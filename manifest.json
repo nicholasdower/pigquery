@@ -1,0 +1,31 @@
+{
+  "name": "PigQuery",
+  "description": "Some Big Query enhancements",
+  "version": "1.0",
+  "manifest_version": 3,
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "host_permissions": [
+    "https://console.cloud.google.com/*"
+  ],
+  "permissions": [
+    "webNavigation",
+    "storage",
+    "tabs"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://console.cloud.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  }
+}
