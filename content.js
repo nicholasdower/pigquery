@@ -646,9 +646,15 @@ document.addEventListener(
       e.stopPropagation();
       if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
-      if (!(e.target instanceof Element)) return;
+      if (!(e.target instanceof Element)) {
+        showToast("Editor not focused.");
+        return;
+      }
       const editor = e.target.closest('cfc-code-editor');
-      if (!editor) return;
+      if (!editor) {
+        showToast("Editor not focused.");
+        return;
+      }
       if (overlayEl) {
         closePopup();
       } else {
@@ -680,9 +686,15 @@ document.addEventListener(
       e.stopPropagation();
       if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
-      if (!(e.target instanceof Element)) return;
+      if (!(e.target instanceof Element)) {
+        showToast("Editor not focused.");
+        return;
+      }
       const editor = e.target.closest('cfc-code-editor');
-      if (!editor) return;
+      if (!editor) {
+        showToast("Editor not focused.");
+        return;
+      }
       copyShareLink(editor);
       return;
     }
