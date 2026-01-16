@@ -44,49 +44,49 @@ async function save() {
     setStatus("Invalid Config: object expected", "error");
     return;
   }
-  if (!Array.isArray(config.insertOptions)) {
-    setStatus("Invalid Config: insertOptions array missing", "error");
+  if (!Array.isArray(config.snippets)) {
+    setStatus("Invalid Config: snippets array missing", "error");
     return;
   }
-  for (const option of config.insertOptions) {
+  for (const option of config.snippets) {
     if (typeof option.description !== "string" || option.description.trim() === "") {
-      setStatus("Invalid Config: insertOptions.description missing", "error");
+      setStatus("Invalid Config: snippets.description missing", "error");
       return;
     }
     if (typeof option.type !== "string" || option.type.trim() === "") {
-      setStatus("Invalid Config: insertOptions.type missing", "error");
+      setStatus("Invalid Config: snippets.type missing", "error");
       return;
     }
     if (typeof option.value !== "string" || option.value.trim() === "") {
-      setStatus("Invalid Config: insertOptions.value missing", "error");
+      setStatus("Invalid Config: snippets.value missing", "error");
       return;
     }
   }
-  if (!Array.isArray(config.clickOptions)) {
-    setStatus("Invalid Config: clickOptions array missing", "error");
+  if (!Array.isArray(config.sites)) {
+    setStatus("Invalid Config: sites array missing", "error");
     return;
   }
-  for (const option of config.clickOptions) {
+  for (const option of config.sites) {
     if (typeof option.label !== "string" || option.label.trim() === "") {
-      setStatus("Invalid Config: clickOptions.label missing", "error");
+      setStatus("Invalid Config: sites.label missing", "error");
       return;
     }
     if (typeof option.regex !== "string" || option.regex.trim() === "") {
-      setStatus("Invalid Config: clickOptions.regex missing", "error");
+      setStatus("Invalid Config: sites.regex missing", "error");
       return;
     }
     if (typeof option.url !== "string" || option.url.trim() === "") {
-      setStatus("Invalid Config: clickOptions.url missing", "error");
+      setStatus("Invalid Config: sites.url missing", "error");
       return;
     }
     try {
       new RegExp(option.regex);
     } catch (e) {
-      setStatus("Invalid Config: clickOptions.regex invalid", "error");
+      setStatus("Invalid Config: sites.regex invalid", "error");
       return;
     }
     if (!option.url.includes("%s")) {
-      setStatus("Invalid Config: clickOptions.url must include %s", "error");
+      setStatus("Invalid Config: sites.url must include %s", "error");
     }
   }
 

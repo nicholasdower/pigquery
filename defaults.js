@@ -1,5 +1,5 @@
 window.DEFAULT_CONFIG = {
-  insertOptions: [
+  snippets: [
     {
       description: "shakespeare",
       type: "table",
@@ -21,7 +21,7 @@ window.DEFAULT_CONFIG = {
       value: "select\n  *\nfrom `bigquery-public-data.samples.wikipedia` w\nwhere title like '%pig%'\nlimit 100;",
     }
   ],
-  clickOptions: [
+  sites: [
     {
       label: "Google",
       regex: '^.*$',

@@ -1,6 +1,6 @@
 let config = {
-  insertOptions: window.DEFAULT_CONFIG.insertOptions,
-  clickOptions: window.DEFAULT_CONFIG.clickOptions.map(option => ({
+  snippets: window.DEFAULT_CONFIG.snippets,
+  sites: window.DEFAULT_CONFIG.sites.map(option => ({
     ...option,
     regex: new RegExp(option.regex),
   })),
@@ -9,7 +9,7 @@ let config = {
 chrome.storage.local.get(["userPayload"], (result) => {
   if (result.userPayload) {
     config = JSON.parse(result.userPayload);
-    config.clickOptions = config.clickOptions.map(option => ({
+    config.sites = config.sites.map(option => ({
       ...option,
       regex: new RegExp(option.regex),
     }));
@@ -148,7 +148,7 @@ let modalEl = null;
 let inputEl = null;
 let listEl = null;
 
-let filtered = config.insertOptions.slice();
+let filtered = config.snippets.slice();
 let activeIndex = 0;
 // Prevent scroll-induced mouseenter from changing selection when navigating with keyboard.
 let lastNavMethod = "keyboard";
@@ -446,7 +446,7 @@ function renderList() {
   if (filtered.length === 0) {
     const empty = document.createElement("div");
     empty.id = "tm-snippet-empty";
-    if (config.insertOptions.length === 0) {
+    if (config.snippets.length === 0) {
       empty.textContent = "No insert options configured.";
     } else {
       empty.textContent = "No insert options match.";
@@ -502,7 +502,7 @@ function renderList() {
 
 function applyFilter() {
   const q = inputEl.value || "";
-  filtered = config.insertOptions.filter((opt) => matches(q, opt));
+  filtered = config.snippets.filter((opt) => matches(q, opt));
   activeIndex = 0;
   renderList();
 }
@@ -612,7 +612,7 @@ function openPopup(editor) {
   document.body.appendChild(overlayEl);
 
   // Default: all options match
-  filtered = config.insertOptions.slice();
+  filtered = config.snippets.slice();
   activeIndex = 0;
   renderList();
 
@@ -739,11 +739,11 @@ document.addEventListener(
       showToast("Copied to clipboard.");
       return;
     }
-    if (config.clickOptions.length === 0) {
+    if (config.sites.length === 0) {
       showToast("No click options configured.");
       return;
     }
-    const matchingItems = config.clickOptions.filter(item => item.regex.test(query));
+    const matchingItems = config.sites.filter(item => item.regex.test(query));
     if (matchingItems.length === 0) {
       showToast("No matching click option found.");
       return;
