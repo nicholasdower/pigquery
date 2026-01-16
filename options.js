@@ -21,7 +21,7 @@ function safeJsonParse(text) {
 
 async function load() {
   const data = await chrome.storage.local.get([STORAGE_KEY]);
-  textarea.value = data[STORAGE_KEY] ?? "";
+  textarea.value = data[STORAGE_KEY] ?? JSON.stringify(window.DEFAULT_CONFIG, null, 2);
   setStatus("Loaded");
 }
 
@@ -29,7 +29,7 @@ async function save() {
   const raw = textarea.value;
   if (raw.trim() === '') {
     await chrome.storage.local.remove(STORAGE_KEY);
-    textarea.value = '';
+    textarea.value = JSON.stringify(window.DEFAULT_CONFIG, null, 2);
     setStatus("Saved", "ok");
     return;
   }

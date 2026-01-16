@@ -1,7 +1,4 @@
-let config = {
-  insertOptions: [],
-  clickOptions: [],
-};
+let config = window.DEFAULT_CONFIG;
 
 chrome.storage.local.get(["userPayload"], (result) => {
   if (result.userPayload) {
