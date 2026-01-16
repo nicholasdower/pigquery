@@ -24,17 +24,17 @@ window.DEFAULT_CONFIG = {
   clickOptions: [
     {
       label: "Google",
-      regex: /^.*$/,
+      regex: '^.*$',
       url: "https://www.google.com/search?q=%s",
     },
     {
       label: "Dict.cc",
-      regex: /^.*$/,
+      regex: '^.*$',
       url: "https://www.dict.cc/?s=%s",
     },
     {
       label: "Wikipedia",
-      regex: /^.*$/,
+      regex: '^.*$',
       url: "https://en.wikipedia.org/w/index.php?search=%s",
     },
   ]

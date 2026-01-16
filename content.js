@@ -1,4 +1,10 @@
-let config = window.DEFAULT_CONFIG;
+let config = {
+  insertOptions: window.DEFAULT_CONFIG.insertOptions,
+  clickOptions: window.DEFAULT_CONFIG.clickOptions.map(option => ({
+    ...option,
+    regex: new RegExp(option.regex),
+  })),
+};
 
 chrome.storage.local.get(["userPayload"], (result) => {
   if (result.userPayload) {
