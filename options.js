@@ -49,12 +49,16 @@ async function save() {
     return;
   }
   for (const option of config.snippets) {
-    if (typeof option.description !== "string" || option.description.trim() === "") {
-      setStatus("Invalid Config: snippets.description missing", "error");
+    if (typeof option.label !== "string" || option.label.trim() === "") {
+      setStatus("Invalid Config: snippets.label missing", "error");
       return;
     }
-    if (typeof option.type !== "string" || option.type.trim() === "") {
-      setStatus("Invalid Config: snippets.type missing", "error");
+    if (typeof option.tag === "string" && option.tag.trim() === "") {
+      setStatus("Invalid Config: snippets.tag string empty", "error");
+      return;
+    }
+    if (option.tag && typeof option.tag !== "string") {
+      setStatus("Invalid Config: snippets.tag string invalid", "error");
       return;
     }
     if (typeof option.value !== "string" || option.value.trim() === "") {

@@ -1,23 +1,23 @@
 window.DEFAULT_CONFIG = {
   snippets: [
     {
-      description: "shakespeare",
-      type: "table",
+      label: "shakespeare",
+      tag: "table",
       value: "`bigquery-public-data.samples.shakespeare` s",
     },
     {
-      description: "wikipedia",
-      type: "table",
+      label: "wikipedia",
+      tag: "table",
       value: "`bigquery-public-data.samples.wikipedia` w",
     },
     {
-      description: "shakespeare pigs",
-      type: "query",
+      label: "shakespeare pigs",
+      tag: "query",
       value: "select\n  word,\n  word_count,\n  corpus,\n  corpus_date\nfrom `bigquery-public-data.samples.shakespeare` s\nwhere word like '%pig%'\nlimit 100;",
     },
     {
-      description: "wikipedia pigs",
-      type: "query",
+      label: "wikipedia pigs",
+      tag: "query",
       value: "select\n  *\nfrom `bigquery-public-data.samples.wikipedia` w\nwhere title like '%pig%'\nlimit 100;",
     }
   ],

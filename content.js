@@ -331,11 +331,11 @@ const styles = `
     align-items: center;
     gap: 12px;
   }
-  .tm-modal-item-description {
+  .tm-modal-item-label {
     flex: 1;
     min-width: 0;
   }
-  .tm-type-label {
+  .tm-tag {
     padding: 3px 8px;
     border-radius: 4px;
     font-size: 11px;
@@ -356,11 +356,11 @@ function addStyles() {
 
 addStyles();
 
-function getTypeColor(type) {
-  // Hash function to generate consistent color for each type
+function getTagColor(tag) {
+  // Hash function to generate consistent color for each tag
   let hash = 0;
-  for (let i = 0; i < type.length; i++) {
-    hash = type.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < tag.length; i++) {
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
   }
 
   // Generate colors that look good on dark background
@@ -401,7 +401,7 @@ function matches(query, option) {
   if (!query) return true;
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return option.description.toLowerCase().includes(q) ||  option.type.toLowerCase().includes(q);
+  return option.label.toLowerCase().includes(q) ||  option.tag.toLowerCase().includes(q);
 }
 
 function updateActiveStyles() {
@@ -473,19 +473,21 @@ function renderList() {
     const wrapper = document.createElement("div");
     wrapper.className = "tm-modal-item-wrapper";
 
-    const description = document.createElement("span");
-    description.className = "tm-modal-item-description";
-    description.textContent = opt.description;
+    const label = document.createElement("span");
+    label.className = "tm-modal-item-label";
+    label.textContent = opt.label;
+    wrapper.appendChild(label);
 
-    const typeLabel = document.createElement("span");
-    typeLabel.className = "tm-type-label";
-    typeLabel.textContent = opt.type;
-    const colors = getTypeColor(opt.type);
-    typeLabel.style.backgroundColor = colors.bg;
-    typeLabel.style.color = colors.text;
+    if (opt.tag) {
+      const tag = document.createElement("span");
+      tag.className = "tm-tag";
+      tag.textContent = opt.tag;
+      const colors = getTagColor(opt.tag);
+      tag.style.backgroundColor = colors.bg;
+      tag.style.color = colors.text;
+      wrapper.appendChild(tag);
+    }
 
-    wrapper.appendChild(description);
-    wrapper.appendChild(typeLabel);
     item.appendChild(wrapper);
 
     item.addEventListener("mousedown", (e) => {
