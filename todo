@@ -1,5 +1,4 @@
 Add light mode.
-Stop using the background worker. Update the URL from the page.
 Fix hover bug in snippet popup.
 Unify styles in popup with snippet popup.
 Add keybaord shortcuts to site popup. Unify with snippet popup.

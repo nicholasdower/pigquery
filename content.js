@@ -16,12 +16,32 @@ chrome.storage.local.get(["userPayload"], (result) => {
   }
 });
 
-let clickedTab = false;
-chrome.runtime.sendMessage({ type: "GET_QUERY" }, (resp) => {
-  let query = resp?.query;
+// Extract and remove the 'q' query parameter on page load
+const url = new URL(window.location.href);
+const queryParam = url.searchParams.get("q");
+let query = queryParam?.length ? base64Decode(queryParam.trim()).trim() : null;
 
-  query = query ? base64Decode(query.trim()).trim() : null;
-  if (!query || query.length === 0) return;
+if (url.searchParams.has("q")) {
+  url.searchParams.delete("q");
+  window.history.replaceState({}, '', url.toString());
+
+  // Keep removing the 'q' param if the page re-adds it (check for 10 seconds)
+  const startTime = Date.now();
+  const intervalId = setInterval(() => {
+    const currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.has("q")) {
+      currentUrl.searchParams.delete("q");
+      window.history.replaceState({}, '', currentUrl.toString());
+    }
+
+    if (Date.now() - startTime > 10000) {
+      clearInterval(intervalId);
+    }
+  }, 100);
+}
+
+let clickedTab = false;
+if (query && query.length > 0) {
 
   const observer = new MutationObserver(() => {
     if (!clickedTab) {
@@ -49,7 +69,7 @@ chrome.runtime.sendMessage({ type: "GET_QUERY" }, (resp) => {
     observer.disconnect();
     clearTimeout(timeoutId);
   }
-});
+}
 
 function base64Encode(str) {
   const bytes = new TextEncoder().encode(str);

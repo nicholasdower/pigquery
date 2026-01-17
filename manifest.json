@@ -13,9 +13,7 @@
     "https://console.cloud.google.com/*"
   ],
   "permissions": [
-    "webNavigation",
-    "storage",
-    "tabs"
+    "storage"
   ],
   "content_scripts": [
     {
@@ -26,8 +24,5 @@
   "options_page": "options.html",
   "action": {
     "default_popup": "popup.html"
-  },
-  "background": {
-    "service_worker": "background.js"
   }
 }
