@@ -8,3 +8,4 @@ Automatically reload config if it changes while a page is open.
 Organize repo files (images dir, etc.).
 Add bug link to popup or settings.
 Add tests.
+Improve search. Should match multiple words, partial words, words plus tags, etc.
