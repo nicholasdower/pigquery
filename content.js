@@ -175,6 +175,7 @@ const styles = `
     box-sizing: border-box;
   }
   .tm-modal {
+    width: min(720px, 100%);
     background: #111;
     border: 1px solid rgba(255,255,255,0.14);
     border-radius: 12px;
@@ -183,14 +184,11 @@ const styles = `
     color: #fff;
     overflow: hidden;
   }
-  #tm-snippet-modal {
-    width: min(720px, 100%);
-  }
-  #tm-snippet-header {
+  .tm-modal-header {
     padding: 14px;
     border-bottom: 1px solid rgba(255,255,255,0.10);
   }
-  #tm-snippet-input {
+  .tm-modal-input {
     width: 100%;
     box-sizing: border-box;
     padding: 10px 12px;
@@ -201,18 +199,22 @@ const styles = `
     outline: none;
     font-size: 14px;
   }
-  #tm-snippet-input::placeholder {
+  .tm-modal-input::placeholder {
     color: rgba(255,255,255,0.45);
   }
   .tm-modal-list {
+    height: min(50vh, 480px);
+    overflow: auto;
     padding: 8px;
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  #tm-snippet-list {
-    height: min(50vh, 480px);
-    overflow: auto;
+  .tm-modal-empty {
+    padding: 12px 10px;
+    opacity: 0.65;
+    font-size: 13px;
+    user-select: none;
   }
   .tm-modal-item {
     padding: 10px;
@@ -241,26 +243,12 @@ const styles = `
     appearance: none;
     color: #fff;
   }
-  #tm-snippet-empty {
-    padding: 12px 10px;
-    opacity: 0.65;
-    font-size: 13px;
-    user-select: none;
-  }
-  .tm-kbd {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    padding: 2px 6px;
-    border: 1px solid rgba(255,255,255,0.18);
-    border-bottom-color: rgba(255,255,255,0.25);
-    border-radius: 6px;
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.9);
+  .tm-modal-item-label {
+    flex: 1;
+    min-width: 0;
   }
   .alt-down bq-results-table-optimized {
     cursor: pointer;
-  }
-  #tm-click-modal {
-    width: min(520px, 100%);
   }
   .tm-toast {
     position: fixed;
@@ -283,45 +271,11 @@ const styles = `
   .tm-toast.show {
     opacity: 1;
   }
-
-  .tm-link-icon-button {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background-color: white; /* icon color */
-    border: none;
-    cursor: pointer;
-
-    /* transparent button, icon via mask */
-    -webkit-mask: url("data:image/svg+xml;utf8,\
-  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
-  <path d='M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4'/>\
-  <path d='M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 20'/>\
-  </svg>") center / 16px 16px no-repeat;
-
-    mask: url("data:image/svg+xml;utf8,\
-  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
-  <path d='M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4'/>\
-  <path d='M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 20'/>\
-  </svg>") center / 16px 16px no-repeat;
-  }
-
-  .tm-link-icon-button:hover {
-    opacity: 0.8;
-  }
-
-  .tm-link-icon-button:focus {
-    outline: none;
-  }
   .tm-modal-item-wrapper {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-  }
-  .tm-modal-item-label {
-    flex: 1;
-    min-width: 0;
   }
   .tm-tag {
     padding: 3px 8px;
@@ -335,14 +289,7 @@ const styles = `
   }
 `;
 
-function addStyles() {
-  const style = document.createElement("style");
-  style.id = "tm-snippet-style";
-  style.textContent = styles;
-  document.head.appendChild(style);
-}
-
-addStyles();
+document.head.appendChild(makeEl("style", { id: "tm-modal-style", text: styles }));
 
 function getTagColor(tag) {
   // Hash function to generate consistent color for each tag
@@ -370,9 +317,7 @@ function getTagColor(tag) {
 }
 
 function showToast(message, duration = 2000) {
-  const toast = document.createElement("div");
-  toast.className = "tm-toast";
-  toast.textContent = message;
+  const toast = makeEl("div", { className: "tm-toast", text: message });
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => {
@@ -402,8 +347,7 @@ function openPopup(options, onOptionSelected) {
   const lastFocusedEl = document.activeElement;
 
   const overlayEl = makeEl("div", { className: "tm-modal-overlay" });
-  overlayEl.id = "tm-snippet-overlay";
-  const listEl = makeEl("div", { id: "tm-snippet-list", className: "tm-modal-list" });
+  const listEl = makeEl("div", { className: "tm-modal-list" });
 
   function closePopup() {
     if (!overlayEl) return;
@@ -443,7 +387,6 @@ function openPopup(options, onOptionSelected) {
   }
 
   const modalEl = makeEl("div", { className: "tm-modal" });
-  modalEl.id = "tm-snippet-modal";
   modalEl.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -487,8 +430,7 @@ function openPopup(options, onOptionSelected) {
     while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
 
     if (filtered.length === 0) {
-      const empty = document.createElement("div");
-      empty.id = "tm-snippet-empty";
+      const empty = makeEl("div", { className: "tm-modal-empty" });
       if (config.snippets.length === 0) {
         empty.textContent = "No insert options configured.";
       } else {
@@ -499,19 +441,14 @@ function openPopup(options, onOptionSelected) {
     }
 
     filtered.forEach((opt, idx) => {
-      const item = document.createElement("div");
-      item.className = "tm-modal-item" + (idx === activeIndex ? " active" : "");
+      const item = makeEl("div", { className: "tm-modal-item" + (idx === activeIndex ? " active" : "") });
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "tm-modal-item-wrapper";
-
-      const label = document.createElement("span");
-      label.className = "tm-modal-item-label";
-      label.textContent = opt.label;
+      const wrapper = makeEl("div", { className: "tm-modal-item-wrapper" });
+      const label = makeEl("span", { className: "tm-modal-item-label", text: opt.label });
       wrapper.appendChild(label);
 
       if (opt.tag) {
-        const tag = document.createElement("span");
+        const tag = makeEl("span", { className: "tm-tag", text: opt.tag });
         tag.className = "tm-tag";
         tag.textContent = opt.tag;
         const colors = getTagColor(opt.tag);
@@ -538,10 +475,8 @@ function openPopup(options, onOptionSelected) {
     scrollActiveIntoView();
   }
 
-  const header = makeEl("div", { id: "tm-snippet-header" });
-
-  const inputEl = document.createElement("input");
-  inputEl.id = "tm-snippet-input";
+  const header = makeEl("div", { className: "tm-modal-header" });
+  const inputEl = makeEl("input", { className: "tm-modal-input" });
   inputEl.type = "text";
   inputEl.placeholder = "Search…";
   inputEl.autocomplete = "off";
@@ -564,9 +499,7 @@ function openPopup(options, onOptionSelected) {
   document.body.appendChild(overlayEl);
   renderList();
 
-  inputEl.focus()
-  // BigQuery steals focus asynchronously on the results table. Try to be the last to focus.
-  //setTimeout(() => inputEl.focus(), 100);
+  inputEl.focus();
 }
 
 document.addEventListener(
@@ -628,12 +561,6 @@ document.addEventListener(
   }
 );
 
-function interceptSiteClick(e) {
-
-
-  return cell;
-}
-
 document.addEventListener(
   'click',
   (e) => {
@@ -664,7 +591,7 @@ document.addEventListener(
 
     // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
     const onFocusIn = () => {
-      const input = document.querySelector("#tm-snippet-input");
+      const input = document.querySelector(".tm-modal-input");
       if (input) {
         input.focus();
       } else {
