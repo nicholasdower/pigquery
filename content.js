@@ -162,17 +162,6 @@ function insertIntoEditor(editor, text) {
   }
 }
 
-// --------- UI (POPUP) ---------
-let overlayEl = null;
-let modalEl = null;
-let inputEl = null;
-let listEl = null;
-
-let filtered = [];
-let activeIndex = 0;
-
-let lastFocusedEl = document.activeElement;
-
 const styles = `
   .tm-modal-overlay {
     position: fixed;
@@ -403,111 +392,6 @@ function matches(query, option) {
   return option.label.toLowerCase().includes(q) ||  option.tag.toLowerCase().includes(q);
 }
 
-function updateActiveStyles() {
-  const items = listEl.querySelectorAll(".tm-modal-item");
-  items.forEach((el, i) => {
-    if (i === activeIndex) el.classList.add("active");
-    else el.classList.remove("active");
-  });
-  scrollActiveIntoView();
-}
-
-function scrollActiveIntoView() {
-  const items = listEl.querySelectorAll(".tm-modal-item");
-  const active = items[activeIndex];
-  if (!active) return;
-
-  // Special handling for first and last items to show padding
-  if (activeIndex === 0) {
-    listEl.scrollTop = 0;
-    return;
-  }
-  if (activeIndex === items.length - 1) {
-    listEl.scrollTop = listEl.scrollHeight;
-    return;
-  }
-
-  // Reliable scrolling within an overflow container.
-  // 'nearest' keeps the list stable and avoids jumping.
-  try {
-    active.scrollIntoView({ block: "nearest" });
-  } catch (_) {
-    // Fallback: manual scroll using bounding boxes
-    const c = listEl.getBoundingClientRect();
-    const r = active.getBoundingClientRect();
-    const topOverflow = r.top - c.top;
-    const bottomOverflow = r.bottom - c.bottom;
-    if (topOverflow < 0) listEl.scrollTop += topOverflow;
-    else if (bottomOverflow > 0) listEl.scrollTop += bottomOverflow;
-  }
-}
-
-function renderList(onOptionSelected) {
-  while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
-
-  if (filtered.length === 0) {
-    const empty = document.createElement("div");
-    empty.id = "tm-snippet-empty";
-    if (config.snippets.length === 0) {
-      empty.textContent = "No insert options configured.";
-    } else {
-      empty.textContent = "No insert options match.";
-    }
-    listEl.appendChild(empty);
-    return;
-  }
-
-  filtered.forEach((opt, idx) => {
-    const item = document.createElement("div");
-    item.className = "tm-modal-item" + (idx === activeIndex ? " active" : "");
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "tm-modal-item-wrapper";
-
-    const label = document.createElement("span");
-    label.className = "tm-modal-item-label";
-    label.textContent = opt.label;
-    wrapper.appendChild(label);
-
-    if (opt.tag) {
-      const tag = document.createElement("span");
-      tag.className = "tm-tag";
-      tag.textContent = opt.tag;
-      const colors = getTagColor(opt.tag);
-      tag.style.backgroundColor = colors.bg;
-      tag.style.color = colors.text;
-      wrapper.appendChild(tag);
-    }
-
-    item.appendChild(wrapper);
-
-    item.addEventListener("mousedown", (e) => {
-      // Prevent input blur before click handler runs
-      e.preventDefault();
-    });
-
-    item.addEventListener("click", () => {
-      onOptionSelected(filtered[idx]);
-      closePopup();
-    });
-
-    listEl.appendChild(item);
-  });
-
-  scrollActiveIntoView();
-}
-
-function applyFilter(onOptionSelected) {
-  const q = inputEl.value || "";
-  filtered = options.filter((opt) => matches(q, opt));
-  activeIndex = 0;
-  renderList(onOptionSelected);
-}
-
-function onOverlayMouseDown(e) {
-  if (e.target === overlayEl) closePopup();
-}
-
 function makeEl(tag, { id, className, text } = {}) {
   const el = document.createElement(tag);
   if (id) el.id = id;
@@ -517,15 +401,75 @@ function makeEl(tag, { id, className, text } = {}) {
 }
 
 function openPopup(options, onOptionSelected) {
-  if (overlayEl) return;
+  if (document.querySelector('.tm-modal-overlay')) return;
 
-  lastFocusedEl = document.activeElement;
+  // Default: all options match
+  let filtered = options.slice();
+  let activeIndex = 0;
 
-  overlayEl = makeEl("div", { className: "tm-modal-overlay" });
+  const lastFocusedEl = document.activeElement;
+
+  const overlayEl = makeEl("div", { className: "tm-modal-overlay" });
   overlayEl.id = "tm-snippet-overlay";
-  overlayEl.addEventListener("mousedown", onOverlayMouseDown);
+  const listEl = makeEl("div", { id: "tm-snippet-list", className: "tm-modal-list" });
 
-  modalEl = makeEl("div", { className: "tm-modal" });
+  function closePopup() {
+    if (!overlayEl) return;
+
+    overlayEl.remove();
+
+    // Restore focus if possible
+    try {
+      if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  overlayEl.addEventListener("mousedown", (e) => {
+    if (e.target === overlayEl) closePopup();
+  });
+
+  function scrollActiveIntoView() {
+    const items = listEl.querySelectorAll(".tm-modal-item");
+    const active = items[activeIndex];
+    if (!active) return;
+
+    // Special handling for first and last items to show padding
+    if (activeIndex === 0) {
+      listEl.scrollTop = 0;
+      return;
+    }
+    if (activeIndex === items.length - 1) {
+      listEl.scrollTop = listEl.scrollHeight;
+      return;
+    }
+
+    // Reliable scrolling within an overflow container.
+    // 'nearest' keeps the list stable and avoids jumping.
+    try {
+      active.scrollIntoView({ block: "nearest" });
+    } catch (_) {
+      // Fallback: manual scroll using bounding boxes
+      const c = listEl.getBoundingClientRect();
+      const r = active.getBoundingClientRect();
+      const topOverflow = r.top - c.top;
+      const bottomOverflow = r.bottom - c.bottom;
+      if (topOverflow < 0) listEl.scrollTop += topOverflow;
+      else if (bottomOverflow > 0) listEl.scrollTop += bottomOverflow;
+    }
+  }
+
+  function updateActiveStyles() {
+    const items = listEl.querySelectorAll(".tm-modal-item");
+    items.forEach((el, i) => {
+      if (i === activeIndex) el.classList.add("active");
+      else el.classList.remove("active");
+    });
+    scrollActiveIntoView();
+  }
+
+  const modalEl = makeEl("div", { className: "tm-modal" });
   modalEl.id = "tm-snippet-modal";
   modalEl.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
@@ -566,62 +510,94 @@ function openPopup(options, onOptionSelected) {
     e.stopPropagation();
   });
 
+  function renderList() {
+    while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
+
+    if (filtered.length === 0) {
+      const empty = document.createElement("div");
+      empty.id = "tm-snippet-empty";
+      if (config.snippets.length === 0) {
+        empty.textContent = "No insert options configured.";
+      } else {
+        empty.textContent = "No insert options match.";
+      }
+      listEl.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach((opt, idx) => {
+      const item = document.createElement("div");
+      item.className = "tm-modal-item" + (idx === activeIndex ? " active" : "");
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "tm-modal-item-wrapper";
+
+      const label = document.createElement("span");
+      label.className = "tm-modal-item-label";
+      label.textContent = opt.label;
+      wrapper.appendChild(label);
+
+      if (opt.tag) {
+        const tag = document.createElement("span");
+        tag.className = "tm-tag";
+        tag.textContent = opt.tag;
+        const colors = getTagColor(opt.tag);
+        tag.style.backgroundColor = colors.bg;
+        tag.style.color = colors.text;
+        wrapper.appendChild(tag);
+      }
+
+      item.appendChild(wrapper);
+
+      item.addEventListener("mousedown", (e) => {
+        // Prevent input blur before click handler runs
+        e.preventDefault();
+      });
+
+      item.addEventListener("click", () => {
+        onOptionSelected(filtered[idx]);
+        closePopup();
+      });
+
+      listEl.appendChild(item);
+    });
+
+    scrollActiveIntoView();
+  }
+
   const header = makeEl("div", { id: "tm-snippet-header" });
 
-  inputEl = document.createElement("input");
+  const inputEl = document.createElement("input");
   inputEl.id = "tm-snippet-input";
   inputEl.type = "text";
   inputEl.placeholder = "Search…";
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
-  inputEl.addEventListener("input", () => { applyFilter(onOptionSelected) });
+  inputEl.addEventListener("input", () => {
+    const q = inputEl.value || "";
+    filtered = options.filter(opt => matches(q, opt));
+    activeIndex = 0;
+    renderList();
+  });
 
   header.appendChild(inputEl);
-
-  listEl = makeEl("div", { id: "tm-snippet-list", className: "tm-modal-list" });
 
   modalEl.appendChild(header);
   modalEl.appendChild(listEl);
 
   overlayEl.appendChild(modalEl);
   document.body.appendChild(overlayEl);
-
-  // Default: all options match
-  filtered = options.slice();
-
-  activeIndex = 0;
-  renderList(onOptionSelected);
+  renderList();
 
   // Focus search box
   inputEl.focus();
   inputEl.select();
 }
 
-function closePopup() {
-  if (!overlayEl) return;
-
-  overlayEl.removeEventListener("mousedown", onOverlayMouseDown);
-  overlayEl.remove();
-
-  overlayEl = null;
-  modalEl = null;
-  inputEl = null;
-  listEl = null;
-
-  // Restore focus if possible
-  try {
-    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
-  } catch (_) {
-    // ignore
-  } finally {
-    lastFocusedEl = null;
-  }
-}
-
 document.addEventListener(
   "keydown",
   (e) => {
-    if (overlayEl) return;
+    if (document.querySelector('.tm-modal-overlay')) return;
 
     // Toggle behavior: if popup open and insert shortcut pressed again, close it.
     if (!e.isComposing && !e.repeat && e.key === 'i' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
@@ -638,13 +614,9 @@ document.addEventListener(
         showToast("Editor not focused.");
         return;
       }
-      if (overlayEl) {
-        closePopup();
-      } else {
-        openPopup(config.snippets, (option) => {
-          insertIntoEditor(editor, option.value);
-        });
-      }
+      openPopup(config.snippets, (option) => {
+        insertIntoEditor(editor, option.value);
+      });
       return;
     }
 
