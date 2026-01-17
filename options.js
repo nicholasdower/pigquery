@@ -49,8 +49,8 @@ async function save() {
     return;
   }
   for (const option of config.snippets) {
-    if (typeof option.label !== "string" || option.label.trim() === "") {
-      setStatus("Invalid Config: snippets.label missing", "error");
+    if (typeof option.name !== "string" || option.name.trim() === "") {
+      setStatus("Invalid Config: snippets.name missing", "error");
       return;
     }
     if (typeof option.tag === "string" && option.tag.trim() === "") {
@@ -71,8 +71,8 @@ async function save() {
     return;
   }
   for (const option of config.sites) {
-    if (typeof option.label !== "string" || option.label.trim() === "") {
-      setStatus("Invalid Config: sites.label missing", "error");
+    if (typeof option.name !== "string" || option.name.trim() === "") {
+      setStatus("Invalid Config: sites.name missing", "error");
       return;
     }
     if (typeof option.regex !== "string" || option.regex.trim() === "") {

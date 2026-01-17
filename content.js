@@ -167,7 +167,7 @@ function insertIntoEditor(editor, text) {
 }
 
 const styles = `
-  .tm-modal-overlay {
+  .pig-modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.55);
@@ -178,7 +178,7 @@ const styles = `
     padding: 24px;
     box-sizing: border-box;
   }
-  .tm-modal {
+  .pig-modal {
     width: min(720px, 100%);
     background: #111;
     border: 1px solid rgba(255,255,255,0.14);
@@ -188,11 +188,11 @@ const styles = `
     color: #fff;
     overflow: hidden;
   }
-  .tm-modal-header {
+  .pig-modal-header {
     padding: 14px;
     border-bottom: 1px solid rgba(255,255,255,0.10);
   }
-  .tm-modal-input {
+  .pig-modal-input {
     width: 100%;
     box-sizing: border-box;
     padding: 10px 12px;
@@ -203,10 +203,10 @@ const styles = `
     outline: none;
     font-size: 14px;
   }
-  .tm-modal-input::placeholder {
+  .pig-modal-input::placeholder {
     color: rgba(255,255,255,0.45);
   }
-  .tm-modal-list {
+  .pig-modal-list {
     height: min(50vh, 480px);
     overflow: auto;
     padding: 8px;
@@ -214,13 +214,13 @@ const styles = `
     flex-direction: column;
     gap: 6px;
   }
-  .tm-modal-empty {
+  .pig-modal-empty {
     padding: 12px 10px;
     opacity: 0.65;
     font-size: 13px;
     user-select: none;
   }
-  .tm-modal-item {
+  .pig-modal-item {
     padding: 10px;
     border-radius: 10px;
     cursor: pointer;
@@ -230,31 +230,31 @@ const styles = `
     font-size: 14px;
     line-height: 1.3;
   }
-  .tm-modal-item:hover {
+  .pig-modal-item:hover {
     background: rgba(255,255,255,0.08);
   }
-  .tm-modal-item.active {
+  .pig-modal-item.active {
     background: rgba(96, 165, 250, 0.2);
     border-color: rgba(96, 165, 250, 0.5);
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
   }
-  .tm-modal-item.active:hover {
+  .pig-modal-item.active:hover {
     background: rgba(96, 165, 250, 0.25);
   }
-  .tm-modal-item[type="button"] {
+  .pig-modal-item[type="button"] {
     width: 100%;
     text-align: left;
     appearance: none;
     color: #fff;
   }
-  .tm-modal-item-label {
+  .pig-modal-item-name {
     flex: 1;
     min-width: 0;
   }
   .alt-down bq-results-table-optimized {
     cursor: pointer;
   }
-  .tm-toast {
+  .pig-toast {
     position: fixed;
     bottom: 24px;
     left: 50%;
@@ -272,16 +272,16 @@ const styles = `
     opacity: 0;
     transition: opacity 0.2s ease;
   }
-  .tm-toast.show {
+  .pig-toast.show {
     opacity: 1;
   }
-  .tm-modal-item-wrapper {
+  .pig-modal-item-wrapper {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
   }
-  .tm-tag {
+  .pig-modal-item-tag {
     padding: 3px 8px;
     border-radius: 4px;
     font-size: 11px;
@@ -293,7 +293,7 @@ const styles = `
   }
 `;
 
-document.head.appendChild(makeEl("style", { id: "tm-modal-style", text: styles }));
+document.head.appendChild(makeEl("style", { id: "pig-modal-style", text: styles }));
 
 function getTagColor(tag) {
   // Hash function to generate consistent color for each tag
@@ -321,7 +321,7 @@ function getTagColor(tag) {
 }
 
 function showToast(message, duration = 2000) {
-  const toast = makeEl("div", { className: "tm-toast", text: message });
+  const toast = makeEl("div", { className: "pig-toast", text: message });
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => {
@@ -343,15 +343,15 @@ function makeEl(tag, { id, className, text } = {}) {
 }
 
 function openPopup(options, onOptionSelected) {
-  if (document.querySelector('.tm-modal-overlay')) return;
+  if (document.querySelector('.pig-modal-overlay')) return;
 
   let filtered = options.slice();
   let activeIndex = 0;
 
   const lastFocusedEl = document.activeElement;
 
-  const overlayEl = makeEl("div", { className: "tm-modal-overlay" });
-  const listEl = makeEl("div", { className: "tm-modal-list" });
+  const overlayEl = makeEl("div", { className: "pig-modal-overlay" });
+  const listEl = makeEl("div", { className: "pig-modal-list" });
 
   function closePopup() {
     if (!overlayEl) return;
@@ -364,7 +364,7 @@ function openPopup(options, onOptionSelected) {
   });
 
   function scrollActiveIntoView() {
-    const items = listEl.querySelectorAll(".tm-modal-item");
+    const items = listEl.querySelectorAll(".pig-modal-item");
     const active = items[activeIndex];
     if (!active) return;
 
@@ -382,7 +382,7 @@ function openPopup(options, onOptionSelected) {
   }
 
   function updateActiveStyles() {
-    const items = listEl.querySelectorAll(".tm-modal-item");
+    const items = listEl.querySelectorAll(".pig-modal-item");
     items.forEach((el, i) => {
       if (i === activeIndex) el.classList.add("active");
       else el.classList.remove("active");
@@ -390,7 +390,7 @@ function openPopup(options, onOptionSelected) {
     scrollActiveIntoView();
   }
 
-  const modalEl = makeEl("div", { className: "tm-modal" });
+  const modalEl = makeEl("div", { className: "pig-modal" });
   modalEl.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -434,7 +434,7 @@ function openPopup(options, onOptionSelected) {
     while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
 
     if (filtered.length === 0) {
-      const empty = makeEl("div", { className: "tm-modal-empty" });
+      const empty = makeEl("div", { className: "pig-modal-empty" });
       if (options.length === 0) {
         empty.textContent = "No options configured.";
       } else {
@@ -445,16 +445,14 @@ function openPopup(options, onOptionSelected) {
     }
 
     filtered.forEach((opt, idx) => {
-      const item = makeEl("div", { className: "tm-modal-item" + (idx === activeIndex ? " active" : "") });
+      const item = makeEl("div", { className: "pig-modal-item" + (idx === activeIndex ? " active" : "") });
 
-      const wrapper = makeEl("div", { className: "tm-modal-item-wrapper" });
-      const label = makeEl("span", { className: "tm-modal-item-label", text: opt.label });
-      wrapper.appendChild(label);
+      const wrapper = makeEl("div", { className: "pig-modal-item-wrapper" });
+      const name = makeEl("span", { className: "pig-modal-item-name", text: opt.name });
+      wrapper.appendChild(name);
 
       if (opt.tag) {
-        const tag = makeEl("span", { className: "tm-tag", text: opt.tag });
-        tag.className = "tm-tag";
-        tag.textContent = opt.tag;
+        const tag = makeEl("span", { className: "pig-modal-item-tag", text: opt.tag });
         const colors = getTagColor(opt.tag);
         tag.style.backgroundColor = colors.bg;
         tag.style.color = colors.text;
@@ -479,8 +477,8 @@ function openPopup(options, onOptionSelected) {
     scrollActiveIntoView();
   }
 
-  const header = makeEl("div", { className: "tm-modal-header" });
-  const inputEl = makeEl("input", { className: "tm-modal-input" });
+  const header = makeEl("div", { className: "pig-modal-header" });
+  const inputEl = makeEl("input", { className: "pig-modal-input" });
   inputEl.type = "text";
   inputEl.placeholder = "Search…";
   inputEl.autocomplete = "off";
@@ -488,7 +486,7 @@ function openPopup(options, onOptionSelected) {
   inputEl.addEventListener("input", () => {
     const query = (inputEl.value || "").trim().toLowerCase();
     filtered = options.filter(option => {
-      return !query || option.label.toLowerCase().includes(query) || option.tag?.toLowerCase()?.includes(query);
+      return !query || option.name.toLowerCase().includes(query) || option.tag?.toLowerCase()?.includes(query);
     });
     activeIndex = 0;
     renderList();
@@ -509,7 +507,7 @@ function openPopup(options, onOptionSelected) {
 document.addEventListener(
   "keydown",
   (e) => {
-    if (document.querySelector('.tm-modal-overlay')) return;
+    if (document.querySelector('.pig-modal-overlay')) return;
 
     if (!e.isComposing && !e.repeat && e.key === 'i' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
       e.preventDefault();
@@ -595,7 +593,7 @@ document.addEventListener(
 
     // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
     const onFocusIn = () => {
-      const input = document.querySelector(".tm-modal-input");
+      const input = document.querySelector(".pig-modal-input");
       if (input) {
         input.focus();
       } else {
