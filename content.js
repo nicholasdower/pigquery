@@ -168,10 +168,9 @@ let modalEl = null;
 let inputEl = null;
 let listEl = null;
 
-let filtered = config.snippets.slice();
+let filtered = [];
 let activeIndex = 0;
 
-let lastEditor = null;
 let lastFocusedEl = document.activeElement;
 
 const styles = `
@@ -443,15 +442,7 @@ function scrollActiveIntoView() {
   }
 }
 
-function chooseIndex(idx) {
-  const opt = filtered[idx];
-  if (!opt) return;
-  if (!lastEditor) return;
-  insertIntoEditor(lastEditor, opt.value);
-  closePopup();
-}
-
-function renderList() {
+function renderList(onOptionSelected) {
   while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
 
   if (filtered.length === 0) {
@@ -496,7 +487,8 @@ function renderList() {
     });
 
     item.addEventListener("click", () => {
-      chooseIndex(idx);
+      onOptionSelected(filtered[idx]);
+      closePopup();
     });
 
     listEl.appendChild(item);
@@ -505,47 +497,15 @@ function renderList() {
   scrollActiveIntoView();
 }
 
-function applyFilter() {
+function applyFilter(onOptionSelected) {
   const q = inputEl.value || "";
-  filtered = config.snippets.filter((opt) => matches(q, opt));
+  filtered = options.filter((opt) => matches(q, opt));
   activeIndex = 0;
-  renderList();
+  renderList(onOptionSelected);
 }
 
 function onOverlayMouseDown(e) {
   if (e.target === overlayEl) closePopup();
-}
-
-function onPopupKeyDown(e) {
-  if (e.key === "Escape") {
-    e.preventDefault();
-    closePopup();
-    return;
-  }
-
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    if (filtered.length) {
-      activeIndex = (activeIndex + 1) % filtered.length;
-      updateActiveStyles();
-    }
-    return;
-  }
-
-  if (e.key === "ArrowUp") {
-    e.preventDefault();
-    if (filtered.length) {
-      activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
-      updateActiveStyles();
-    }
-    return;
-  }
-
-  if (e.key === "Enter") {
-    e.preventDefault();
-    if (filtered.length) chooseIndex(activeIndex);
-    return;
-  }
 }
 
 function makeEl(tag, { id, className, text } = {}) {
@@ -556,11 +516,10 @@ function makeEl(tag, { id, className, text } = {}) {
   return el;
 }
 
-function openPopup(editor) {
+function openPopup(options, onOptionSelected) {
   if (overlayEl) return;
 
   lastFocusedEl = document.activeElement;
-  lastEditor = editor;
 
   overlayEl = makeEl("div", { className: "tm-modal-overlay" });
   overlayEl.id = "tm-snippet-overlay";
@@ -568,7 +527,44 @@ function openPopup(editor) {
 
   modalEl = makeEl("div", { className: "tm-modal" });
   modalEl.id = "tm-snippet-modal";
-  modalEl.addEventListener("keydown", onPopupKeyDown);
+  modalEl.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closePopup();
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filtered.length) {
+        activeIndex = (activeIndex + 1) % filtered.length;
+        updateActiveStyles();
+      }
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filtered.length) {
+        activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
+        updateActiveStyles();
+      }
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      onOptionSelected(filtered[activeIndex]);
+      closePopup();
+      return;
+    }
+
+    e.stopPropagation();
+  });
 
   const header = makeEl("div", { id: "tm-snippet-header" });
 
@@ -578,8 +574,7 @@ function openPopup(editor) {
   inputEl.placeholder = "Search…";
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
-  inputEl.addEventListener("input", applyFilter);
-  inputEl.addEventListener("keydown", onPopupKeyDown);
+  inputEl.addEventListener("input", () => { applyFilter(onOptionSelected) });
 
   header.appendChild(inputEl);
 
@@ -592,9 +587,10 @@ function openPopup(editor) {
   document.body.appendChild(overlayEl);
 
   // Default: all options match
-  filtered = config.snippets.slice();
+  filtered = options.slice();
+
   activeIndex = 0;
-  renderList();
+  renderList(onOptionSelected);
 
   // Focus search box
   inputEl.focus();
@@ -611,7 +607,6 @@ function closePopup() {
   modalEl = null;
   inputEl = null;
   listEl = null;
-  lastEditor = null;
 
   // Restore focus if possible
   try {
@@ -626,6 +621,8 @@ function closePopup() {
 document.addEventListener(
   "keydown",
   (e) => {
+    if (overlayEl) return;
+
     // Toggle behavior: if popup open and insert shortcut pressed again, close it.
     if (!e.isComposing && !e.repeat && e.key === 'i' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
       e.preventDefault();
@@ -644,26 +641,10 @@ document.addEventListener(
       if (overlayEl) {
         closePopup();
       } else {
-        openPopup(editor);
+        openPopup(config.snippets, (option) => {
+          insertIntoEditor(editor, option.value);
+        });
       }
-      return;
-    }
-
-    // When popup is open, intercept navigation keys globally (even if the search input has focus).
-    if (overlayEl) {
-      const k = e.key;
-      if (k === "Escape" || k === "ArrowDown" || k === "ArrowUp" || k === "Enter") {
-        // Ensure the browser/site does not consume these keys.
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-        onPopupKeyDown(e);
-        return;
-      }
-
-      // For all other keys (typing in the search box), keep them working,
-      // but prevent BigQuery/Monaco from reacting.
-      e.stopPropagation();
       return;
     }
 
