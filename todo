@@ -1,0 +1,13 @@
+Add light mode.
+Stop using the background worker. Update the URL from the page.
+Fix hover bug in snippet popup.
+Unify styles in popup with snippet popup.
+Add keybaord shortcuts to site popup. Unify with snippet popup.
+Read config from file or url or Git. Some way to share config.
+Consider allowing multiple configs. Maybe each config needs a name and that can show up as a tag in the snippet modal.
+Create screenshots and/or a gif.
+Publish to web store.
+Automatically reload config if it changes while a page is open.
+Organize repo files (images dir, etc.).
+Add bug link to popup or settings.
+Add tests.
