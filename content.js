@@ -1,20 +1,24 @@
-let config = {
-  snippets: window.DEFAULT_CONFIG.snippets,
-  sites: window.DEFAULT_CONFIG.sites.map(option => ({
+let config;
+
+function setConfig(newConfig) {
+  config = newConfig
+  config.sites = config.sites.map(option => ({
     ...option,
     regex: new RegExp(option.regex),
-  })),
-};
+  }));
+}
 
-chrome.storage.local.get(["userPayload"], (result) => {
-  if (result.userPayload) {
-    config = JSON.parse(result.userPayload);
-    config.sites = config.sites.map(option => ({
-      ...option,
-      regex: new RegExp(option.regex),
-    }));
-  }
-});
+function loadConfig() {
+  setConfig(window.DEFAULT_CONFIG);
+  chrome.storage.local.get(["userPayload"], (result) => {
+    if (result.userPayload) {
+      setConfig(JSON.parse(result.userPayload));
+    }
+  });
+}
+loadConfig();
+
+chrome.storage.onChanged.addListener(loadConfig);
 
 // Extract and remove the 'q' query parameter on page load
 const url = new URL(window.location.href);
