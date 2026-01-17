@@ -431,10 +431,10 @@ function openPopup(options, onOptionSelected) {
 
     if (filtered.length === 0) {
       const empty = makeEl("div", { className: "tm-modal-empty" });
-      if (config.snippets.length === 0) {
-        empty.textContent = "No insert options configured.";
+      if (options.length === 0) {
+        empty.textContent = "No options configured.";
       } else {
-        empty.textContent = "No insert options match.";
+        empty.textContent = "No options match.";
       }
       listEl.appendChild(empty);
       return;
