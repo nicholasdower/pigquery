@@ -170,17 +170,7 @@ let listEl = null;
 
 let filtered = config.snippets.slice();
 let activeIndex = 0;
-// Prevent scroll-induced mouseenter from changing selection when navigating with keyboard.
-let lastNavMethod = "keyboard";
 
-function setNavMethod(method) {
-  lastNavMethod = method;
-  // When navigating via keyboard, disable hover highlighting entirely.
-  if (modalEl) {
-    if (method === "mouse") modalEl.classList.add("tm-nav-mouse");
-    else modalEl.classList.remove("tm-nav-mouse");
-  }
-}
 let lastEditor = null;
 let lastFocusedEl = document.activeElement;
 
@@ -249,12 +239,13 @@ const styles = `
   .tm-modal-item:hover {
     background: rgba(255,255,255,0.08);
   }
-  #tm-snippet-modal.tm-nav-mouse .tm-modal-item:hover:not(.active) {
-    background: rgba(255,255,255,0.07);
-  }
   .tm-modal-item.active {
-    background: rgba(255,255,255,0.10);
-    border-color: rgba(255,255,255,0.18);
+    background: rgba(96, 165, 250, 0.2);
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+  }
+  .tm-modal-item.active:hover {
+    background: rgba(96, 165, 250, 0.25);
   }
   .tm-modal-item[type="button"] {
     width: 100%;
@@ -497,14 +488,6 @@ function renderList() {
     wrapper.appendChild(typeLabel);
     item.appendChild(wrapper);
 
-    // Only let the mouse change selection if the user actually moved the mouse recently.
-    // This avoids selection "jumping" while the list scrolls under a stationary cursor.
-    item.addEventListener("mouseenter", () => {
-      if (lastNavMethod !== "mouse") return;
-      activeIndex = idx;
-      updateActiveStyles();
-    });
-
     item.addEventListener("mousedown", (e) => {
       // Prevent input blur before click handler runs
       e.preventDefault();
@@ -539,7 +522,6 @@ function onPopupKeyDown(e) {
   }
 
   if (e.key === "ArrowDown") {
-    setNavMethod("keyboard");
     e.preventDefault();
     if (filtered.length) {
       activeIndex = (activeIndex + 1) % filtered.length;
@@ -549,7 +531,6 @@ function onPopupKeyDown(e) {
   }
 
   if (e.key === "ArrowUp") {
-    setNavMethod("keyboard");
     e.preventDefault();
     if (filtered.length) {
       activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
@@ -585,8 +566,6 @@ function openPopup(editor) {
 
   modalEl = makeEl("div", { className: "tm-modal" });
   modalEl.id = "tm-snippet-modal";
-  // Default to keyboard navigation mode on open (no hover highlight unless mouse moves).
-  setNavMethod("keyboard");
   modalEl.addEventListener("keydown", onPopupKeyDown);
 
   const header = makeEl("div", { id: "tm-snippet-header" });
@@ -603,27 +582,6 @@ function openPopup(editor) {
   header.appendChild(inputEl);
 
   listEl = makeEl("div", { id: "tm-snippet-list", className: "tm-modal-list" });
-
-  // If the user moves the mouse over the list, allow hover to change selection.
-  listEl.addEventListener("mousemove", (ev) => {
-    // If the user starts using the mouse after keyboard navigation,
-    // immediately move the active selection to the item under the cursor
-    // so we never show two highlighted rows.
-    const wasKeyboard = lastNavMethod !== "mouse";
-    setNavMethod("mouse");
-    if (!wasKeyboard) return;
-
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
-    const item = el && el.closest ? el.closest(".tm-modal-item") : null;
-    if (!item || !listEl.contains(item)) return;
-
-    const items = Array.from(listEl.querySelectorAll(".tm-modal-item"));
-    const idx = items.indexOf(item);
-    if (idx >= 0) {
-      activeIndex = idx;
-      updateActiveStyles();
-    }
-  });
 
   modalEl.appendChild(header);
   modalEl.appendChild(listEl);

@@ -1,5 +1,4 @@
 Add light mode.
-Fix hover bug in snippet popup.
 Unify styles in popup with snippet popup.
 Add keybaord shortcuts to site popup. Unify with snippet popup.
 Read config from file or url or Git. Some way to share config.
