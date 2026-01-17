@@ -1,6 +1,5 @@
 Add light mode.
-Unify styles in popup with snippet popup.
-Add keybaord shortcuts to site popup. Unify with snippet popup.
+Unify styles in extension popup and modal.
 Read config from file or url or Git. Some way to share config.
 Consider allowing multiple configs. Maybe each config needs a name and that can show up as a tag in the snippet modal.
 Create screenshots and/or a gif.

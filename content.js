@@ -385,13 +385,6 @@ function showToast(message, duration = 2000) {
   }, duration);
 }
 
-function matches(query, option) {
-  if (!query) return true;
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return option.label.toLowerCase().includes(q) ||  option.tag.toLowerCase().includes(q);
-}
-
 function makeEl(tag, { id, className, text } = {}) {
   const el = document.createElement(tag);
   if (id) el.id = id;
@@ -403,7 +396,6 @@ function makeEl(tag, { id, className, text } = {}) {
 function openPopup(options, onOptionSelected) {
   if (document.querySelector('.tm-modal-overlay')) return;
 
-  // Default: all options match
   let filtered = options.slice();
   let activeIndex = 0;
 
@@ -415,15 +407,8 @@ function openPopup(options, onOptionSelected) {
 
   function closePopup() {
     if (!overlayEl) return;
-
     overlayEl.remove();
-
-    // Restore focus if possible
-    try {
-      if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
-    } catch (_) {
-      // ignore
-    }
+    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
   }
 
   overlayEl.addEventListener("mousedown", (e) => {
@@ -435,8 +420,8 @@ function openPopup(options, onOptionSelected) {
     const active = items[activeIndex];
     if (!active) return;
 
-    // Special handling for first and last items to show padding
     if (activeIndex === 0) {
+      // Ensure the top padding is visible
       listEl.scrollTop = 0;
       return;
     }
@@ -445,19 +430,7 @@ function openPopup(options, onOptionSelected) {
       return;
     }
 
-    // Reliable scrolling within an overflow container.
-    // 'nearest' keeps the list stable and avoids jumping.
-    try {
-      active.scrollIntoView({ block: "nearest" });
-    } catch (_) {
-      // Fallback: manual scroll using bounding boxes
-      const c = listEl.getBoundingClientRect();
-      const r = active.getBoundingClientRect();
-      const topOverflow = r.top - c.top;
-      const bottomOverflow = r.bottom - c.bottom;
-      if (topOverflow < 0) listEl.scrollTop += topOverflow;
-      else if (bottomOverflow > 0) listEl.scrollTop += bottomOverflow;
-    }
+    active.scrollIntoView({ block: "nearest" });
   }
 
   function updateActiveStyles() {
@@ -574,8 +547,10 @@ function openPopup(options, onOptionSelected) {
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
   inputEl.addEventListener("input", () => {
-    const q = inputEl.value || "";
-    filtered = options.filter(opt => matches(q, opt));
+    const query = (inputEl.value || "").trim().toLowerCase();
+    filtered = options.filter(option => {
+      return !query || option.label.toLowerCase().includes(query) || option.tag?.toLowerCase()?.includes(query);
+    });
     activeIndex = 0;
     renderList();
   });
@@ -589,9 +564,9 @@ function openPopup(options, onOptionSelected) {
   document.body.appendChild(overlayEl);
   renderList();
 
-  // Focus search box
-  inputEl.focus();
-  inputEl.select();
+  inputEl.focus()
+  // BigQuery steals focus asynchronously on the results table. Try to be the last to focus.
+  //setTimeout(() => inputEl.focus(), 100);
 }
 
 document.addEventListener(
@@ -599,11 +574,10 @@ document.addEventListener(
   (e) => {
     if (document.querySelector('.tm-modal-overlay')) return;
 
-    // Toggle behavior: if popup open and insert shortcut pressed again, close it.
     if (!e.isComposing && !e.repeat && e.key === 'i' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      e.stopImmediatePropagation();
 
       if (!(e.target instanceof Element)) {
         showToast("Editor not focused.");
@@ -623,7 +597,7 @@ document.addEventListener(
     if (!e.isComposing && !e.repeat && e.key === 's' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      e.stopImmediatePropagation();
 
       if (!(e.target instanceof Element)) {
         showToast("Editor not focused.");
@@ -654,6 +628,12 @@ document.addEventListener(
   }
 );
 
+function interceptSiteClick(e) {
+
+
+  return cell;
+}
+
 document.addEventListener(
   'click',
   (e) => {
@@ -665,78 +645,34 @@ document.addEventListener(
     const cell = table.querySelector('[role="cell"]');
     if (!cell) return;
 
-    const query = cell.innerText.trim();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const content = cell.innerText.trim();
 
     if (e.metaKey) {
-      navigator.clipboard.writeText(query);
+      navigator.clipboard.writeText(content);
       showToast("Copied to clipboard.");
       return;
     }
-    if (config.sites.length === 0) {
-      showToast("No click options configured.");
-      return;
-    }
-    const matchingItems = config.sites.filter(item => item.regex.test(query));
-    if (matchingItems.length === 0) {
-      showToast("No matching click option found.");
-      return;
-    }
 
-    function cleanup() {
-      document.removeEventListener("keydown", onKeyDown, true);
-      backdrop.remove();
-    }
+    const matchingOptions = config.sites.filter(option => option.regex.test(content));
+    openPopup(matchingOptions, (option) => {
+      window.open(option.url.replace('%s', encodeURIComponent(content)), "_blank", "noopener,noreferrer");
+    });
 
-    function openUrl(url) {
-      window.open(url, "_blank", "noopener,noreferrer");
-      cleanup();
-    }
-
-    function onKeyDown(e) {
-      if (e.key === "Escape") cleanup();
-      if (e.key === "Enter" && document.activeElement instanceof HTMLButtonElement) {
-        document.activeElement.click();
+    // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
+    const onFocusIn = () => {
+      const input = document.querySelector("#tm-snippet-input");
+      if (input) {
+        input.focus();
+      } else {
+        cell.removeEventListener('focusin', onFocusIn, true);
       }
-    }
+    };
 
-    const backdrop = document.createElement("div");
-    backdrop.className = "tm-modal-overlay";
-    backdrop.id = "tm-click-backdrop";
-    backdrop.setAttribute("role", "dialog");
-    backdrop.setAttribute("aria-modal", "true");
-    backdrop.tabIndex = -1;
-
-    const modal = document.createElement("div");
-    modal.className = "tm-modal";
-    modal.id = "tm-click-modal";
-
-    const list = document.createElement("div");
-    list.className = "tm-modal-list";
-    list.id = "tm-click-list";
-
-    matchingItems.forEach((item, idx) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "tm-modal-item";
-      btn.textContent = item.label;
-      btn.dataset.index = String(idx);
-
-      btn.addEventListener("click", () => openUrl(item.url.replace('%s', encodeURIComponent(query))));
-      list.appendChild(btn);
-    });
-
-    modal.appendChild(list);
-    backdrop.appendChild(modal);
-    document.body.appendChild(backdrop);
-
-    backdrop.addEventListener("click", (e) => {
-      if (e.target === backdrop) cleanup();
-    });
-
-    document.addEventListener("keydown", onKeyDown, true);
-
-    const firstBtn = list.querySelector("button");
-    if (firstBtn) firstBtn.focus();
+    cell.addEventListener('focusin', onFocusIn, true);
   },
   true
 );
