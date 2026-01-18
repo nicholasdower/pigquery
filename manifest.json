@@ -1,6 +1,7 @@
 {
   "name": "PigQuery",
   "description": "Some Big Query enhancements",
+  "default_locale": "en",
   "version": "1.0",
   "manifest_version": 3,
   "icons": {

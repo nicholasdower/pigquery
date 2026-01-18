@@ -1,0 +1,76 @@
+{
+  "keyboardShortcuts": {
+    "message": "Keyboard Shortcuts"
+  },
+  "shortcutInsert": {
+    "message": "Insert"
+  },
+  "shortcutShare": {
+    "message": "Share"
+  },
+  "shortcutOpenSite": {
+    "message": "Open site"
+  },
+  "shortcutCopyCell": {
+    "message": "Copy cell"
+  },
+  "extensionOptions": {
+    "message": "Extension Options"
+  },
+  "optionsPlaceholder": {
+    "message": "Enter configuration"
+  },
+  "optionsSave": {
+    "message": "Save"
+  },
+  "statusLoaded": {
+    "message": "Loaded"
+  },
+  "statusSaved": {
+    "message": "Saved"
+  },
+  "statusInvalidJson": {
+    "message": "Invalid JSON: $1",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusInvalidConfigObject": {
+    "message": "Invalid Config: object expected"
+  },
+  "statusInvalidConfigSnippetsArrayMissing": {
+    "message": "Invalid Config: snippets array missing"
+  },
+  "statusInvalidConfigSnippetsNameMissing": {
+    "message": "Invalid Config: snippets.name missing"
+  },
+  "statusInvalidConfigSnippetsTagEmpty": {
+    "message": "Invalid Config: snippets.tag string empty"
+  },
+  "statusInvalidConfigSnippetsTagInvalid": {
+    "message": "Invalid Config: snippets.tag string invalid"
+  },
+  "statusInvalidConfigSnippetsValueMissing": {
+    "message": "Invalid Config: snippets.value missing"
+  },
+  "statusInvalidConfigSitesArrayMissing": {
+    "message": "Invalid Config: sites array missing"
+  },
+  "statusInvalidConfigSitesNameMissing": {
+    "message": "Invalid Config: sites[].name missing"
+  },
+  "statusInvalidConfigSitesRegexMissing": {
+    "message": "Invalid Config: sites[].regex missing"
+  },
+  "statusInvalidConfigSitesUrlMissing": {
+    "message": "Invalid Config: sites[].url missing"
+  },
+  "statusInvalidConfigSitesRegexInvalid": {
+    "message": "Invalid Config: sites[].regex invalid"
+  },
+  "statusInvalidConfigSitesUrlMissingPlaceholder": {
+    "message": "Invalid Config: sites[].url must include %s"
+  }
+}

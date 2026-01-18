@@ -1,0 +1,76 @@
+{
+  "keyboardShortcuts": {
+    "message": "Tastenkombinationen"
+  },
+  "shortcutInsert": {
+    "message": "Einsetzen"
+  },
+  "shortcutShare": {
+    "message": "Teilen"
+  },
+  "shortcutOpenSite": {
+    "message": "Website öffnen"
+  },
+  "shortcutCopyCell": {
+    "message": "Zelle kopieren"
+  },
+  "extensionOptions": {
+    "message": "Erweiterungsoptionen"
+  },
+  "optionsPlaceholder": {
+    "message": "Konfiguration eingeben"
+  },
+  "optionsSave": {
+    "message": "Speichern"
+  },
+  "statusLoaded": {
+    "message": "Geladen"
+  },
+  "statusSaved": {
+    "message": "Gespeichert"
+  },
+  "statusInvalidJson": {
+    "message": "Ungültiges JSON: $1",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusInvalidConfigObject": {
+    "message": "Ungültige Konfiguration: Objekt erwartet"
+  },
+  "statusInvalidConfigSnippetsArrayMissing": {
+    "message": "Ungültige Konfiguration: snippets Array fehlt"
+  },
+  "statusInvalidConfigSnippetsNameMissing": {
+    "message": "Ungültige Konfiguration: snippets[].name fehlt"
+  },
+  "statusInvalidConfigSnippetsTagEmpty": {
+    "message": "Ungültige Konfiguration: snippets[].tag String leer"
+  },
+  "statusInvalidConfigSnippetsTagInvalid": {
+    "message": "Ungültige Konfiguration: snippets[].tag String ungültig"
+  },
+  "statusInvalidConfigSnippetsValueMissing": {
+    "message": "Ungültige Konfiguration: snippets[].value fehlt"
+  },
+  "statusInvalidConfigSitesArrayMissing": {
+    "message": "Ungültige Konfiguration: sites Array fehlt"
+  },
+  "statusInvalidConfigSitesNameMissing": {
+    "message": "Ungültige Konfiguration: sites[].name fehlt"
+  },
+  "statusInvalidConfigSitesRegexMissing": {
+    "message": "Ungültige Konfiguration: sites[].regex fehlt"
+  },
+  "statusInvalidConfigSitesUrlMissing": {
+    "message": "Ungültige Konfiguration: sites[].url fehlt"
+  },
+  "statusInvalidConfigSitesRegexInvalid": {
+    "message": "Ungültige Konfiguration: sites[].regex ungültig"
+  },
+  "statusInvalidConfigSitesUrlMissingPlaceholder": {
+    "message": "Ungültige Konfiguration: sites[].url muss %s enthalten"
+  }
+}
