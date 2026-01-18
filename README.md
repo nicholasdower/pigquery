@@ -6,7 +6,7 @@ A Chrome Extension offering some BigQuery enhancements.
 
 ## Features
 
-- Insert snippets. (Ctrl+⌘+I)
-- Share links. (Ctrl+⌘+S)
-- Open data in sites. (Alt+Click)
-- Copy data to clipboard. (Alt+⌘+Click)
+- Insert saved queries and query snippets.
+- Share queries via URL without saving.
+- Open external site for table cell.
+- Copy table cell content to clipboard.

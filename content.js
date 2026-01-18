@@ -509,7 +509,7 @@ document.addEventListener(
   (e) => {
     if (document.querySelector('.pig-modal-overlay')) return;
 
-    if (!e.isComposing && !e.repeat && e.key === 'i' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
+    if (!e.isComposing && !e.repeat && e.key === 'i' && e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -529,7 +529,7 @@ document.addEventListener(
       return;
     }
 
-    if (!e.isComposing && !e.repeat && e.key === 's' && e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey) {
+    if (!e.isComposing && !e.repeat && e.key === 's' && e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
