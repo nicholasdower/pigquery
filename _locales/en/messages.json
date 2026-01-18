@@ -44,28 +44,28 @@
     "message": "Invalid Config: snippets array missing"
   },
   "statusInvalidConfigSnippetsNameMissing": {
-    "message": "Invalid Config: snippets.name missing"
+    "message": "Invalid Config: snippets[].name string missing"
   },
   "statusInvalidConfigSnippetsTagEmpty": {
-    "message": "Invalid Config: snippets.tag string empty"
+    "message": "Invalid Config: snippets[].tag string empty"
   },
   "statusInvalidConfigSnippetsTagInvalid": {
-    "message": "Invalid Config: snippets.tag string invalid"
+    "message": "Invalid Config: snippets[].tag string invalid"
   },
   "statusInvalidConfigSnippetsValueMissing": {
-    "message": "Invalid Config: snippets.value missing"
+    "message": "Invalid Config: snippets[].value string missing"
   },
   "statusInvalidConfigSitesArrayMissing": {
     "message": "Invalid Config: sites array missing"
   },
   "statusInvalidConfigSitesNameMissing": {
-    "message": "Invalid Config: sites[].name missing"
+    "message": "Invalid Config: sites[].name string missing"
   },
   "statusInvalidConfigSitesRegexMissing": {
-    "message": "Invalid Config: sites[].regex missing"
+    "message": "Invalid Config: sites[].regex string missing"
   },
   "statusInvalidConfigSitesUrlMissing": {
-    "message": "Invalid Config: sites[].url missing"
+    "message": "Invalid Config: sites[].url string missing"
   },
   "statusInvalidConfigSitesRegexInvalid": {
     "message": "Invalid Config: sites[].regex invalid"

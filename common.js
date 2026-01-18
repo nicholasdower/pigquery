@@ -39,3 +39,15 @@ window.DEFAULT_CONFIG = {
     },
   ]
 };
+
+function setMessage(element, key, attribute) {
+  const message = chrome.i18n.getMessage(key);
+  if (message) element[attribute] = message;
+}
+
+window.applyI18n = function() {
+  document.querySelectorAll('[data-i18n]').forEach((element) => setMessage(element, element.dataset.i18n, "textContent"));
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => setMessage(element, element.dataset['i18nPlaceholder'], "placeholder"));
+  document.querySelectorAll('[data-i18n-title]').forEach((element) => setMessage(element, element.dataset['i18nTitle'], "title"));
+  document.querySelectorAll('[data-i18n-alt]').forEach((element) => setMessage(element, element.dataset['i18nAlt'], "alt"));
+};

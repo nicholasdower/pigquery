@@ -44,7 +44,7 @@
     "message": "Ungültige Konfiguration: snippets Array fehlt"
   },
   "statusInvalidConfigSnippetsNameMissing": {
-    "message": "Ungültige Konfiguration: snippets[].name fehlt"
+    "message": "Ungültige Konfiguration: snippets[].name String fehlt"
   },
   "statusInvalidConfigSnippetsTagEmpty": {
     "message": "Ungültige Konfiguration: snippets[].tag String leer"
@@ -53,19 +53,19 @@
     "message": "Ungültige Konfiguration: snippets[].tag String ungültig"
   },
   "statusInvalidConfigSnippetsValueMissing": {
-    "message": "Ungültige Konfiguration: snippets[].value fehlt"
+    "message": "Ungültige Konfiguration: snippets[].value String fehlt"
   },
   "statusInvalidConfigSitesArrayMissing": {
     "message": "Ungültige Konfiguration: sites Array fehlt"
   },
   "statusInvalidConfigSitesNameMissing": {
-    "message": "Ungültige Konfiguration: sites[].name fehlt"
+    "message": "Ungültige Konfiguration: sites[].name String fehlt"
   },
   "statusInvalidConfigSitesRegexMissing": {
-    "message": "Ungültige Konfiguration: sites[].regex fehlt"
+    "message": "Ungültige Konfiguration: sites[].regex String fehlt"
   },
   "statusInvalidConfigSitesUrlMissing": {
-    "message": "Ungültige Konfiguration: sites[].url fehlt"
+    "message": "Ungültige Konfiguration: sites[].url String fehlt"
   },
   "statusInvalidConfigSitesRegexInvalid": {
     "message": "Ungültige Konfiguration: sites[].regex ungültig"

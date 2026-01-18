@@ -1,3 +1,5 @@
+window.applyI18n();
+
 let config;
 
 function setConfig(newConfig) {
