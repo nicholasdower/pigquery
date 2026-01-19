@@ -1,4 +1,7 @@
-window.applyI18n();
+const LOCALE = window.i18n.getSystemLocale();
+window.i18n.applyI18n(LOCALE);
+
+const t = (key, substitutions) => window.i18n.getMessage(key, LOCALE, substitutions);
 
 const STORAGE_KEY = "userPayload";
 
@@ -24,7 +27,7 @@ function safeJsonParse(text) {
 async function load() {
   const data = await chrome.storage.local.get([STORAGE_KEY]);
   textarea.value = data[STORAGE_KEY] ?? JSON.stringify(window.DEFAULT_CONFIG, null, 2);
-  setStatus(chrome.i18n.getMessage("statusLoaded"));
+  setStatus(t("statusLoaded"));
 }
 
 async function save() {
@@ -32,14 +35,14 @@ async function save() {
   if (raw.trim() === '') {
     await chrome.storage.local.remove(STORAGE_KEY);
     textarea.value = JSON.stringify(window.DEFAULT_CONFIG, null, 2);
-    setStatus(chrome.i18n.getMessage("statusSaved"), "ok");
+    setStatus(t("statusSaved"), "ok");
     return;
   }
 
   const parsed = safeJsonParse(raw.trim() === "" ? "null" : raw);
   if (!parsed.ok) {
     setStatus(
-      chrome.i18n.getMessage("statusInvalidJson", parsed.error.message),
+      t("statusInvalidJson", parsed.error.message),
       "error"
     );
     return;
@@ -47,14 +50,14 @@ async function save() {
   const config = parsed.value;
   if (typeof config !== "object" || config === null) {
     setStatus(
-      chrome.i18n.getMessage("statusInvalidConfigObject"),
+      t("statusInvalidConfigObject"),
       "error"
     );
     return;
   }
   if (!Array.isArray(config.snippets)) {
     setStatus(
-      chrome.i18n.getMessage("statusInvalidConfigSnippetsArrayMissing"),
+      t("statusInvalidConfigSnippetsArrayMissing"),
       "error"
     );
     return;
@@ -62,28 +65,28 @@ async function save() {
   for (const option of config.snippets) {
     if (typeof option.name !== "string" || option.name.trim() === "") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSnippetsNameMissing"),
+        t("statusInvalidConfigSnippetsNameMissing"),
         "error"
       );
       return;
     }
     if (typeof option.tag === "string" && option.tag.trim() === "") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSnippetsTagEmpty"),
+        t("statusInvalidConfigSnippetsTagEmpty"),
         "error"
       );
       return;
     }
     if (option.tag && typeof option.tag !== "string") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSnippetsTagInvalid"),
+        t("statusInvalidConfigSnippetsTagInvalid"),
         "error"
       );
       return;
     }
     if (typeof option.value !== "string" || option.value.trim() === "") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSnippetsValueMissing"),
+        t("statusInvalidConfigSnippetsValueMissing"),
         "error"
       );
       return;
@@ -91,7 +94,7 @@ async function save() {
   }
   if (!Array.isArray(config.sites)) {
     setStatus(
-      chrome.i18n.getMessage("statusInvalidConfigSitesArrayMissing"),
+      t("statusInvalidConfigSitesArrayMissing"),
       "error"
     );
     return;
@@ -99,21 +102,21 @@ async function save() {
   for (const option of config.sites) {
     if (typeof option.name !== "string" || option.name.trim() === "") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSitesNameMissing"),
+        t("statusInvalidConfigSitesNameMissing"),
         "error"
       );
       return;
     }
     if (typeof option.regex !== "string" || option.regex.trim() === "") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSitesRegexMissing"),
+        t("statusInvalidConfigSitesRegexMissing"),
         "error"
       );
       return;
     }
     if (typeof option.url !== "string" || option.url.trim() === "") {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSitesUrlMissing"),
+        t("statusInvalidConfigSitesUrlMissing"),
         "error"
       );
       return;
@@ -122,14 +125,14 @@ async function save() {
       new RegExp(option.regex);
     } catch (e) {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSitesRegexInvalid"),
+        t("statusInvalidConfigSitesRegexInvalid"),
         "error"
       );
       return;
     }
     if (!option.url.includes("%s")) {
       setStatus(
-        chrome.i18n.getMessage("statusInvalidConfigSitesUrlMissingPlaceholder"),
+        t("statusInvalidConfigSitesUrlMissingPlaceholder"),
         "error"
       );
     }
@@ -140,7 +143,7 @@ async function save() {
 
   await chrome.storage.local.set({ [STORAGE_KEY]: pretty });
 
-  setStatus(chrome.i18n.getMessage("statusSaved"), "ok");
+  setStatus(t("statusSaved"), "ok");
 }
 
 saveBtn.addEventListener("click", () => void save());

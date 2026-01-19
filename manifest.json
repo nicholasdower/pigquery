@@ -1,7 +1,6 @@
 {
   "name": "PigQuery",
   "description": "Some Big Query enhancements",
-  "default_locale": "en",
   "version": "1.0",
   "manifest_version": 3,
   "icons": {
@@ -19,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": ["common.js", "content.js"]
+      "js": ["i18n.js", "common.js", "content.js"]
     }
   ],
   "options_page": "options.html",

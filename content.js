@@ -1,4 +1,5 @@
-window.applyI18n();
+const LOCALE = window.i18n.getBigQueryLocale();
+window.applyI18n(LOCALE);
 
 let config;
 
