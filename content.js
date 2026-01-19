@@ -569,17 +569,24 @@ document.addEventListener(
       return;
     }
 
-    if (!e.isComposing && !e.repeat && e.key === 's' && e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      const editor = getVisibleOrActiveEditor();
-      if (!editor) {
+    if (!e.isComposing && !e.repeat && e.key === 'a' && !e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
+      if (!e.target.closest('cfc-code-editor')) {
         showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
-      copyShareLink(editor);
+      if (window.copyTimeoutId) {
+        clearTimeout(window.copyTimeoutId);
+        window.copyTimeoutId = null;
+      }
+      window.copyTimeoutId = copyShareLink();
+      return;
+    }
+
+    if (!e.isComposing && !e.repeat && e.key === 'c' && !e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
+      if (window.copyTimeoutId) {
+        clearTimeout(window.copyTimeoutId);
+        window.copyTimeoutId = null;
+      }
       return;
     }
 
@@ -642,17 +649,18 @@ document.addEventListener(
   true
 );
 
-function copyShareLink(editor) {
-  const viewLines = editor.querySelector('[role="code"] [role="presentation"] .view-lines');
-  if (!viewLines) return;
-  const query = viewLines.innerText.trim().replace(/\u00A0/g, ' ');
-  const url = new URL(window.location.href);
-  const project = url.searchParams.get("project");
-  url.search = "";
-  url.hash = "";
-  if (project) url.searchParams.set("project", project);
-  url.searchParams.set("pig", base64Encode(query));
-  const shareLink = url.toString();
-  navigator.clipboard.writeText(shareLink);
-  showToast(window.i18n.getMessage("linkCopied", LOCALE));
+function copyShareLink() {
+  return setTimeout(async () => {
+    document.execCommand("copy");
+    const query = await navigator.clipboard.readText();
+    const url = new URL(window.location.href);
+    const project = url.searchParams.get("project");
+    url.search = "";
+    url.hash = "";
+    url.searchParams.set("pig", base64Encode(query));
+    if (project) url.searchParams.set("project", project);
+    const shareLink = url.toString();
+    await navigator.clipboard.writeText(shareLink);
+    showToast(window.i18n.getMessage("linkCopied", LOCALE));
+  }, 500);
 }
