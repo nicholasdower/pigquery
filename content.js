@@ -23,21 +23,21 @@ loadConfig();
 
 chrome.storage.onChanged.addListener(loadConfig);
 
-// Extract and remove the 'q' query parameter on page load
+// Extract and remove the 'pig' query parameter on page load
 const url = new URL(window.location.href);
-const queryParam = url.searchParams.get("q");
+const queryParam = url.searchParams.get("pig");
 let query = queryParam?.length ? base64Decode(queryParam.trim()).trim() : null;
 
-if (url.searchParams.has("q")) {
-  url.searchParams.delete("q");
+if (url.searchParams.has("pig")) {
+  url.searchParams.delete("pig");
   window.history.replaceState({}, '', url.toString());
 
-  // Keep removing the 'q' param if the page re-adds it (check for 10 seconds)
+  // Keep removing the 'pig' param if the page re-adds it (check for 10 seconds)
   const startTime = Date.now();
   const intervalId = setInterval(() => {
     const currentUrl = new URL(window.location.href);
-    if (currentUrl.searchParams.has("q")) {
-      currentUrl.searchParams.delete("q");
+    if (currentUrl.searchParams.has("pig")) {
+      currentUrl.searchParams.delete("pig");
       window.history.replaceState({}, '', currentUrl.toString());
     }
 
@@ -615,7 +615,7 @@ function copyShareLink(editor) {
   url.search = "";
   url.hash = "";
   if (project) url.searchParams.set("project", project);
-  url.searchParams.set("q", base64Encode(query));
+  url.searchParams.set("pig", base64Encode(query));
   const shareLink = url.toString();
   navigator.clipboard.writeText(shareLink);
   showToast(window.i18n.getMessage("linkCopied", LOCALE));

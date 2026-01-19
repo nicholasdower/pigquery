@@ -10,7 +10,6 @@ Add tests.
 Improve search. Should match multiple words, partial words, words plus tags, etc.
 Show windows symbol in popup.
 Maybe support multiple tags.
-Rename share link param to pig.
 Clean up global state in content script.
 Allow override of keyboard shortcuts.
 Handle really long names and tags.
