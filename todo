@@ -14,6 +14,5 @@ Rename share link param to pig.
 Clean up global state in content script.
 Allow override of keyboard shortcuts.
 Handle really long names and tags.
-Translate
 Share should work if only one editor is visible, even if not focused.
 Insert should work if only one editor is visible, even if not focused.

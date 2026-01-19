@@ -438,11 +438,7 @@ function openPopup(options, onOptionSelected) {
 
     if (filtered.length === 0) {
       const empty = makeEl("div", { className: "pig-modal-empty" });
-      if (options.length === 0) {
-        empty.textContent = "No options configured.";
-      } else {
-        empty.textContent = "No options match.";
-      }
+      empty.textContent = window.i18n.getMessage("noOptionsFound", LOCALE);
       listEl.appendChild(empty);
       return;
     }
@@ -483,7 +479,7 @@ function openPopup(options, onOptionSelected) {
   const header = makeEl("div", { className: "pig-modal-header" });
   const inputEl = makeEl("input", { className: "pig-modal-input" });
   inputEl.type = "text";
-  inputEl.placeholder = "Search…";
+  inputEl.placeholder = window.i18n.getMessage("searchPlaceholder", LOCALE);
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
   inputEl.addEventListener("input", () => {
@@ -518,12 +514,13 @@ document.addEventListener(
       e.stopImmediatePropagation();
 
       if (!(e.target instanceof Element)) {
-        showToast("Editor not focused.");
+        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
+        
         return;
       }
       const editor = e.target.closest('cfc-code-editor');
       if (!editor) {
-        showToast("Editor not focused.");
+        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
       openPopup(config.snippets, (option) => {
@@ -538,12 +535,12 @@ document.addEventListener(
       e.stopImmediatePropagation();
 
       if (!(e.target instanceof Element)) {
-        showToast("Editor not focused.");
+        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
       const editor = e.target.closest('cfc-code-editor');
       if (!editor) {
-        showToast("Editor not focused.");
+        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
       copyShareLink(editor);
@@ -585,7 +582,7 @@ document.addEventListener(
 
     if (e.metaKey) {
       navigator.clipboard.writeText(content);
-      showToast("Copied to clipboard.");
+      showToast(window.i18n.getMessage("cellCopied", LOCALE));
       return;
     }
 
@@ -621,5 +618,5 @@ function copyShareLink(editor) {
   url.searchParams.set("q", base64Encode(query));
   const shareLink = url.toString();
   navigator.clipboard.writeText(shareLink);
-  showToast("Query copied to clipboard.");
+  showToast(window.i18n.getMessage("linkCopied", LOCALE));
 }

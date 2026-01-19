@@ -91,6 +91,26 @@ const TRANSLATIONS = {
     en: "Invalid Config: sites[].url must include %s",
     de: "Ungültige Konfiguration: sites[].url muss %s enthalten",
   },
+  searchPlaceholder: {
+    en: "Search…",
+    de: "Suchen…",
+  },
+  cellCopied: {
+    en: "Cell copied to clipboard.",
+    de: "Zelle in die Zwischenablage kopiert.",
+  },
+  editorNotFocused: {
+    en: "Editor not focused.",
+    de: "Editor nicht fokussiert.",
+  },
+  linkCopied: {
+    en: "Link copied to clipboard.",
+    de: "Link in die Zwischenablage kopiert.",
+  },
+  noOptionsFound: {
+    en: "No options found.",
+    de: "Keine Optionen gefunden.",
+  }
 };
 
 function getSystemLocale() {
@@ -98,11 +118,7 @@ function getSystemLocale() {
 }
 
 function getBigQueryLocale() {
-  return "en";
-}
-
-function normalizeLocale(locale) {
-  return locale?.trim()?.toLowerCase()?.split(/[-_]/)[0] || "en";
+  return document.documentElement.lang?.trim()?.toLowerCase()?.split(/[-_]/)[0] || "en";
 }
 
 function formatMessage(template, substitutions) {
