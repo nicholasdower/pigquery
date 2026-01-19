@@ -96,11 +96,6 @@ function findEditorTextArea(editor) {
   let ta = editor.querySelector("textarea.inputarea") || editor.querySelector("textarea");
   if (ta) return ta;
 
-  if (editor.shadowRoot) {
-    ta = editor.shadowRoot.querySelector("textarea.inputarea") || editor.shadowRoot.querySelector("textarea");
-    if (ta) return ta;
-  }
-
   return null;
 }
 
@@ -503,6 +498,33 @@ function openPopup(options, onOptionSelected) {
   inputEl.focus();
 }
 
+function getVisibleOrActiveEditor() {
+  const editors = document.querySelectorAll('cfc-code-editor');
+
+  const visibleEditors = Array.from(editors).filter(el =>
+    el.checkVisibility ? el.checkVisibility() : (
+      el.offsetWidth > 0 &&
+      el.offsetHeight > 0 &&
+      getComputedStyle(el).visibility !== 'hidden'
+    )
+  );
+
+  if (visibleEditors.length === 1) {
+    return visibleEditors[0];
+  }
+
+  if (visibleEditors.length > 1) {
+    const activeEl = document.activeElement;
+    if (!activeEl) return null;
+    const activeEditor = activeEl.closest('cfc-code-editor');
+    if (activeEditor && activeEditor.checkVisibility()) {
+      return activeEditor;
+    }
+  }
+
+  return null;
+}
+
 document.addEventListener(
   "keydown",
   (e) => {
@@ -534,11 +556,7 @@ document.addEventListener(
       e.stopPropagation();
       e.stopImmediatePropagation();
 
-      if (!(e.target instanceof Element)) {
-        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
-        return;
-      }
-      const editor = e.target.closest('cfc-code-editor');
+      const editor = getVisibleOrActiveEditor();
       if (!editor) {
         showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
         return;
