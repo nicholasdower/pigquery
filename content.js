@@ -1,6 +1,8 @@
 const LOCALE = window.i18n.getBigQueryLocale();
 window.applyI18n(LOCALE);
 
+const ICON_URL = chrome.runtime.getURL("icon.svg");
+
 let config;
 
 function setConfig(newConfig) {
@@ -189,9 +191,13 @@ const styles = `
   .pig-modal-header {
     padding: 14px;
     border-bottom: 1px solid rgba(255,255,255,0.10);
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .pig-modal-input {
     width: 100%;
+    flex: 1;
     box-sizing: border-box;
     padding: 10px 12px;
     border-radius: 10px;
@@ -288,6 +294,12 @@ const styles = `
     letter-spacing: 0.3px;
     white-space: nowrap;
     flex-shrink: 0;
+  }
+  .pig-modal-logo {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: block;
   }
 `;
 
@@ -472,6 +484,12 @@ function openPopup(options, onOptionSelected) {
   }
 
   const header = makeEl("div", { className: "pig-modal-header" });
+  const iconEl = document.createElement("img");
+  iconEl.className = "pig-modal-logo";
+  iconEl.alt = "PigQuery";
+  iconEl.src = ICON_URL;
+  header.appendChild(iconEl);
+
   const inputEl = makeEl("input", { className: "pig-modal-input" });
   inputEl.type = "text";
   inputEl.placeholder = window.i18n.getMessage("searchPlaceholder", LOCALE);
