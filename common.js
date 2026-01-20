@@ -1,4 +1,4 @@
-window.DEFAULT_CONFIG = {
+const DEFAULT_CONFIG = {
   snippets: [
     {
       name: "shakespeare",
@@ -38,4 +38,13 @@ window.DEFAULT_CONFIG = {
       url: "https://en.wikipedia.org/w/index.php?search=%s",
     },
   ]
+};
+
+function defaultConfig() {
+  return DEFAULT_CONFIG;
+}
+
+window.pigquery ||= {};
+window.pigquery.common = {
+  defaultConfig,
 };

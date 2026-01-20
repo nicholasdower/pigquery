@@ -18,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": ["i18n.js", "common.js", "content.js"]
+      "js": ["i18n.js", "common.js", "search.js", "content.js"]
     }
   ],
   "options_page": "options.html",

@@ -1,7 +1,9 @@
-const LOCALE = window.i18n.getSystemLocale();
-window.i18n.applyI18n(LOCALE);
+const common = window.pigquery.common;
+const i18n = window.pigquery.i18n;
+const LOCALE = i18n.getSystemLocale();
+i18n.applyI18n(LOCALE);
 
-const t = (key, substitutions) => window.i18n.getMessage(key, LOCALE, substitutions);
+const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
 
 const STORAGE_KEY = "userPayload";
 
@@ -26,7 +28,7 @@ function safeJsonParse(text) {
 
 async function load() {
   const data = await chrome.storage.local.get([STORAGE_KEY]);
-  textarea.value = data[STORAGE_KEY] ?? JSON.stringify(window.DEFAULT_CONFIG, null, 2);
+  textarea.value = data[STORAGE_KEY] ?? JSON.stringify(common.defaultConfig(), null, 2);
   setStatus(t("statusLoaded"));
 }
 
@@ -34,7 +36,7 @@ async function save() {
   const raw = textarea.value;
   if (raw.trim() === '') {
     await chrome.storage.local.remove(STORAGE_KEY);
-    textarea.value = JSON.stringify(window.DEFAULT_CONFIG, null, 2);
+    textarea.value = JSON.stringify(common.defaultConfig(), null, 2);
     setStatus(t("statusSaved"), "ok");
     return;
   }

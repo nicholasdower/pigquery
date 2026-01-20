@@ -1,5 +1,8 @@
-const LOCALE = window.i18n.getBigQueryLocale();
-window.applyI18n(LOCALE);
+const common = window.pigquery.common;
+const i18n = window.pigquery.i18n;
+const search = window.pigquery.search;
+const LOCALE = i18n.getBigQueryLocale();
+i18n.applyI18n(LOCALE);
 
 const ICON_URL = chrome.runtime.getURL("icon.svg");
 
@@ -14,7 +17,7 @@ function setConfig(newConfig) {
 }
 
 function loadConfig() {
-  setConfig(window.DEFAULT_CONFIG);
+  setConfig(common.defaultConfig());
   chrome.storage.local.get(["userPayload"], (result) => {
     if (result.userPayload) {
       setConfig(JSON.parse(result.userPayload));
@@ -445,7 +448,7 @@ function openPopup(options, onOptionSelected) {
 
     if (filtered.length === 0) {
       const empty = makeEl("div", { className: "pig-modal-empty" });
-      empty.textContent = window.i18n.getMessage("noOptionsFound", LOCALE);
+      empty.textContent = i18n.getMessage("noOptionsFound", LOCALE);
       listEl.appendChild(empty);
       return;
     }
@@ -492,14 +495,15 @@ function openPopup(options, onOptionSelected) {
 
   const inputEl = makeEl("input", { className: "pig-modal-input" });
   inputEl.type = "text";
-  inputEl.placeholder = window.i18n.getMessage("searchPlaceholder", LOCALE);
+  inputEl.placeholder = i18n.getMessage("searchPlaceholder", LOCALE);
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
   inputEl.addEventListener("input", () => {
     const query = (inputEl.value || "").trim().toLowerCase();
-    filtered = options.filter(option => {
-      return !query || option.name.toLowerCase().includes(query) || option.tag?.toLowerCase()?.includes(query);
-    });
+    filtered = search.filter(options, query);
+    //filtered = options.filter(option => {
+    //. return !query || option.name.toLowerCase().includes(query) || option.tag?.toLowerCase()?.includes(query);
+    //});
     activeIndex = 0;
     renderList();
   });
@@ -554,13 +558,13 @@ document.addEventListener(
       e.stopImmediatePropagation();
 
       if (!(e.target instanceof Element)) {
-        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
+        showToast(i18n.getMessage("editorNotFocused", LOCALE));
         
         return;
       }
       const editor = e.target.closest('cfc-code-editor');
       if (!editor) {
-        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
+        showToast(i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
       openPopup(config.snippets, (option) => {
@@ -571,7 +575,7 @@ document.addEventListener(
 
     if (!e.isComposing && !e.repeat && e.key === 'a' && !e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
       if (!e.target.closest('cfc-code-editor')) {
-        showToast(window.i18n.getMessage("editorNotFocused", LOCALE));
+        showToast(i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
       if (window.copyTimeoutId) {
@@ -625,7 +629,7 @@ document.addEventListener(
 
     if (e.metaKey) {
       navigator.clipboard.writeText(content);
-      showToast(window.i18n.getMessage("cellCopied", LOCALE));
+      showToast(i18n.getMessage("cellCopied", LOCALE));
       return;
     }
 
@@ -661,6 +665,6 @@ function copyShareLink() {
     if (project) url.searchParams.set("project", project);
     const shareLink = url.toString();
     await navigator.clipboard.writeText(shareLink);
-    showToast(window.i18n.getMessage("linkCopied", LOCALE));
+    showToast(i18n.getMessage("linkCopied", LOCALE));
   }, 500);
 }
