@@ -1,4 +1,40 @@
 // Note: This is 100% AI and not even reviewed by humans.
+//
+// Data model
+//  - Each item has:
+//    - name (string, can include underscores/spaces/punctuation; may be SQL snippets)
+//    - optional tag (string like TABLE, JOIN, WHERE, QUERY)
+//  - Search should consider name + tag (and optionally let matches span across them).
+//
+// Query behavior
+//  - User types a free-text query.
+//  - Query is case-insensitive.
+//  - Query is tokenized on separators (spaces/punctuation) into query terms (e.g. "query foo" → ["query","foo"]).
+//
+// Matching semantics
+//  - AND semantics across query tokens: all query tokens must match somewhere in the item (name and/or tag).
+//  - A query token can match via multiple strategies:
+//    - Exact token match: foo matches token foo
+//    - Token prefix match: bloo matches token bloop
+//    - Collapsed substring match: foobar matches foo_bar (remove separators and then substring)
+//    - Subsequence (fuzzy-finder) match: apn matches apple_backend because a…p…n occurs in order in applebackend
+//    - Acronym/initialism match: ab matches apple_backend because tokens → a + b
+//    - Spanning match across fields: appta matches apple_backend + tag table by matching against applebackendtable (collapsed).
+//
+// Ranking requirements (IntelliJ-like)
+//  - Results are ranked by “match quality”, not just boolean match.
+//  - Strong preferences:
+//    - Matches at the start of tokens rank above matches in the middle of tokens.
+//    - Matches that use token boundaries (prefix / acronym / token-start sequences) rank above generic substring/subsequence matches.
+//    - Earlier tokens in the name rank above later tokens.
+//    - Fewer “jumps” (using fewer tokens to satisfy the query) ranks higher.
+//    - Name matches generally rank above tag-only matches.
+//  - Specific requirement from your example:
+//    - If query is otoc, then an item like orders to creators must outrank apple_storekit_notifications even if otoc can be found as a subsequence in the latter, because otoc aligns with token starts in the former.
+//
+// Practical constraints
+//  - Must be fast enough for “type-to-filter” in a Chrome extension UI.
+//  - Deterministic ordering for equal scores (typically stable sort or tie-breakers like original order).
 const SEP = /[^a-z0-9]+/gi;
 
 function isSubsequence(needle, haystack) {
