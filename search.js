@@ -1,3 +1,4 @@
+// Note: This is 100% AI and not even reviewed by humans.
 const SEP = /[^a-z0-9]+/gi;
 
 function isSubsequence(needle, haystack) {
@@ -14,6 +15,47 @@ function isSubsequence(needle, haystack) {
 function acronymFromTokens(toks) {
   // "apple_backend" -> ["apple","backend"] -> "ab"
   return toks.map(t => t[0]).filter(Boolean).join("");
+}
+
+function tokenPrefixSequenceBest(toks, q) {
+  // IntelliJ-like: match query by consuming it from successive token *prefixes*.
+  // Example: ["orders","to","creators"], "otoc" => "o" + "to" + "c".
+  // Returns the best (highest) score for any start position, or 0 if no match.
+  if (!q) return 0;
+
+  let best = 0;
+
+  for (let start = 0; start < toks.length; start++) {
+    let pos = 0;
+    let used = 0;
+
+    for (let i = start; i < toks.length && pos < q.length; i++) {
+      const t = toks[i];
+      if (!t) continue;
+
+      // Find the longest prefix of t that matches q at pos.
+      const maxLen = Math.min(t.length, q.length - pos);
+      let k = 0;
+      while (k < maxLen && t[k] === q[pos + k]) k++;
+
+      if (k > 0) {
+        pos += k;
+        used++;
+      }
+    }
+
+    if (pos === q.length) {
+      // Scoring: prefer earlier start, fewer tokens, and longer queries.
+      // Tuned to strongly prefer token-start matches over mid-token subsequence.
+      let s = 90;
+      s += Math.min(40, q.length * 6);
+      s -= start * 10;
+      s -= (used - 1) * 6;
+      best = Math.max(best, s);
+    }
+  }
+
+  return best;
 }
 
 function norm(s) {
@@ -51,25 +93,33 @@ function scoreItem({ name, tag }, query) {
 
   // Require all query tokens to match somewhere (AND).
   // A token matches if it appears in either the normal or collapsed forms,
-  // or is a subsequence match against the collapsed form (fuzzy-finder style),
-  // or matches the token acronym.
+  // or matches a token acronym,
+  // or matches an IntelliJ-like token-prefix sequence,
+  // or (as a last resort) is a subsequence match against the collapsed form.
   for (const qt of q) {
+    const nameTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(nameToks, qt) : 0;
+    const tagTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(tagToks, qt) : 0;
+    const combinedTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(combinedToks, qt) : 0;
+
     const inName =
       nameNorm.includes(qt) ||
       nameCollapsed.includes(qt) ||
-      (qt.length >= 2 && isSubsequence(qt, nameCollapsed)) ||
-      (qt.length >= 2 && nameAcr.startsWith(qt));
+      (qt.length >= 2 && nameAcr.startsWith(qt)) ||
+      nameTokSeq > 0 ||
+      (qt.length >= 2 && isSubsequence(qt, nameCollapsed));
 
     const inTag =
       tagNorm.includes(qt) ||
       tagCollapsed.includes(qt) ||
-      (qt.length >= 2 && isSubsequence(qt, tagCollapsed)) ||
-      (qt.length >= 2 && tagAcr.startsWith(qt));
+      (qt.length >= 2 && tagAcr.startsWith(qt)) ||
+      tagTokSeq > 0 ||
+      (qt.length >= 2 && isSubsequence(qt, tagCollapsed));
 
     const inCombined =
+      combinedTokSeq > 0 ||
+      (qt.length >= 2 && combinedAcr.startsWith(qt)) ||
       (qt.length >= 2 && combinedCollapsed.includes(qt)) ||
-      (qt.length >= 2 && isSubsequence(qt, combinedCollapsed)) ||
-      (qt.length >= 2 && combinedAcr.startsWith(qt));
+      (qt.length >= 2 && isSubsequence(qt, combinedCollapsed));
 
     if (!inName && !inTag && !inCombined) return 0;
   }
@@ -77,12 +127,21 @@ function scoreItem({ name, tag }, query) {
   let score = 0;
 
   for (const qt of q) {
-    // Prefer token-level matches (exact > prefix > substring)
+    // Prefer token-level matches (exact > prefix > acronym > token-prefix-sequence > substring > subsequence)
     const nameExact = nameToks.includes(qt);
     const tagExact = tagToks.includes(qt);
 
     const namePrefix = nameToks.some(t => t.startsWith(qt));
     const tagPrefix = tagToks.some(t => t.startsWith(qt));
+
+    const nameAcrPrefix = qt.length >= 2 && nameAcr.startsWith(qt);
+    const tagAcrPrefix = qt.length >= 2 && tagAcr.startsWith(qt);
+
+    // IntelliJ-like: query consumed across successive token prefixes.
+    // This is the main signal that should make "otoc" prefer "orders to creators".
+    const nameTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(nameToks, qt) : 0;
+    const tagTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(tagToks, qt) : 0;
+    const combinedTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(combinedToks, qt) : 0;
 
     const nameSub = nameNorm.includes(qt);
     const tagSub = tagNorm.includes(qt);
@@ -90,38 +149,44 @@ function scoreItem({ name, tag }, query) {
     const nameCollapsedSub = !nameSub && nameCollapsed.includes(qt);
     const tagCollapsedSub = !tagSub && tagCollapsed.includes(qt);
 
-    const nameAcrPrefix = qt.length >= 2 && nameAcr.startsWith(qt);
-    const tagAcrPrefix = qt.length >= 2 && tagAcr.startsWith(qt);
-
     const nameSubseq =
-      !nameSub && !nameCollapsedSub && !nameAcrPrefix && qt.length >= 2 && isSubsequence(qt, nameCollapsed);
+      !nameSub && !nameCollapsedSub && !nameAcrPrefix && nameTokSeq === 0 && qt.length >= 2 && isSubsequence(qt, nameCollapsed);
     const tagSubseq =
-      !tagSub && !tagCollapsedSub && !tagAcrPrefix && qt.length >= 2 && isSubsequence(qt, tagCollapsed);
+      !tagSub && !tagCollapsedSub && !tagAcrPrefix && tagTokSeq === 0 && qt.length >= 2 && isSubsequence(qt, tagCollapsed);
 
-    // Spanning matches (name+tag) get a smaller boost than name/tag matches.
+    // Spanning matches (name+tag) are weaker than direct name matches.
     const combinedAcrPrefix = qt.length >= 2 && combinedAcr.startsWith(qt);
     const combinedCollapsedSub = qt.length >= 2 && combinedCollapsed.includes(qt);
     const combinedSubseq = qt.length >= 2 && isSubsequence(qt, combinedCollapsed);
 
-    if (nameExact) score += 50;
-    else if (namePrefix) score += 25;
-    else if (nameSub) score += 10;
-    else if (nameCollapsedSub) score += 8;
-    else if (nameAcrPrefix) score += 16;
-    else if (nameSubseq) score += 6;
+    // Name weighting (dominant)
+    if (nameExact) score += 160;
+    else if (namePrefix) score += 130;
+    else if (nameAcrPrefix) score += 120;
+    else if (nameTokSeq) score += nameTokSeq; // already strong
+    else if (nameSub) score += 45;
+    else if (nameCollapsedSub) score += 36;
+    else if (nameSubseq) score += 18;
 
-    if (tagExact) score += 35;
-    else if (tagPrefix) score += 18;
-    else if (tagSub) score += 7;
-    else if (tagCollapsedSub) score += 5;
-    else if (tagAcrPrefix) score += 11;
-    else if (tagSubseq) score += 4;
+    // Tag weighting (secondary)
+    if (tagExact) score += 90;
+    else if (tagPrefix) score += 70;
+    else if (tagAcrPrefix) score += 55;
+    else if (tagTokSeq) score += Math.max(0, tagTokSeq - 30);
+    else if (tagSub) score += 22;
+    else if (tagCollapsedSub) score += 18;
+    else if (tagSubseq) score += 10;
 
-    if (!nameExact && !namePrefix && !nameSub && !nameCollapsedSub && !nameAcrPrefix && !nameSubseq &&
-        !tagExact && !tagPrefix && !tagSub && !tagCollapsedSub && !tagAcrPrefix && !tagSubseq) {
-      if (combinedAcrPrefix) score += 9;
-      else if (combinedCollapsedSub) score += 6;
-      else if (combinedSubseq) score += 4;
+    // Combined (name+tag) only if neither name nor tag had a strong token-start style match.
+    const hasStrong =
+      nameExact || namePrefix || nameAcrPrefix || nameTokSeq ||
+      tagExact || tagPrefix || tagAcrPrefix || tagTokSeq;
+
+    if (!hasStrong) {
+      if (combinedTokSeq) score += Math.max(0, combinedTokSeq - 45);
+      else if (combinedAcrPrefix) score += 28;
+      else if (combinedCollapsedSub) score += 18;
+      else if (combinedSubseq) score += 8;
     }
   }
 
