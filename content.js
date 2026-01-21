@@ -9,11 +9,13 @@ const ICON_URL = chrome.runtime.getURL("icon.svg");
 let config;
 
 function setConfig(newConfig) {
-  config = newConfig
-  config.sites = config.sites.map(option => ({
-    ...option,
-    regex: new RegExp(option.regex),
-  }));
+  config = {
+    snippets: newConfig.filter(option => option.type === "snippet"),
+    sites: newConfig.filter(option => option.type === "site").map(option => ({
+      ...option,
+      regex: new RegExp(option.regex),
+    })),
+  }
 }
 
 function loadConfig() {

@@ -44,60 +44,48 @@ const TRANSLATIONS = {
     de: "Ungültiges JSON: $1",
   },
   statusInvalidConfigObject: {
-    en: "Invalid Config: object expected",
-    de: "Ungültige Konfiguration: Objekt erwartet",
+    en: "Invalid Config: array expected",
+    de: "Ungültige Konfiguration: Array erwartet",
   },
-  statusInvalidConfigSnippetsArrayMissing: {
-    en: "Invalid Config: snippets array missing",
-    de: "Ungültige Konfiguration: snippets Array fehlt",
+  statusInvalidConfigTypeMissing: {
+    en: "Invalid Config: type missing",
+    de: "Ungültige Konfiguration: type fehlt",
   },
-  statusInvalidConfigSnippetsNameMissing: {
-    en: "Invalid Config: snippets[].name string missing",
-    de: "Ungültige Konfiguration: snippets[].name String fehlt",
+  statusInvalidConfigTypeInvalid: {
+    en: "Invalid Config: $1 type invalid",
+    de: "Ungültige Konfiguration: $1 type ungültig",
   },
-  statusInvalidConfigSnippetsTagEmpty: {
-    en: "Invalid Config: snippets[].tag string empty",
-    de: "Ungültige Konfiguration: snippets[].tag String leer",
+  statusInvalidConfigNameMissing: {
+    en: "Invalid Config: $1 name missing",
+    de: "Ungültige Konfiguration: $1 name fehlt",
   },
-  statusInvalidConfigSnippetsTagInvalid: {
-    en: "Invalid Config: snippets[].tag string invalid",
-    de: "Ungültige Konfiguration: snippets[].tag String ungültig",
+  statusInvalidConfigTagInvalid: {
+    en: "Invalid Config: $1 tag invalid",
+    de: "Ungültige Konfiguration: $1 tag ungültig",
   },
-  statusInvalidConfigSnippetsGroupEmpty: {
-    en: "Invalid Config: snippets[].group string empty",
-    de: "Ungültige Konfiguration: snippets[].group String leer",
-  },
-  statusInvalidConfigSnippetsGroupInvalid: {
-    en: "Invalid Config: snippets[].group string invalid",
-    de: "Ungültige Konfiguration: snippets[].group String ungültig",
+  statusInvalidConfigGroupMissing: {
+    en: "Invalid Config: $1 group missing",
+    de: "Ungültige Konfiguration: $1 group fehlt",
   },
   statusInvalidConfigSnippetsValueMissing: {
-    en: "Invalid Config: snippets[].value string missing",
-    de: "Ungültige Konfiguration: snippets[].value String fehlt",
-  },
-  statusInvalidConfigSitesArrayMissing: {
-    en: "Invalid Config: sites array missing",
-    de: "Ungültige Konfiguration: sites Array fehlt",
-  },
-  statusInvalidConfigSitesNameMissing: {
-    en: "Invalid Config: sites[].name string missing",
-    de: "Ungültige Konfiguration: sites[].name String fehlt",
+    en: "Invalid Config: snippet value missing",
+    de: "Ungültige Konfiguration: snippet value fehlt",
   },
   statusInvalidConfigSitesRegexMissing: {
-    en: "Invalid Config: sites[].regex string missing",
-    de: "Ungültige Konfiguration: sites[].regex String fehlt",
+    en: "Invalid Config: site regex missing",
+    de: "Ungültige Konfiguration: site regex fehlt",
   },
   statusInvalidConfigSitesUrlMissing: {
-    en: "Invalid Config: sites[].url string missing",
-    de: "Ungültige Konfiguration: sites[].url String fehlt",
+    en: "Invalid Config: site url missing",
+    de: "Ungültige Konfiguration: site url fehlt",
   },
   statusInvalidConfigSitesRegexInvalid: {
-    en: "Invalid Config: sites[].regex invalid",
-    de: "Ungültige Konfiguration: sites[].regex ungültig",
+    en: "Invalid Config: site regex invalid",
+    de: "Ungültige Konfiguration: site regex ungültig",
   },
   statusInvalidConfigSitesUrlMissingPlaceholder: {
-    en: "Invalid Config: sites[].url must include %s",
-    de: "Ungültige Konfiguration: sites[].url muss %s enthalten",
+    en: "Invalid Config: site.url must include %s",
+    de: "Ungültige Konfiguration: site.url muss %s enthalten",
   },
   searchPlaceholder: {
     en: "Search…",

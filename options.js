@@ -50,107 +50,95 @@ async function save() {
     return;
   }
   const config = parsed.value;
-  if (typeof config !== "object" || config === null) {
+  if (!Array.isArray(config)) {
     setStatus(
-      t("statusInvalidConfigObject"),
+      t("statusInvalidConfigArray"),
       "error"
     );
     return;
   }
-  if (!Array.isArray(config.snippets)) {
-    setStatus(
-      t("statusInvalidConfigSnippetsArrayMissing"),
-      "error"
-    );
-    return;
-  }
-  for (const option of config.snippets) {
+  for (const option of config) {
+    if (typeof option.type !== "string" || option.type.trim() === "") {
+      setStatus(
+        t("statusInvalidConfigTypeMissing"),
+        "error"
+      );
+      return;
+    }
+    if (option.type.trim() !== "snippet" && option.type.trim() !== "site") {
+      setStatus(
+        t("statusInvalidConfigTypeInvalid", option.type),
+        "error"
+      );
+      return;
+    }
     if (typeof option.name !== "string" || option.name.trim() === "") {
       setStatus(
-        t("statusInvalidConfigSnippetsNameMissing"),
+        t("statusInvalidConfigNameMissing", option.type),
         "error"
       );
       return;
     }
     if (typeof option.tag === "string" && option.tag.trim() === "") {
       setStatus(
-        t("statusInvalidConfigSnippetsTagEmpty"),
+        t("statusInvalidConfigTagInvalid", option.type),
         "error"
       );
       return;
     }
     if (option.tag && typeof option.tag !== "string") {
       setStatus(
-        t("statusInvalidConfigSnippetsTagInvalid"),
+        t("statusInvalidConfigTagInvalid", option.type),
         "error"
       );
       return;
     }
-    if (typeof option.group === "string" && option.group.trim() === "") {
+    if (typeof option.group !== "string" || option.group.trim() === "") {
       setStatus(
-        t("statusInvalidConfigSnippetsGroupEmpty"),
+        t("statusInvalidConfigGroupMissing", option.type),
         "error"
       );
       return;
     }
-    if (option.group && typeof option.group !== "string") {
-      setStatus(
-        t("statusInvalidConfigSnippetsGroupInvalid"),
-        "error"
-      );
-      return;
+    if (option.type === "snippet") {
+      if (typeof option.value !== "string" || option.value.trim() === "") {
+        setStatus(
+          t("statusInvalidConfigSnippetsValueMissing"),
+          "error"
+        );
+        return;
+      }
     }
-    if (typeof option.value !== "string" || option.value.trim() === "") {
-      setStatus(
-        t("statusInvalidConfigSnippetsValueMissing"),
-        "error"
-      );
-      return;
-    }
-  }
-  if (!Array.isArray(config.sites)) {
-    setStatus(
-      t("statusInvalidConfigSitesArrayMissing"),
-      "error"
-    );
-    return;
-  }
-  for (const option of config.sites) {
-    if (typeof option.name !== "string" || option.name.trim() === "") {
-      setStatus(
-        t("statusInvalidConfigSitesNameMissing"),
-        "error"
-      );
-      return;
-    }
-    if (typeof option.regex !== "string" || option.regex.trim() === "") {
-      setStatus(
-        t("statusInvalidConfigSitesRegexMissing"),
-        "error"
-      );
-      return;
-    }
-    if (typeof option.url !== "string" || option.url.trim() === "") {
-      setStatus(
-        t("statusInvalidConfigSitesUrlMissing"),
-        "error"
-      );
-      return;
-    }
-    try {
-      new RegExp(option.regex);
-    } catch (e) {
-      setStatus(
-        t("statusInvalidConfigSitesRegexInvalid"),
-        "error"
-      );
-      return;
-    }
-    if (!option.url.includes("%s")) {
-      setStatus(
-        t("statusInvalidConfigSitesUrlMissingPlaceholder"),
-        "error"
-      );
+    if (option.type === "site") {
+      if (typeof option.regex !== "string" || option.regex.trim() === "") {
+        setStatus(
+          t("statusInvalidConfigSitesRegexMissing"),
+          "error"
+        );
+        return;
+      }
+      if (typeof option.url !== "string" || option.url.trim() === "") {
+        setStatus(
+          t("statusInvalidConfigSitesUrlMissing"),
+          "error"
+        );
+        return;
+      }
+      try {
+        new RegExp(option.regex);
+      } catch (e) {
+        setStatus(
+          t("statusInvalidConfigSitesRegexInvalid"),
+          "error"
+        );
+        return;
+      }
+      if (!option.url.includes("%s")) {
+        setStatus(
+          t("statusInvalidConfigSitesUrlMissingPlaceholder"),
+          "error"
+        );
+      }
     }
   }
 
