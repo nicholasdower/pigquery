@@ -395,11 +395,15 @@ function openPopup(options, onOptionSelected) {
   function closePopup() {
     if (!overlayEl) return;
     overlayEl.remove();
-    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    lastFocusedEl.focus();
   }
 
   overlayEl.addEventListener("mousedown", (e) => {
-    if (e.target === overlayEl) closePopup();
+    if (e.target === overlayEl) {
+      e.preventDefault();
+      e.stopPropagation();
+      closePopup();
+    }
   });
 
   function scrollActiveIntoView() {
@@ -507,7 +511,9 @@ function openPopup(options, onOptionSelected) {
         e.preventDefault();
       });
 
-      item.addEventListener("click", () => {
+      item.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         onOptionSelected(filtered[idx]);
         closePopup();
       });
