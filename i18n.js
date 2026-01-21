@@ -63,6 +63,14 @@ const TRANSLATIONS = {
     en: "Invalid Config: snippets[].tag string invalid",
     de: "Ungültige Konfiguration: snippets[].tag String ungültig",
   },
+  statusInvalidConfigSnippetsGroupEmpty: {
+    en: "Invalid Config: snippets[].group string empty",
+    de: "Ungültige Konfiguration: snippets[].group String leer",
+  },
+  statusInvalidConfigSnippetsGroupInvalid: {
+    en: "Invalid Config: snippets[].group string invalid",
+    de: "Ungültige Konfiguration: snippets[].group String ungültig",
+  },
   statusInvalidConfigSnippetsValueMissing: {
     en: "Invalid Config: snippets[].value string missing",
     de: "Ungültige Konfiguration: snippets[].value String fehlt",

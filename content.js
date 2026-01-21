@@ -228,7 +228,7 @@ const styles = `
     user-select: none;
   }
   .pig-modal-item {
-    padding: 10px;
+    padding: 12px;
     border-radius: 10px;
     cursor: pointer;
     user-select: none;
@@ -284,7 +284,6 @@ const styles = `
   }
   .pig-modal-item-wrapper {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     gap: 12px;
   }
@@ -298,6 +297,13 @@ const styles = `
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .pig-modal-item-group {
+    padding: 3px 0px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 24px;
+    text-align: center;
+  }
   .pig-modal-logo {
     width: 24px;
     height: 24px;
@@ -308,14 +314,28 @@ const styles = `
 
 document.head.appendChild(makeEl("style", { id: "pig-modal-style", text: styles }));
 
-function getTagColor(tag) {
-  // Hash function to generate consistent color for each tag
-  let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
-    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+function getInitials(name) {
+  const words = name.trim().split(/\s+/);
+  if (words.length >= 2) {
+    // Take first letter of first two words
+    return (words[0][0] + words[1][0]).toUpperCase();
+  } else if (name.length === 1) {
+    return name[0].toUpperCase();
+  } else {
+    return name[0].toUpperCase() + name[1];
   }
+}
 
-  // Generate colors that look good on dark background
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return hash;
+}
+
+function getLabelColor(name) {
+  // Vibrant colors for tags
   const colors = [
     { bg: 'rgba(59, 130, 246, 0.2)', text: 'rgb(147, 197, 253)' },  // blue
     { bg: 'rgba(16, 185, 129, 0.2)', text: 'rgb(110, 231, 183)' },  // green
@@ -329,7 +349,7 @@ function getTagColor(tag) {
     { bg: 'rgba(234, 179, 8, 0.2)', text: 'rgb(250, 204, 21)' },    // yellow
   ];
 
-  const index = Math.abs(hash) % colors.length;
+  const index = Math.abs(hashString(name)) % colors.length;
   return colors[index];
 }
 
@@ -457,12 +477,18 @@ function openPopup(options, onOptionSelected) {
       const item = makeEl("div", { className: "pig-modal-item" + (idx === activeIndex ? " active" : "") });
 
       const wrapper = makeEl("div", { className: "pig-modal-item-wrapper" });
+
+      const group = makeEl("span", { className: "pig-modal-item-group", text: getInitials(opt.group) });
+      const groupColors = getLabelColor(opt.group);
+      group.style.color = groupColors.text;
+      wrapper.appendChild(group);
+
       const name = makeEl("span", { className: "pig-modal-item-name", text: opt.name });
       wrapper.appendChild(name);
 
       if (opt.tag) {
         const tag = makeEl("span", { className: "pig-modal-item-tag", text: opt.tag });
-        const colors = getTagColor(opt.tag);
+        const colors = getLabelColor(opt.tag);
         tag.style.backgroundColor = colors.bg;
         tag.style.color = colors.text;
         wrapper.appendChild(tag);
@@ -501,9 +527,6 @@ function openPopup(options, onOptionSelected) {
   inputEl.addEventListener("input", () => {
     const query = (inputEl.value || "").trim().toLowerCase();
     filtered = search.filter(options, query);
-    //filtered = options.filter(option => {
-    //. return !query || option.name.toLowerCase().includes(query) || option.tag?.toLowerCase()?.includes(query);
-    //});
     activeIndex = 0;
     renderList();
   });

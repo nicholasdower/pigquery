@@ -1,248 +1,215 @@
-// Note: This is 100% AI and not even reviewed by humans.
+// Search/filter for items with group, tag, and name fields.
 //
 // Data model
-//  - Each item has:
-//    - name (string, can include underscores/spaces/punctuation; may be SQL snippets)
-//    - optional tag (string like TABLE, JOIN, WHERE, QUERY)
-//  - Search should consider name + tag (and optionally let matches span across them).
+//   Each item has three fields:
+//   - group: project/category (e.g. "My Project", "Analytics")
+//   - tag: item type (e.g. "TABLE", "JOIN", "QUERY")
+//   - name: the item itself (e.g. "foo_bar", SQL snippets)
 //
 // Query behavior
-//  - User types a free-text query.
-//  - Query is case-insensitive.
-//  - Query is tokenized on separators (spaces/punctuation) into query terms (e.g. "query foo" → ["query","foo"]).
+//   - Empty query returns all items (no filtering).
+//   - Query is case-insensitive.
+//   - Query is tokenized on non-alphanumeric characters (e.g. "foo bar" → ["foo", "bar"]).
+//   - AND semantics: all query tokens must match somewhere in the item.
+//   - Field order doesn't matter: group, name, and tag can match in any order.
+//     e.g. a query can match tag first, then group, then name.
 //
-// Matching semantics
-//  - AND semantics across query tokens: all query tokens must match somewhere in the item (name and/or tag).
-//  - A query token can match via multiple strategies:
-//    - Exact token match: foo matches token foo
-//    - Token prefix match: bloo matches token bloop
-//    - Collapsed substring match: foobar matches foo_bar (remove separators and then substring)
-//    - Subsequence (fuzzy-finder) match: apn matches apple_backend because a…p…n occurs in order in applebackend
-//    - Acronym/initialism match: ab matches apple_backend because tokens → a + b
-//    - Spanning match across fields: appta matches apple_backend + tag table by matching against applebackendtable (collapsed).
+// Matching strategies (in order of quality)
+//   1. Exact token match: "foo" matches token "foo"
+//   2. Token prefix match: "ord" matches token "orders"
+//   3. Acronym match: "otc" matches "obb_to_cob" (first letter of each token)
+//   4. Token-prefix sequence: "otoc" or "obtco" matches "obb_to_cob"
 //
-// Ranking requirements (IntelliJ-like)
-//  - Results are ranked by “match quality”, not just boolean match.
-//  - Strong preferences:
-//    - Matches at the start of tokens rank above matches in the middle of tokens.
-//    - Matches that use token boundaries (prefix / acronym / token-start sequences) rank above generic substring/subsequence matches.
-//    - Earlier tokens in the name rank above later tokens.
-//    - Fewer “jumps” (using fewer tokens to satisfy the query) ranks higher.
-//    - Name matches generally rank above tag-only matches.
-//  - Specific requirement from your example:
-//    - If query is otoc, then an item like orders to creators must outrank apple_storekit_notifications even if otoc can be found as a subsequence in the latter, because otoc aligns with token starts in the former.
+// Ranking
+//   - Higher-quality match strategies score higher.
+//   - Earlier matches rank higher: "cs" prefers "consumer_subscriptions" over
+//     "orders to consumer_subscriptions" because the match starts at token 0.
+//   - Field priority: group > name > tag.
 //
-// Practical constraints
-//  - Must be fast enough for “type-to-filter” in a Chrome extension UI.
-//  - Deterministic ordering for equal scores (typically stable sort or tie-breakers like original order).
+// Constraints
+//   - Fast enough for real-time type-to-filter in a Chrome extension.
+//   - Stable sort for deterministic ordering.
+
 const SEP = /[^a-z0-9]+/gi;
 
-function isSubsequence(needle, haystack) {
-  // Returns true if all chars in needle appear in haystack in order (not necessarily contiguously).
-  // Useful for "apn" matching "apple_backend" (applebackend).
-  if (!needle) return true;
-  let i = 0;
-  for (let j = 0; j < haystack.length && i < needle.length; j++) {
-    if (haystack[j] === needle[i]) i++;
-  }
-  return i === needle.length;
+function norm(s) {
+  return (s ?? "").toLowerCase();
 }
 
-function acronymFromTokens(toks) {
-  // "apple_backend" -> ["apple","backend"] -> "ab"
-  return toks.map(t => t[0]).filter(Boolean).join("");
+function tokenize(s) {
+  return norm(s).split(SEP).filter(Boolean);
 }
 
-function tokenPrefixSequenceBest(toks, q) {
-  // IntelliJ-like: match query by consuming it from successive token *prefixes*.
-  // Example: ["orders","to","creators"], "otoc" => "o" + "to" + "c".
-  // Returns the best (highest) score for any start position, or 0 if no match.
-  if (!q) return 0;
+function acronym(tokens) {
+  return tokens.map(t => t[0] || "").join("");
+}
 
-  let best = 0;
+// IntelliJ-style matching: consume query across successive token prefixes.
+// "otoc" matches ["orders", "to", "creators"] as "o" + "to" + "c"
+// Returns { score, startIndex } if matched, null otherwise.
+function tokenPrefixMatch(tokens, query) {
+  if (!query || tokens.length === 0) return null;
 
-  for (let start = 0; start < toks.length; start++) {
+  let best = null;
+
+  for (let start = 0; start < tokens.length; start++) {
     let pos = 0;
-    let used = 0;
+    let tokensUsed = 0;
+    let firstMatchIndex = -1;
 
-    for (let i = start; i < toks.length && pos < q.length; i++) {
-      const t = toks[i];
-      if (!t) continue;
+    for (let i = start; i < tokens.length && pos < query.length; i++) {
+      const token = tokens[i];
+      if (!token) continue;
 
-      // Find the longest prefix of t that matches q at pos.
-      const maxLen = Math.min(t.length, q.length - pos);
-      let k = 0;
-      while (k < maxLen && t[k] === q[pos + k]) k++;
+      // Match as much of this token's prefix as possible
+      let matched = 0;
+      while (matched < token.length && pos + matched < query.length && token[matched] === query[pos + matched]) {
+        matched++;
+      }
 
-      if (k > 0) {
-        pos += k;
-        used++;
+      if (matched > 0) {
+        if (firstMatchIndex === -1) firstMatchIndex = i;
+        pos += matched;
+        tokensUsed++;
       }
     }
 
-    if (pos === q.length) {
-      // Scoring: prefer earlier start, fewer tokens, and longer queries.
-      // Tuned to strongly prefer token-start matches over mid-token subsequence.
-      let s = 90;
-      s += Math.min(40, q.length * 6);
-      s -= start * 10;
-      s -= (used - 1) * 6;
-      best = Math.max(best, s);
+    if (pos === query.length) {
+      // Full match! Score prefers: fewer tokens used, longer queries
+      let score = 100;
+      score += Math.min(30, query.length * 5);
+      score -= (tokensUsed - 1) * 5;
+
+      if (!best || score > best.score || (score === best.score && firstMatchIndex < best.startIndex)) {
+        best = { score, startIndex: firstMatchIndex };
+      }
     }
   }
 
   return best;
 }
 
-function norm(s) {
-  return (s ?? "").toLowerCase();
-}
-
-function tokens(s) {
-  return norm(s).split(SEP).filter(Boolean);
-}
-
-function scoreItem({ name, tag }, query) {
-  const q = tokens(query);
-  if (q.length === 0) return 0;
-
-  const nameNorm = norm(name);
-  const tagNorm = norm(tag);
-
-  // Collapsed variants let "foobar" match "foo_bar".
-  // (Drop all non-alphanumerics, including underscores/spaces/punctuation.)
-  const nameCollapsed = nameNorm.replace(SEP, "");
-  const tagCollapsed = tagNorm.replace(SEP, "");
-
-  // Combined forms allow matches that span name + tag, e.g. "appta" matching
-  // "apple_backend" + tag "table" (applebackendtable).
-  const combinedCollapsed = `${nameCollapsed}${tagCollapsed}`;
-
-  const nameToks = tokens(name);
-  const tagToks = tokens(tag);
-  const combinedToks = [...nameToks, ...tagToks];
-
-  // Initialism support: "ab" -> "apple_backend"; combined supports spanning name+tag.
-  const nameAcr = acronymFromTokens(nameToks);
-  const tagAcr = acronymFromTokens(tagToks);
-  const combinedAcr = acronymFromTokens(combinedToks);
-
-  // Require all query tokens to match somewhere (AND).
-  // A token matches if it appears in either the normal or collapsed forms,
-  // or matches a token acronym,
-  // or matches an IntelliJ-like token-prefix sequence,
-  // or (as a last resort) is a subsequence match against the collapsed form.
-  for (const qt of q) {
-    const nameTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(nameToks, qt) : 0;
-    const tagTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(tagToks, qt) : 0;
-    const combinedTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(combinedToks, qt) : 0;
-
-    const inName =
-      nameNorm.includes(qt) ||
-      nameCollapsed.includes(qt) ||
-      (qt.length >= 2 && nameAcr.startsWith(qt)) ||
-      nameTokSeq > 0 ||
-      (qt.length >= 2 && isSubsequence(qt, nameCollapsed));
-
-    const inTag =
-      tagNorm.includes(qt) ||
-      tagCollapsed.includes(qt) ||
-      (qt.length >= 2 && tagAcr.startsWith(qt)) ||
-      tagTokSeq > 0 ||
-      (qt.length >= 2 && isSubsequence(qt, tagCollapsed));
-
-    const inCombined =
-      combinedTokSeq > 0 ||
-      (qt.length >= 2 && combinedAcr.startsWith(qt)) ||
-      (qt.length >= 2 && combinedCollapsed.includes(qt)) ||
-      (qt.length >= 2 && isSubsequence(qt, combinedCollapsed));
-
-    if (!inName && !inTag && !inCombined) return 0;
+// Check if query token matches within a field
+// Returns { type, score, startIndex } or null
+function matchesField(queryToken, fieldNorm, fieldTokens, fieldAcronym) {
+  // Exact token match - find earliest matching token
+  const exactIndex = fieldTokens.indexOf(queryToken);
+  if (exactIndex !== -1) {
+    return { type: "exact", score: 100, startIndex: exactIndex };
   }
 
-  let score = 0;
+  // Token prefix match - find earliest matching token
+  const prefixIndex = fieldTokens.findIndex(t => t.startsWith(queryToken));
+  if (prefixIndex !== -1) {
+    return { type: "prefix", score: 80, startIndex: prefixIndex };
+  }
 
-  for (const qt of q) {
-    // Prefer token-level matches (exact > prefix > acronym > token-prefix-sequence > substring > subsequence)
-    const nameExact = nameToks.includes(qt);
-    const tagExact = tagToks.includes(qt);
+  // Acronym match (requires 2+ chars) - always starts at index 0
+  if (queryToken.length >= 2 && fieldAcronym.startsWith(queryToken)) {
+    return { type: "acronym", score: 70, startIndex: 0 };
+  }
 
-    const namePrefix = nameToks.some(t => t.startsWith(qt));
-    const tagPrefix = tagToks.some(t => t.startsWith(qt));
-
-    const nameAcrPrefix = qt.length >= 2 && nameAcr.startsWith(qt);
-    const tagAcrPrefix = qt.length >= 2 && tagAcr.startsWith(qt);
-
-    // IntelliJ-like: query consumed across successive token prefixes.
-    // This is the main signal that should make "otoc" prefer "orders to creators".
-    const nameTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(nameToks, qt) : 0;
-    const tagTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(tagToks, qt) : 0;
-    const combinedTokSeq = qt.length >= 2 ? tokenPrefixSequenceBest(combinedToks, qt) : 0;
-
-    const nameSub = nameNorm.includes(qt);
-    const tagSub = tagNorm.includes(qt);
-
-    const nameCollapsedSub = !nameSub && nameCollapsed.includes(qt);
-    const tagCollapsedSub = !tagSub && tagCollapsed.includes(qt);
-
-    const nameSubseq =
-      !nameSub && !nameCollapsedSub && !nameAcrPrefix && nameTokSeq === 0 && qt.length >= 2 && isSubsequence(qt, nameCollapsed);
-    const tagSubseq =
-      !tagSub && !tagCollapsedSub && !tagAcrPrefix && tagTokSeq === 0 && qt.length >= 2 && isSubsequence(qt, tagCollapsed);
-
-    // Spanning matches (name+tag) are weaker than direct name matches.
-    const combinedAcrPrefix = qt.length >= 2 && combinedAcr.startsWith(qt);
-    const combinedCollapsedSub = qt.length >= 2 && combinedCollapsed.includes(qt);
-    const combinedSubseq = qt.length >= 2 && isSubsequence(qt, combinedCollapsed);
-
-    // Name weighting (dominant)
-    if (nameExact) score += 160;
-    else if (namePrefix) score += 130;
-    else if (nameAcrPrefix) score += 120;
-    else if (nameTokSeq) score += nameTokSeq; // already strong
-    else if (nameSub) score += 45;
-    else if (nameCollapsedSub) score += 36;
-    else if (nameSubseq) score += 18;
-
-    // Tag weighting (secondary)
-    if (tagExact) score += 90;
-    else if (tagPrefix) score += 70;
-    else if (tagAcrPrefix) score += 55;
-    else if (tagTokSeq) score += Math.max(0, tagTokSeq - 30);
-    else if (tagSub) score += 22;
-    else if (tagCollapsedSub) score += 18;
-    else if (tagSubseq) score += 10;
-
-    // Combined (name+tag) only if neither name nor tag had a strong token-start style match.
-    const hasStrong =
-      nameExact || namePrefix || nameAcrPrefix || nameTokSeq ||
-      tagExact || tagPrefix || tagAcrPrefix || tagTokSeq;
-
-    if (!hasStrong) {
-      if (combinedTokSeq) score += Math.max(0, combinedTokSeq - 45);
-      else if (combinedAcrPrefix) score += 28;
-      else if (combinedCollapsedSub) score += 18;
-      else if (combinedSubseq) score += 8;
+  // Token-prefix sequence match (requires 2+ chars)
+  if (queryToken.length >= 2) {
+    const seqResult = tokenPrefixMatch(fieldTokens, queryToken);
+    if (seqResult) {
+      return { type: "sequence", score: seqResult.score, startIndex: seqResult.startIndex };
     }
   }
 
-  // Bonus for ordered appearance across the combined (non-collapsed) string
-  const combined = `${nameNorm} ${tagNorm}`.trim();
-  let idx = -1;
-  let ordered = true;
-  for (const qt of q) {
-    idx = combined.indexOf(qt, idx + 1);
-    if (idx === -1) {
-      ordered = false;
-      break;
+  return null;
+}
+
+// Generate all permutations of an array
+function permutations(arr) {
+  if (arr.length <= 1) return [arr];
+  const result = [];
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    for (const perm of permutations(rest)) {
+      result.push([arr[i], ...perm]);
     }
   }
-  if (ordered) score += 12;
+  return result;
+}
 
-  return score;
+function scoreItem({ group, name, tag }, query) {
+  const queryTokens = tokenize(query);
+  if (queryTokens.length === 0) return 0;
+
+  // Prepare fields
+  const fields = [
+    { name: "group", norm: norm(group), tokens: tokenize(group), weight: 1.0 },
+    { name: "name", norm: norm(name), tokens: tokenize(name), weight: 0.9 },
+    { name: "tag", norm: norm(tag), tokens: tokenize(tag), weight: 0.8 },
+  ];
+
+  // Pre-compute acronyms
+  for (const field of fields) {
+    field.acronym = acronym(field.tokens);
+  }
+
+  // All permutations of fields for spanning matches (field order shouldn't matter)
+  const fieldPerms = permutations(fields);
+
+  let totalScore = 0;
+  const POSITION_PENALTY = 25; // Penalty per token index for later matches
+
+  // Each query token must match somewhere (AND semantics)
+  for (const qt of queryTokens) {
+    let bestMatch = null;
+    let bestWeight = 0;
+
+    // Try each field
+    for (const field of fields) {
+      const match = matchesField(qt, field.norm, field.tokens, field.acronym);
+      if (match) {
+        const effectiveScore = match.score * field.weight - match.startIndex * POSITION_PENALTY;
+        const bestEffective = bestMatch ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY : -Infinity;
+        if (effectiveScore > bestEffective) {
+          bestMatch = match;
+          bestWeight = field.weight;
+        }
+      }
+    }
+
+    // Try combined (spanning) match as fallback - try all field orderings
+    if (!bestMatch && qt.length >= 2) {
+      for (const perm of fieldPerms) {
+        const combinedTokens = perm.flatMap(f => f.tokens);
+        const combinedAcronym = acronym(combinedTokens);
+
+        if (combinedAcronym.startsWith(qt)) {
+          bestMatch = { type: "combined-acronym", score: 50, startIndex: 0 };
+          bestWeight = 0.7;
+          break;
+        }
+
+        const seqResult = tokenPrefixMatch(combinedTokens, qt);
+        if (seqResult) {
+          const candidate = { type: "combined-sequence", score: seqResult.score * 0.7, startIndex: seqResult.startIndex };
+          const candidateEffective = candidate.score * 0.7 - candidate.startIndex * POSITION_PENALTY;
+          const bestEffective = bestMatch ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY : -Infinity;
+          if (candidateEffective > bestEffective) {
+            bestMatch = candidate;
+            bestWeight = 0.7;
+          }
+        }
+      }
+    }
+
+    // No match for this token = item doesn't match
+    if (!bestMatch) return 0;
+
+    totalScore += bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY;
+  }
+
+  return totalScore;
 }
 
 function filter(items, query) {
+  if (tokenize(query).length === 0) return items;
+
   return items
     .map(item => ({ item, score: scoreItem(item, query) }))
     .filter(x => x.score > 0)
@@ -251,6 +218,4 @@ function filter(items, query) {
 }
 
 window.pigquery ||= {};
-window.pigquery.search = {
-  filter,
-};
+window.pigquery.search = { filter };

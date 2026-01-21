@@ -86,6 +86,20 @@ async function save() {
       );
       return;
     }
+    if (typeof option.group === "string" && option.group.trim() === "") {
+      setStatus(
+        t("statusInvalidConfigSnippetsGroupEmpty"),
+        "error"
+      );
+      return;
+    }
+    if (option.group && typeof option.group !== "string") {
+      setStatus(
+        t("statusInvalidConfigSnippetsGroupInvalid"),
+        "error"
+      );
+      return;
+    }
     if (typeof option.value !== "string" || option.value.trim() === "") {
       setStatus(
         t("statusInvalidConfigSnippetsValueMissing"),
