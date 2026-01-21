@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pig Query Unit Test</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+    .pass { color: #4ec9b0; }
+    .fail { color: #f14c4c; font-weight: bold; }
+    .group { margin: 20px 0 10px; color: #569cd6; font-size: 1.1em; }
+  </style>
+</head>
+<body>
+  <h1>Pig Query Unit Test</h1>
+  <div id="results"></div>
+
+  <script src="search.js"></script>
+  <script>
+    const results = document.getElementById('results');
+    let passed = 0, failed = 0;
+
+    function test(name, fn) {
+      try {
+        fn();
+        results.innerHTML += `<div class="pass">✓ ${name}</div>`;
+        passed++;
+      } catch (e) {
+        results.innerHTML += `<div class="fail">✗ ${name}\n  ${e.message}</div>`;
+        failed++;
+      }
+    }
+
+    function group(name) {
+      results.innerHTML += `<div class="group">${name}</div>`;
+    }
+
+    function assert(cond, msg = 'Assertion failed') {
+      if (!cond) throw new Error(msg);
+    }
+
+    function assertEquals(actual, expected, msg = '') {
+      const a = JSON.stringify(actual);
+      const e = JSON.stringify(expected);
+      if (a !== e) throw new Error(`${msg}\nExpected: ${e}\nActual: ${a}`);
+    }
+
+    // Access the exported filter function
+    const { filter: searchFilter } = window.pigquery.search;
+
+    // Test data
+    const items = [
+      { group: 'Analytics', tag: 'TABLE', name: 'user_orders' },
+      { group: 'Analytics', tag: 'TABLE', name: 'order_items' },
+      { group: 'Marketing', tag: 'QUERY', name: 'campaign_metrics' },
+      { group: 'My Project', tag: 'JOIN', name: 'obb_to_cob' },
+    ];
+
+    // ========== TESTS ==========
+
+    group('Empty query');
+    test('returns all items', () => {
+      assertEquals(searchFilter(items, ''), items);
+      assertEquals(searchFilter(items, '   '), items);
+    });
+
+    group('Exact match');
+    test('matches exact token in name', () => {
+      const result = searchFilter(items, 'user');
+      assertEquals(result.length, 1);
+      assertEquals(result[0].name, 'user_orders');
+    });
+
+    test('is case insensitive', () => {
+      const result = searchFilter(items, 'USER');
+      assertEquals(result.length, 1);
+      assertEquals(result[0].name, 'user_orders');
+    });
+
+    group('Prefix match');
+    test('matches token prefix', () => {
+      const result = searchFilter(items, 'ord');
+      assert(result.length === 2, `Expected 2 results, got ${result.length}`);
+    });
+
+    group('Acronym match');
+    test('matches first letters of tokens', () => {
+      const result = searchFilter(items, 'otc');
+      assertEquals(result.length, 1);
+      assertEquals(result[0].name, 'obb_to_cob');
+    });
+
+    group('Token-prefix sequence match');
+    test('matches across token prefixes', () => {
+      const result = searchFilter(items, 'obtoc');
+      assertEquals(result.length, 1);
+      assertEquals(result[0].name, 'obb_to_cob');
+    });
+
+    group('AND semantics');
+    test('all query tokens must match', () => {
+      const result = searchFilter(items, 'analytics order');
+      assert(result.length === 2, 'Should match both Analytics tables');
+      assert(result.every(r => r.group === 'Analytics'));
+    });
+
+    test('no match when token missing', () => {
+      const result = searchFilter(items, 'analytics zzz');
+      assertEquals(result.length, 0);
+    });
+
+    group('Ranking');
+    test('earlier matches rank higher', () => {
+      const result = searchFilter(items, 'order');
+      // 'order_items' should rank above 'user_orders' (match at token 0 vs 1)
+      assertEquals(result[0].name, 'order_items');
+    });
+
+    group('Field matching');
+    test('matches group field', () => {
+      const result = searchFilter(items, 'marketing');
+      assertEquals(result.length, 1);
+      assertEquals(result[0].group, 'Marketing');
+    });
+
+    test('matches tag field', () => {
+      const result = searchFilter(items, 'query');
+      assertEquals(result.length, 1);
+      assertEquals(result[0].tag, 'QUERY');
+    });
+
+    group('Field order independence');
+
+    test('matches across all three fields in any order', () => {
+      // group=Marketing, tag=QUERY, name=campaign_metrics
+      const r1 = searchFilter(items, 'marketing query campaign');
+      const r2 = searchFilter(items, 'campaign marketing query');
+      const r3 = searchFilter(items, 'query campaign marketing');
+      assertEquals(r1.length, 1);
+      assertEquals(r1[0].name, 'campaign_metrics');
+      assertEquals(r2[0].name, 'campaign_metrics');
+      assertEquals(r3[0].name, 'campaign_metrics');
+    });
+
+    // Summary
+    results.innerHTML += `<div class="group">─────────────────</div>`;
+    results.innerHTML += `<div class="${failed ? 'fail' : 'pass'}">
+      ${passed} passed, ${failed} failed
+    </div>`;
+  </script>
+</body>
+</html>
