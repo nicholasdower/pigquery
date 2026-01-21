@@ -257,6 +257,9 @@ const styles = `
   .pig-modal-item-name {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .alt-down bq-results-table-optimized {
     cursor: pointer;
@@ -296,6 +299,9 @@ const styles = `
     letter-spacing: 0.3px;
     white-space: nowrap;
     flex-shrink: 0;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .pig-modal-item-group {
     padding: 3px 0px;
