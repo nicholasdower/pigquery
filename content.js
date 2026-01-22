@@ -589,6 +589,11 @@ document.addEventListener(
   (e) => {
     if (document.querySelector('.pig-modal-overlay')) return;
 
+    if (window.copyTimeoutId) {
+      clearTimeout(window.copyTimeoutId);
+      window.copyTimeoutId = null;
+    }
+
     if (!e.isComposing && !e.repeat && e.key === 'i' && e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
       e.preventDefault();
       e.stopPropagation();
@@ -620,14 +625,6 @@ document.addEventListener(
         window.copyTimeoutId = null;
       }
       window.copyTimeoutId = copyShareLink();
-      return;
-    }
-
-    if (!e.isComposing && !e.repeat && e.key === 'c' && !e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
-      if (window.copyTimeoutId) {
-        clearTimeout(window.copyTimeoutId);
-        window.copyTimeoutId = null;
-      }
       return;
     }
 
