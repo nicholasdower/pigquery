@@ -66,33 +66,33 @@ async function save() {
     }
     if (typeof option.name !== "string" || option.name.trim() === "") {
       setStatus(
-        t("statusInvalidConfigNameMissing", option.type),
+        t("statusInvalidConfigNameMissing", type),
         "error"
       );
       return;
     }
     if (typeof option.tag === "string" && option.tag.trim() === "") {
       setStatus(
-        t("statusInvalidConfigTagInvalid", option.type),
+        t("statusInvalidConfigTagInvalid", type),
         "error"
       );
       return;
     }
     if (option.tag && typeof option.tag !== "string") {
       setStatus(
-        t("statusInvalidConfigTagInvalid", option.type),
+        t("statusInvalidConfigTagInvalid", type),
         "error"
       );
       return;
     }
     if (typeof option.group !== "string" || option.group.trim() === "") {
       setStatus(
-        t("statusInvalidConfigGroupMissing", option.type),
+        t("statusInvalidConfigGroupMissing", type),
         "error"
       );
       return;
     }
-    if (option.type === "snippet") {
+    if (type === "snippet") {
       if (typeof option.value !== "string" || option.value.trim() === "") {
         setStatus(
           t("statusInvalidConfigSnippetsValueMissing"),
@@ -101,7 +101,7 @@ async function save() {
         return;
       }
     }
-    if (option.type === "site") {
+    if (type === "site") {
       if (typeof option.regex !== "string" || option.regex.trim() === "") {
         setStatus(
           t("statusInvalidConfigSitesRegexMissing"),

@@ -47,14 +47,6 @@ const TRANSLATIONS = {
     en: "Invalid Config: array expected",
     de: "Ungültige Konfiguration: Array erwartet",
   },
-  statusInvalidConfigTypeMissing: {
-    en: "Invalid Config: type missing",
-    de: "Ungültige Konfiguration: type fehlt",
-  },
-  statusInvalidConfigTypeInvalid: {
-    en: "Invalid Config: $1 type invalid",
-    de: "Ungültige Konfiguration: $1 type ungültig",
-  },
   statusInvalidConfigNameMissing: {
     en: "Invalid Config: $1 name missing",
     de: "Ungültige Konfiguration: $1 name fehlt",

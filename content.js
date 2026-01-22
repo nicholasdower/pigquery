@@ -10,8 +10,8 @@ let config;
 
 function setConfig(newConfig) {
   config = {
-    snippets: newConfig.filter(option => option.type === "snippet"),
-    sites: newConfig.filter(option => option.type === "site").map(option => ({
+    snippets: newConfig.filter(option => !option.url),
+    sites: newConfig.filter(option => option.url).map(option => ({
       ...option,
       regex: new RegExp(option.regex),
     })),
