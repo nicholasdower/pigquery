@@ -4,19 +4,36 @@
     <meta charset="utf-8" />
     <title>PigQuery</title>
     <style>
-      body { font: 14px/1.4 system-ui, sans-serif; margin: 0px 16px 16px 16px; background: #1e1e1e; color: #e0e0e0; }
-      textarea { width: 100%; min-height: 500px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; padding: 8px; box-sizing: border-box; }
+      body { font: 14px/1.4 system-ui, sans-serif; margin: 0 16px; padding-bottom: 24px; background: #1e1e1e; color: #e0e0e0; }
+      textarea { width: 100%; min-height: 300px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; padding: 8px; box-sizing: border-box; resize: vertical; margin-top: 12px; }
       textarea::placeholder { color: #888; }
+      textarea[readonly] { background: #252525; color: #aaa; min-height: 150px; }
+      input[type="text"] { flex: 1; padding: 6px 10px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; font-size: 14px; }
+      input[type="text"]::placeholder { color: #888; }
       .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
       button { padding: 6px 10px; background: #0e639c; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
       button:hover { background: #1177bb; }
+      button.danger { background: #a31515; }
+      button.danger:hover { background: #c41818; }
+      button.secondary { background: #3c3c3c; }
+      button.secondary:hover { background: #505050; }
       #status { margin-left: 8px; }
       .error { color: #f48771; }
       .ok { color: #89d185; }
       .muted { color: #999; }
-      .header { display: flex; align-items: center; gap: 12px; }
+      .header { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
       .header img { width: 32px; height: 32px; }
-      h1 { color: #e0e0e0; }
+      h1 { color: #e0e0e0; margin: 0; }
+      h2 { color: #e0e0e0; margin: 24px 0 0 0; font-size: 16px; }
+      .source-card { margin-top: 12px; }
+      .source-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+      .source-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #6cb6ff; word-break: break-all; }
+      .source-meta { font-size: 12px; color: #888; }
+      .source-actions { display: flex; gap: 6px; }
+      .source-actions button { padding: 4px 8px; font-size: 12px; }
+      .source-card textarea { margin-top: 8px; }
+      .empty-state { color: #888; font-style: italic; padding-top: 16px; text-align: center; }
+      .example-textarea { font-size: 12px; height: auto; min-height: auto; overflow: hidden; resize: none; }
     </style>
   </head>
   <body>
@@ -25,8 +42,22 @@
       <h1>PigQuery</h1>
     </div>
 
-    <textarea id="payload" spellcheck="false" placeholder="Enter configuration" data-i18n-placeholder="optionsPlaceholder"></textarea>
+    <!-- Example Section -->
+    <h2 data-i18n="optionsExample">Example</h2>
+    <textarea id="example" class="example-textarea" readonly spellcheck="false"></textarea>
 
+    <!-- Remote Sources Section -->
+    <h2 data-i18n="optionsRemoteSources">Remote Sources</h2>
+    <div class="row">
+      <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
+      <button id="addUrl" type="button" data-i18n="optionsAddUrl">Add URL</button>
+      <button id="refreshAll" type="button" class="secondary" data-i18n="optionsRefreshAll">Refresh All</button>
+    </div>
+    <div id="remoteSources"></div>
+
+    <!-- Local Configuration Section -->
+    <h2 data-i18n="optionsLocalConfig">Local Configuration</h2>
+    <textarea id="payload" spellcheck="false" placeholder="Enter configuration" data-i18n-placeholder="optionsPlaceholder"></textarea>
     <div class="row">
       <button id="save" type="button" data-i18n="optionsSave">Save</button>
       <span id="status" class="muted"></span>

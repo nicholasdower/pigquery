@@ -19,10 +19,11 @@ function setConfig(newConfig) {
 }
 
 function loadConfig() {
-  setConfig(common.defaultConfig());
   chrome.storage.local.get(["userPayload"], (result) => {
     if (result.userPayload) {
-      setConfig(JSON.parse(result.userPayload));
+      const sources = JSON.parse(result.userPayload);
+      const allItems = sources.flatMap(source => source.data);
+      setConfig(allItems);
     }
   });
 }

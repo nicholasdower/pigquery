@@ -18,7 +18,7 @@
 //   1. Exact token match: "foo" matches token "foo"
 //   2. Token prefix match: "ord" matches token "orders"
 //   3. Acronym match: "otc" matches "obb_to_cob" (first letter of each token)
-//   4. Token-prefix sequence: "otoc" or "obtco" matches "obb_to_cob"
+//   4. Token-prefix sequence: "otoc" or "obtco" matches "obb_to_cob".
 //
 // Ranking
 //   - Higher-quality match strategies score higher.

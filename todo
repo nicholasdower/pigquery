@@ -1,6 +1,5 @@
 Add light mode.
 Unify styles in extension popup and modal.
-Read config from file or url or Git. Some way to share config.
 Consider allowing multiple configs.
 Create screenshots and/or a gif.
 Publish to web store.
@@ -12,3 +11,5 @@ Maybe support multiple tags.
 Clean up global state in content script.
 Allow override of keyboard shortcuts.
 Link to named queries. Problem is not all users have the same config. Maybe include full query in URL as backup.
+Link to config from no options found message.
+Auto-update remote configs.

@@ -98,6 +98,74 @@ const TRANSLATIONS = {
   noOptionsFound: {
     en: "No options found.",
     de: "Keine Optionen gefunden.",
+  },
+  optionsAddUrl: {
+    en: "Add URL",
+    de: "URL hinzufügen",
+  },
+  optionsUrlPlaceholder: {
+    en: "Enter YAML URL",
+    de: "YAML-URL eingeben",
+  },
+  optionsLocalConfig: {
+    en: "Local Configuration",
+    de: "Lokale Konfiguration",
+  },
+  optionsRemoteSources: {
+    en: "Remote Sources",
+    de: "Remote-Quellen",
+  },
+  optionsLastUpdated: {
+    en: "Last updated: $1",
+    de: "Zuletzt aktualisiert: $1",
+  },
+  optionsRefresh: {
+    en: "Refresh",
+    de: "Aktualisieren",
+  },
+  optionsRemove: {
+    en: "Remove",
+    de: "Entfernen",
+  },
+  optionsRefreshAll: {
+    en: "Refresh All",
+    de: "Alle aktualisieren",
+  },
+  statusFetching: {
+    en: "Fetching...",
+    de: "Wird abgerufen...",
+  },
+  statusFetched: {
+    en: "Fetched successfully",
+    de: "Erfolgreich abgerufen",
+  },
+  statusFetchError: {
+    en: "Fetch error: $1",
+    de: "Abruffehler: $1",
+  },
+  statusPermissionDenied: {
+    en: "Permission denied for this URL",
+    de: "Zugriff auf diese URL verweigert",
+  },
+  statusUrlAdded: {
+    en: "URL added",
+    de: "URL hinzugefügt",
+  },
+  statusUrlRemoved: {
+    en: "URL removed",
+    de: "URL entfernt",
+  },
+  statusInvalidUrl: {
+    en: "Invalid URL",
+    de: "Ungültige URL",
+  },
+  statusInvalidConfigArray: {
+    en: "Invalid Config: array expected",
+    de: "Ungültige Konfiguration: Array erwartet",
+  },
+  optionsExample: {
+    en: "Example",
+    de: "Beispiel",
   }
 };
 
