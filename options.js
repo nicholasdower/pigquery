@@ -58,19 +58,11 @@ async function save() {
     return;
   }
   for (const option of config) {
-    if (typeof option.type !== "string" || option.type.trim() === "") {
-      setStatus(
-        t("statusInvalidConfigTypeMissing"),
-        "error"
-      );
-      return;
-    }
-    if (option.type.trim() !== "snippet" && option.type.trim() !== "site") {
-      setStatus(
-        t("statusInvalidConfigTypeInvalid", option.type),
-        "error"
-      );
-      return;
+    let type;
+    if (option.regex) {
+      type = "site";
+    } else {
+      type = "snippet";
     }
     if (typeof option.name !== "string" || option.name.trim() === "") {
       setStatus(
