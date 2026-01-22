@@ -18,17 +18,22 @@ function setStatus(message, kind = "muted") {
   statusEl.textContent = message;
 }
 
-function safeJsonParse(text) {
+function safeYamlParse(text) {
   try {
-    return { ok: true, value: JSON.parse(text) };
+    return { ok: true, value: jsyaml.load(text) };
   } catch (e) {
     return { ok: false, error: e };
   }
 }
 
+function jsonToYaml(obj) {
+  return jsyaml.dump(obj, { indent: 2, lineWidth: -1, quotingType: '"', forceQuotes: false });
+}
+
 async function load() {
   const data = await chrome.storage.local.get([STORAGE_KEY]);
-  textarea.value = data[STORAGE_KEY] ?? JSON.stringify(common.defaultConfig(), null, 2);
+  const config = data[STORAGE_KEY] ? JSON.parse(data[STORAGE_KEY]) : common.defaultConfig();
+  textarea.value = jsonToYaml(config);
   setStatus(t("statusLoaded"));
 }
 
@@ -36,15 +41,15 @@ async function save() {
   const raw = textarea.value;
   if (raw.trim() === '') {
     await chrome.storage.local.remove(STORAGE_KEY);
-    textarea.value = JSON.stringify(common.defaultConfig(), null, 2);
+    textarea.value = jsonToYaml(common.defaultConfig());
     setStatus(t("statusSaved"), "ok");
     return;
   }
 
-  const parsed = safeJsonParse(raw.trim() === "" ? "null" : raw);
+  const parsed = safeYamlParse(raw);
   if (!parsed.ok) {
     setStatus(
-      t("statusInvalidJson", parsed.error.message),
+      t("statusInvalidYaml", parsed.error.message),
       "error"
     );
     return;
@@ -134,10 +139,10 @@ async function save() {
     }
   }
 
-  const pretty = JSON.stringify(config, null, 2);
-  textarea.value = pretty;
+  const json = JSON.stringify(config, null, 2);
+  textarea.value = jsonToYaml(config);
 
-  await chrome.storage.local.set({ [STORAGE_KEY]: pretty });
+  await chrome.storage.local.set({ [STORAGE_KEY]: json });
 
   setStatus(t("statusSaved"), "ok");
 }

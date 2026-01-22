@@ -39,9 +39,9 @@ const TRANSLATIONS = {
     en: "Saved",
     de: "Gespeichert",
   },
-  statusInvalidJson: {
-    en: "Invalid JSON: $1",
-    de: "Ungültiges JSON: $1",
+  statusInvalidYaml: {
+    en: "Invalid YAML: $1",
+    de: "Ungültiges YAML: $1",
   },
   statusInvalidConfigObject: {
     en: "Invalid Config: array expected",
