@@ -65,9 +65,12 @@ if (query && query.length > 0) {
 
     const editors = document.querySelectorAll('cfc-code-editor');
     if (editors.length === 0) return;
+    const editor = editors[editors.length - 1];
+    const ta = findEditorTextArea(editor);
+    if (!ta) return;
 
     cleanup();
-    insertIntoEditor(editors[editors.length - 1], query.trim());
+    insertIntoEditor(editor, query.trim());
   });
 
   observer.observe(document.body, {
