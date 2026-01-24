@@ -13,3 +13,8 @@ Allow override of keyboard shortcuts.
 Link to named queries. Problem is not all users have the same config. Maybe include full query in URL as backup.
 Link to config from no options found message.
 Auto-update remote configs.
+Add buttons to site link to open in background tab, new window, etc.
+It should be possible to copy a link to a site by right-clicking
+It should be possible to disable groups.
+Once a group is used, maybe this should add a bonus to that group in the search rankings.
+Precreate search index.

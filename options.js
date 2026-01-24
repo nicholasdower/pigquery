@@ -116,7 +116,7 @@ async function fetchYamlFromUrl(url) {
   }
   
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) {
       return { ok: false, error: `HTTP ${response.status}: ${response.statusText}` };
     }
