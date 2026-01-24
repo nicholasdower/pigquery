@@ -239,6 +239,9 @@ const styles = `
     cursor: pointer;
     user-select: none;
     border: 1px solid rgba(255,255,255,0.12);
+    display: block;
+    text-decoration: none;
+    color: inherit;
     background: rgba(255,255,255,0.04);
     font-size: 14px;
     line-height: 1.3;
@@ -497,7 +500,16 @@ function openPopup(options, onOptionSelected) {
     }
 
     filtered.forEach((opt, idx) => {
-      const item = makeEl("div", { className: "pig-modal-item" + (idx === activeIndex ? " active" : "") });
+      const itemClass = "pig-modal-item" + (idx === activeIndex ? " active" : "");
+      const item = opt.url
+        ? makeEl("a", { className: itemClass })
+        : makeEl("div", { className: itemClass });
+
+      if (opt.url) {
+        item.href = opt.url;
+        item.target = "_blank";
+        item.rel = "noopener noreferrer";
+      }
 
       const wrapper = makeEl("div", { className: "pig-modal-item-wrapper" });
 
@@ -678,9 +690,14 @@ document.addEventListener(
       return;
     }
 
-    const matchingOptions = configuration.sites.filter(option => option.regex.test(content));
+    const matchingOptions = configuration.sites
+      .filter(option => option.regex.test(content))
+      .map(option => ({
+        ...option,
+        url: option.url.replace('%s', encodeURIComponent(content))
+      }));
     openPopup(matchingOptions, (option) => {
-      window.open(option.url.replace('%s', encodeURIComponent(content)), "_blank", "noopener,noreferrer");
+      window.open(option.url, "_blank", "noopener,noreferrer");
     });
 
     // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
