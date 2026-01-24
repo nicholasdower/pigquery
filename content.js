@@ -1,4 +1,4 @@
-const common = window.pigquery.common;
+const configModule = window.pigquery.config;
 const i18n = window.pigquery.i18n;
 const search = window.pigquery.search;
 const LOCALE = i18n.getBigQueryLocale();
@@ -18,16 +18,16 @@ function setConfig(newConfig) {
   }
 }
 
-function loadConfig() {
-  chrome.storage.local.get(["userPayload"], (result) => {
-    if (result.userPayload) {
-      const sources = JSON.parse(result.userPayload);
-      const allItems = sources.flatMap(source => source.data);
-      setConfig(allItems);
-    }
-  });
+async function loadConfig() {
+  const sources = await configModule.loadSources();
+  const allItems = sources.flatMap(source => source.data);
+  setConfig(allItems);
 }
 loadConfig();
+
+// Trigger background refresh of remote sources on page load
+chrome.runtime.sendMessage({ action: "refreshRemoteSources" })
+  .catch(() => {}); // Ignore errors if service worker isn't ready
 
 chrome.storage.onChanged.addListener(loadConfig);
 

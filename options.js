@@ -1,11 +1,9 @@
-const common = window.pigquery.common;
+const config = window.pigquery.config;
 const i18n = window.pigquery.i18n;
 const LOCALE = i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
 
 const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
-
-const STORAGE_KEY = "userPayload";
 
 const el = (id) => document.getElementById(id);
 
@@ -18,8 +16,7 @@ const refreshAllBtn = el("refreshAll");
 const remoteSourcesEl = el("remoteSources");
 const exampleEl = el("example");
 
-// Storage format: array of source objects
-// { url: "local" | "https://...", timestamp: number, data: [...config items] }
+// Local cache of sources
 let sources = [];
 
 function setStatus(message, kind = "muted") {
@@ -27,16 +24,12 @@ function setStatus(message, kind = "muted") {
   statusEl.textContent = message;
 }
 
-function safeYamlParse(text) {
-  try {
-    return { ok: true, value: jsyaml.load(text) };
-  } catch (e) {
-    return { ok: false, error: e };
+function setStatusFromResult(result, successKey) {
+  if (result.ok) {
+    setStatus(t(successKey), "ok");
+  } else {
+    setStatus(t(result.errorKey, result.errorSubs), "error");
   }
-}
-
-function jsonToYaml(obj) {
-  return jsyaml.dump(obj, { indent: 2, lineWidth: -1, quotingType: '"', forceQuotes: false });
 }
 
 function formatTimestamp(ts) {
@@ -45,114 +38,10 @@ function formatTimestamp(ts) {
   return date.toLocaleString();
 }
 
-function validateConfigItems(items) {
-  if (!Array.isArray(items)) {
-    return { ok: false, error: t("statusInvalidConfigArray") };
-  }
-  for (const option of items) {
-    let type;
-    if (option.regex) {
-      type = "site";
-    } else {
-      type = "snippet";
-    }
-    if (typeof option.name !== "string" || option.name.trim() === "") {
-      return { ok: false, error: t("statusInvalidConfigNameMissing", type) };
-    }
-    if (typeof option.tag === "string" && option.tag.trim() === "") {
-      return { ok: false, error: t("statusInvalidConfigTagInvalid", type) };
-    }
-    if (option.tag && typeof option.tag !== "string") {
-      return { ok: false, error: t("statusInvalidConfigTagInvalid", type) };
-    }
-    if (typeof option.group !== "string" || option.group.trim() === "") {
-      return { ok: false, error: t("statusInvalidConfigGroupMissing", type) };
-    }
-    if (type === "snippet") {
-      if (typeof option.value !== "string" || option.value.trim() === "") {
-        return { ok: false, error: t("statusInvalidConfigSnippetsValueMissing") };
-      }
-    }
-    if (type === "site") {
-      if (typeof option.regex !== "string" || option.regex.trim() === "") {
-        return { ok: false, error: t("statusInvalidConfigSitesRegexMissing") };
-      }
-      if (typeof option.url !== "string" || option.url.trim() === "") {
-        return { ok: false, error: t("statusInvalidConfigSitesUrlMissing") };
-      }
-      try {
-        new RegExp(option.regex);
-      } catch (e) {
-        return { ok: false, error: t("statusInvalidConfigSitesRegexInvalid") };
-      }
-      if (!option.url.includes("%s")) {
-        return { ok: false, error: t("statusInvalidConfigSitesUrlMissingPlaceholder") };
-      }
-    }
-  }
-  return { ok: true };
-}
-
-async function requestUrlPermission(url) {
-  try {
-    const urlObj = new URL(url);
-    const origin = `${urlObj.origin}/*`;
-    
-    const hasPermission = await chrome.permissions.contains({ origins: [origin] });
-    if (hasPermission) {
-      return true;
-    }
-    
-    return await chrome.permissions.request({ origins: [origin] });
-  } catch (e) {
-    return false;
-  }
-}
-
-async function fetchYamlFromUrl(url) {
-  const granted = await requestUrlPermission(url);
-  if (!granted) {
-    return { ok: false, error: t("statusPermissionDenied") };
-  }
-  
-  try {
-    const response = await fetch(url, { cache: 'no-store' });
-    if (!response.ok) {
-      return { ok: false, error: `HTTP ${response.status}: ${response.statusText}` };
-    }
-    const yamlText = await response.text();
-    const parsed = safeYamlParse(yamlText);
-    if (!parsed.ok) {
-      return { ok: false, error: t("statusInvalidYaml", parsed.error.message) };
-    }
-    const validation = validateConfigItems(parsed.value);
-    if (!validation.ok) {
-      return { ok: false, error: validation.error };
-    }
-    return { ok: true, value: parsed.value };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-}
-
-async function saveToStorage() {
-  const json = JSON.stringify(sources, null, 2);
-  await chrome.storage.local.set({ [STORAGE_KEY]: json });
-}
-
 async function load() {
-  const data = await chrome.storage.local.get([STORAGE_KEY]);
-  sources = data[STORAGE_KEY] ? JSON.parse(data[STORAGE_KEY]) : [];
+  sources = await config.loadSources();
   renderAll();
   setStatus(t("statusLoaded"));
-}
-
-function getLocalSource() {
-  return sources.find(s => s.url === "local");
-}
-
-function getRemoteSources() {
-  return sources.filter(s => s.url !== "local");
 }
 
 function renderAll() {
@@ -161,16 +50,16 @@ function renderAll() {
 }
 
 function renderLocalConfig() {
-  const local = getLocalSource();
+  const local = config.getLocalSource(sources);
   if (local) {
-    textarea.value = jsonToYaml(local.data);
+    textarea.value = config.jsonToYaml(local.data);
   } else {
     textarea.value = "";
   }
 }
 
 function renderRemoteSources() {
-  const remote = getRemoteSources();
+  const remote = config.getRemoteSources(sources);
   
   if (remote.length === 0) {
     remoteSourcesEl.innerHTML = "";
@@ -189,7 +78,7 @@ function renderRemoteSources() {
           <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
         </div>
       </div>
-      <textarea readonly>${escapeHtml(jsonToYaml(source.data))}</textarea>
+      <textarea readonly>${escapeHtml(config.jsonToYaml(source.data))}</textarea>
     </div>
   `).join("");
   
@@ -214,20 +103,20 @@ async function saveLocal() {
   if (raw.trim() === '') {
     // Remove local source if empty
     sources = sources.filter(s => s.url !== "local");
-    await saveToStorage();
+    await config.saveSources(sources);
     setStatus(t("statusSaved"), "ok");
     return;
   }
   
-  const parsed = safeYamlParse(raw);
+  const parsed = config.safeYamlParse(raw);
   if (!parsed.ok) {
     setStatus(t("statusInvalidYaml", parsed.error.message), "error");
     return;
   }
   
-  const validation = validateConfigItems(parsed.value);
+  const validation = config.validateConfigItems(parsed.value);
   if (!validation.ok) {
-    setStatus(validation.error, "error");
+    setStatus(t(validation.errorKey, validation.errorSubs), "error");
     return;
   }
   
@@ -244,8 +133,8 @@ async function saveLocal() {
     sources.unshift(localSource);
   }
   
-  textarea.value = jsonToYaml(parsed.value);
-  await saveToStorage();
+  textarea.value = config.jsonToYaml(parsed.value);
+  await config.saveSources(sources);
   setStatus(t("statusSaved"), "ok");
 }
 
@@ -270,11 +159,18 @@ async function addUrl() {
     return;
   }
   
+  // Request permission for the URL
+  const granted = await config.requestUrlPermission(url);
+  if (!granted) {
+    setStatus(t("statusPermissionDenied"), "error");
+    return;
+  }
+  
   setStatus(t("statusFetching"), "muted");
   
-  const result = await fetchYamlFromUrl(url);
+  const result = await config.fetchYamlFromUrl(url);
   if (!result.ok) {
-    setStatus(t("statusFetchError", result.error), "error");
+    setStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
   
@@ -284,7 +180,7 @@ async function addUrl() {
     data: result.value
   });
   
-  await saveToStorage();
+  await config.saveSources(sources);
   urlInput.value = "";
   renderRemoteSources();
   setStatus(t("statusUrlAdded"), "ok");
@@ -293,9 +189,9 @@ async function addUrl() {
 async function refreshSource(url) {
   setStatus(t("statusFetching"), "muted");
   
-  const result = await fetchYamlFromUrl(url);
+  const result = await config.fetchYamlFromUrl(url);
   if (!result.ok) {
-    setStatus(t("statusFetchError", result.error), "error");
+    setStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
   
@@ -308,27 +204,27 @@ async function refreshSource(url) {
     };
   }
   
-  await saveToStorage();
+  await config.saveSources(sources);
   renderRemoteSources();
   setStatus(t("statusFetched"), "ok");
 }
 
 async function removeSource(url) {
   sources = sources.filter(s => s.url !== url);
-  await saveToStorage();
+  await config.saveSources(sources);
   renderRemoteSources();
   setStatus(t("statusUrlRemoved"), "ok");
 }
 
 async function refreshAll() {
-  const remote = getRemoteSources();
+  const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
   
   setStatus(t("statusFetching"), "muted");
   
   let hasError = false;
   for (const source of remote) {
-    const result = await fetchYamlFromUrl(source.url);
+    const result = await config.fetchYamlFromUrl(source.url);
     if (result.ok) {
       const index = sources.findIndex(s => s.url === source.url);
       if (index >= 0) {
@@ -343,7 +239,7 @@ async function refreshAll() {
     }
   }
   
-  await saveToStorage();
+  await config.saveSources(sources);
   renderRemoteSources();
   
   if (hasError) {

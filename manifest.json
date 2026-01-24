@@ -19,10 +19,13 @@
   "permissions": [
     "storage"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": ["i18n.js", "common.js", "search.js", "content.js"]
+      "js": ["js-yaml.min.js", "i18n.js", "config.js", "search.js", "content.js"]
     }
   ],
   "options_page": "options.html",
