@@ -9,27 +9,24 @@ const el = (id) => document.getElementById(id);
 
 const textarea = el("payload");
 const saveBtn = el("save");
-const statusEl = el("status");
+const localStatusEl = el("localStatus");
+const remoteStatusEl = el("remoteStatus");
 const urlInput = el("urlInput");
 const addUrlBtn = el("addUrl");
 const refreshAllBtn = el("refreshAll");
 const remoteSourcesEl = el("remoteSources");
 const exampleEl = el("example");
 
-// Local cache of sources
 let sources = [];
 
-function setStatus(message, kind = "muted") {
-  statusEl.className = kind;
-  statusEl.textContent = message;
+function setLocalStatus(message, kind = "muted") {
+  localStatusEl.className = "status " + kind;
+  localStatusEl.textContent = message;
 }
 
-function setStatusFromResult(result, successKey) {
-  if (result.ok) {
-    setStatus(t(successKey), "ok");
-  } else {
-    setStatus(t(result.errorKey, result.errorSubs), "error");
-  }
+function setRemoteStatus(message, kind = "muted") {
+  remoteStatusEl.className = "status " + kind;
+  remoteStatusEl.textContent = message;
 }
 
 function formatTimestamp(ts) {
@@ -41,7 +38,6 @@ function formatTimestamp(ts) {
 async function load() {
   sources = await config.loadSources();
   renderAll();
-  setStatus(t("statusLoaded"));
 }
 
 function renderAll() {
@@ -68,29 +64,24 @@ function renderRemoteSources() {
   
   remoteSourcesEl.innerHTML = remote.map((source, index) => {
     const errorHtml = source.error 
-      ? `<div class="source-error">${escapeHtml(t(source.error.key, source.error.subs))}</div>` 
+      ? `<span class="source-status error">${escapeHtml(t(source.error.key, source.error.subs))}</span>` 
       : '';
     return `
       <div class="source-card" data-url="${escapeHtml(source.url)}">
-        <div class="source-header">
-          <div>
-            <div class="source-url">${escapeHtml(source.url)}</div>
-            <div class="source-meta">${t("optionsLastUpdated", formatTimestamp(source.timestamp))}</div>
-            ${errorHtml}
-          </div>
-          <div class="source-actions">
-            <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
-            <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
-          </div>
-        </div>
+        <div class="source-url">${escapeHtml(source.url)}</div>
+        <div class="source-meta">${t("optionsLastUpdated", formatTimestamp(source.timestamp))}</div>
         <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
+        <div class="source-actions">
+          <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
+          <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
+          ${errorHtml}
+        </div>
       </div>
     `;
   }).join("");
-  
-  // Attach event listeners
+
   remoteSourcesEl.querySelectorAll(".refresh-btn").forEach(btn => {
-    btn.addEventListener("click", () => refreshSource(btn.dataset.url));
+    btn.addEventListener("click", () => refreshSource(btn.dataset.url, btn));
   });
   remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
     btn.addEventListener("click", () => removeSource(btn.dataset.url));
@@ -107,22 +98,21 @@ async function saveLocal() {
   const raw = textarea.value;
   
   if (raw.trim() === '') {
-    // Remove local source if empty
     sources = sources.filter(s => s.url !== "local");
     await config.saveSources(sources);
-    setStatus(t("statusSaved"), "ok");
+    setLocalStatus(t("statusSaved"), "ok");
     return;
   }
   
   const parsed = config.safeYamlParse(raw);
   if (!parsed.ok) {
-    setStatus(t("statusInvalidYaml", parsed.error.message), "error");
+    setLocalStatus(t("statusInvalidYaml", parsed.error.message), "error");
     return;
   }
   
   const validation = config.validateConfigItems(parsed.value);
   if (!validation.ok) {
-    setStatus(t(validation.errorKey, validation.errorSubs), "error");
+    setLocalStatus(t(validation.errorKey, validation.errorSubs), "error");
     return;
   }
   
@@ -141,42 +131,40 @@ async function saveLocal() {
   
   textarea.value = config.jsonToYaml(parsed.value);
   await config.saveSources(sources);
-  setStatus(t("statusSaved"), "ok");
+  setLocalStatus(t("statusSaved"), "ok");
 }
 
 async function addUrl() {
   const url = urlInput.value.trim();
   
   if (!url) {
-    setStatus(t("statusInvalidUrl"), "error");
+    setRemoteStatus(t("statusInvalidUrl"), "error");
     return;
   }
   
   try {
     new URL(url);
   } catch (e) {
-    setStatus(t("statusInvalidUrl"), "error");
+    setRemoteStatus(t("statusInvalidUrl"), "error");
     return;
   }
-  
-  // Check if URL already exists
+
   if (sources.find(s => s.url === url)) {
     await refreshSource(url);
     return;
   }
-  
-  // Request permission for the URL
+
   const granted = await config.requestUrlPermission(url);
   if (!granted) {
-    setStatus(t("statusPermissionDenied"), "error");
+    setRemoteStatus(t("statusPermissionDenied"), "error");
     return;
   }
   
-  setStatus(t("statusFetching"), "muted");
+  setRemoteStatus(t("statusFetching"), "muted");
   
   const result = await config.fetchYamlFromUrl(url);
   if (!result.ok) {
-    setStatus(t(result.errorKey, result.errorSubs), "error");
+    setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
   
@@ -190,11 +178,26 @@ async function addUrl() {
   await config.saveSources(sources);
   urlInput.value = "";
   renderRemoteSources();
-  setStatus(t("statusUrlAdded"), "ok");
+  setRemoteStatus(t("statusUrlAdded"), "ok");
 }
 
-async function refreshSource(url) {
-  setStatus(t("statusFetching"), "muted");
+async function refreshSource(url, btn) {
+  if (btn) {
+    btn.disabled = true;
+  }
+
+  const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(url)}"]`);
+  if (card) {
+    const actions = card.querySelector('.source-actions');
+    let status = actions.querySelector('.source-status');
+    if (!status) {
+      status = document.createElement('span');
+      status.className = 'source-status muted';
+      actions.appendChild(status);
+    }
+    status.className = 'source-status muted';
+    status.textContent = t("statusFetching");
+  }
   
   const result = await config.fetchYamlFromUrl(url);
   const index = sources.findIndex(s => s.url === url);
@@ -219,9 +222,9 @@ async function refreshSource(url) {
   renderRemoteSources();
   
   if (result.ok) {
-    setStatus(t("statusFetched"), "ok");
+    setRemoteStatus(t("statusFetched"), "ok");
   } else {
-    setStatus(t(result.errorKey, result.errorSubs), "error");
+    setRemoteStatus("", "muted");
   }
 }
 
@@ -229,14 +232,14 @@ async function removeSource(url) {
   sources = sources.filter(s => s.url !== url);
   await config.saveSources(sources);
   renderRemoteSources();
-  setStatus(t("statusUrlRemoved"), "ok");
+  setRemoteStatus(t("statusUrlRemoved"), "ok");
 }
 
 async function refreshAll() {
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
   
-  setStatus(t("statusFetching"), "muted");
+  setRemoteStatus(t("statusFetching"), "muted");
   
   let failedCount = 0;
   for (const source of remote) {
@@ -264,18 +267,16 @@ async function refreshAll() {
   renderRemoteSources();
   
   if (failedCount > 0) {
-    setStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
+    setRemoteStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
   } else {
-    setStatus(t("statusFetched"), "ok");
+    setRemoteStatus(t("statusFetched"), "ok");
   }
 }
 
-// Event listeners
 saveBtn.addEventListener("click", () => void saveLocal());
 addUrlBtn.addEventListener("click", () => void addUrl());
 refreshAllBtn.addEventListener("click", () => void refreshAll());
 
-// Ctrl/Cmd+S saves
 document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
     e.preventDefault();
@@ -283,7 +284,6 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Enter in URL input adds URL
 urlInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -299,7 +299,6 @@ chrome.storage.onChanged.addListener((changes) => {
   }
 });
 
-// Populate example
 const EXAMPLE_YAML = `- group: shakespeare
   name: shakespeare
   tag: table

@@ -8,7 +8,7 @@
       textarea { width: 100%; min-height: 300px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; padding: 8px; box-sizing: border-box; resize: vertical; margin-top: 12px; }
       textarea::placeholder { color: #888; }
       textarea[readonly] { background: #252525; color: #aaa; min-height: 150px; }
-      input[type="text"] { flex: 1; padding: 6px 10px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; font-size: 14px; }
+      input[type="text"] { width: 100%; padding: 6px 10px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; font-size: 14px; box-sizing: border-box; margin-top: 12px; }
       input[type="text"]::placeholder { color: #888; }
       .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
       button { padding: 6px 10px; background: #0e639c; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
@@ -17,7 +17,7 @@
       button.danger:hover { background: #c41818; }
       button.secondary { background: #3c3c3c; }
       button.secondary:hover { background: #505050; }
-      #status { margin-left: 8px; }
+      .status { font-size: 12px; margin-top: 4px; }
       .error { color: #f48771; }
       .ok { color: #89d185; }
       .muted { color: #999; }
@@ -25,14 +25,13 @@
       .header img { width: 32px; height: 32px; }
       h1 { color: #e0e0e0; margin: 0; }
       h2 { color: #e0e0e0; margin: 24px 0 0 0; font-size: 16px; }
-      .source-card { margin-top: 12px; }
-      .source-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+      .source-card { margin-top: 24px; }
       .source-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #6cb6ff; word-break: break-all; }
-      .source-meta { font-size: 12px; color: #888; }
-      .source-actions { display: flex; gap: 6px; }
-      .source-actions button { padding: 4px 8px; font-size: 12px; }
+      .source-meta { font-size: 12px; color: #888; margin-top: 2px; }
       .source-card textarea { margin-top: 8px; }
-      .source-error { color: #f48771; font-size: 12px; margin-top: 4px; }
+      .source-actions { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+      .source-actions button { padding: 4px 8px; font-size: 12px; }
+      .source-status { font-size: 12px; margin-left: 4px; }
       .empty-state { color: #888; font-style: italic; padding-top: 16px; text-align: center; }
       .example-textarea { font-size: 12px; height: auto; min-height: auto; overflow: hidden; resize: none; }
     </style>
@@ -49,10 +48,11 @@
 
     <!-- Remote Sources Section -->
     <h2 data-i18n="optionsRemoteSources">Remote Sources</h2>
+    <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
     <div class="row">
-      <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
       <button id="addUrl" type="button" data-i18n="optionsAddUrl">Add URL</button>
       <button id="refreshAll" type="button" class="secondary" data-i18n="optionsRefreshAll">Refresh All</button>
+      <span id="remoteStatus" class="muted"></span>
     </div>
     <div id="remoteSources"></div>
 
@@ -61,7 +61,7 @@
     <textarea id="payload" spellcheck="false" placeholder="Enter configuration" data-i18n-placeholder="optionsPlaceholder"></textarea>
     <div class="row">
       <button id="save" type="button" data-i18n="optionsSave">Save</button>
-      <span id="status" class="muted"></span>
+      <span id="localStatus" class="muted"></span>
     </div>
 
     <script src="js-yaml.min.js"></script>
