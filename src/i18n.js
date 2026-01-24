@@ -209,10 +209,10 @@ const TRANSLATIONS = {
     en: "Example",
     de: "Beispiel",
   },
-  // popup.js: Shows oldest remote source update time. $1 = formatted date
-  popupOldestUpdate: {
-    en: "Oldest update: $1",
-    de: "Älteste Aktualisierung: $1",
+  // popup.js: Remote sources last updated timestamp. $1 = formatted date
+  popupLastUpdated: {
+    en: "Last updated: $1",
+    de: "Zuletzt aktualisiert: $1",
   },
   // popup.js: Error indicator when there were one or more errors refreshing remote YAML sources
   popupHasErrors: {

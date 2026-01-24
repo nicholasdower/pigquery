@@ -36,7 +36,7 @@ async function loadStatus() {
   // Build status content
   statusEl.style.display = '';
   statusEl.innerHTML = '';
-  statusEl.appendChild(document.createTextNode(t("popupOldestUpdate", date.toLocaleString())));
+  statusEl.appendChild(document.createTextNode(t("popupLastUpdated", date.toLocaleString())));
 
   if (hasErrors) {
     const errorEl = document.createElement('div');
