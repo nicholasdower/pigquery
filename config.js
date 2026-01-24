@@ -144,42 +144,44 @@
 
   /**
    * Refreshes all remote sources by fetching their URLs.
-   * Updates storage if any sources were refreshed.
-   * Returns { refreshed: number, errors: string[] }
+   * Updates storage with new data or error state.
+   * Returns { refreshed: number, failed: number }
    */
   async function refreshRemoteSources() {
     const sources = await loadSources();
     const remoteSources = getRemoteSources(sources);
     
     if (remoteSources.length === 0) {
-      return { refreshed: 0, errors: [] };
+      return { refreshed: 0, failed: 0 };
     }
 
     let refreshedCount = 0;
-    const errors = [];
+    let failedCount = 0;
 
     for (const source of remoteSources) {
       const result = await fetchYamlFromUrl(source.url);
+      const index = sources.findIndex(s => s.url === source.url);
+      if (index < 0) continue;
+
       if (result.ok) {
-        const index = sources.findIndex(s => s.url === source.url);
-        if (index >= 0) {
-          sources[index] = {
-            url: source.url,
-            timestamp: Date.now(),
-            data: result.value
-          };
-          refreshedCount++;
-        }
+        sources[index] = {
+          url: source.url,
+          timestamp: Date.now(),
+          data: result.value,
+          error: null
+        };
+        refreshedCount++;
       } else {
-        errors.push(`${source.url}: ${result.errorKey}`);
+        sources[index] = {
+          ...sources[index],
+          error: { key: result.errorKey, subs: result.errorSubs }
+        };
+        failedCount++;
       }
     }
 
-    if (refreshedCount > 0) {
-      await saveSources(sources);
-    }
-
-    return { refreshed: refreshedCount, errors };
+    await saveSources(sources);
+    return { refreshed: refreshedCount, failed: failedCount };
   }
 
   // Export to pigquery.config (works in both window and service worker contexts)

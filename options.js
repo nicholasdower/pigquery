@@ -66,21 +66,27 @@ function renderRemoteSources() {
     return;
   }
   
-  remoteSourcesEl.innerHTML = remote.map((source, index) => `
-    <div class="source-card" data-url="${escapeHtml(source.url)}">
-      <div class="source-header">
-        <div>
-          <div class="source-url">${escapeHtml(source.url)}</div>
-          <div class="source-meta">${t("optionsLastUpdated", formatTimestamp(source.timestamp))}</div>
+  remoteSourcesEl.innerHTML = remote.map((source, index) => {
+    const errorHtml = source.error 
+      ? `<div class="source-error">${escapeHtml(t(source.error.key, source.error.subs))}</div>` 
+      : '';
+    return `
+      <div class="source-card" data-url="${escapeHtml(source.url)}">
+        <div class="source-header">
+          <div>
+            <div class="source-url">${escapeHtml(source.url)}</div>
+            <div class="source-meta">${t("optionsLastUpdated", formatTimestamp(source.timestamp))}</div>
+            ${errorHtml}
+          </div>
+          <div class="source-actions">
+            <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
+            <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
+          </div>
         </div>
-        <div class="source-actions">
-          <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
-          <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
-        </div>
+        <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
       </div>
-      <textarea readonly>${escapeHtml(config.jsonToYaml(source.data))}</textarea>
-    </div>
-  `).join("");
+    `;
+  }).join("");
   
   // Attach event listeners
   remoteSourcesEl.querySelectorAll(".refresh-btn").forEach(btn => {
@@ -177,7 +183,8 @@ async function addUrl() {
   sources.push({
     url: url,
     timestamp: Date.now(),
-    data: result.value
+    data: result.value,
+    error: null
   });
   
   await config.saveSources(sources);
@@ -190,23 +197,32 @@ async function refreshSource(url) {
   setStatus(t("statusFetching"), "muted");
   
   const result = await config.fetchYamlFromUrl(url);
-  if (!result.ok) {
-    setStatus(t(result.errorKey, result.errorSubs), "error");
-    return;
-  }
-  
   const index = sources.findIndex(s => s.url === url);
+  
   if (index >= 0) {
-    sources[index] = {
-      url: url,
-      timestamp: Date.now(),
-      data: result.value
-    };
+    if (result.ok) {
+      sources[index] = {
+        url: url,
+        timestamp: Date.now(),
+        data: result.value,
+        error: null
+      };
+    } else {
+      sources[index] = {
+        ...sources[index],
+        error: { key: result.errorKey, subs: result.errorSubs }
+      };
+    }
   }
   
   await config.saveSources(sources);
   renderRemoteSources();
-  setStatus(t("statusFetched"), "ok");
+  
+  if (result.ok) {
+    setStatus(t("statusFetched"), "ok");
+  } else {
+    setStatus(t(result.errorKey, result.errorSubs), "error");
+  }
 }
 
 async function removeSource(url) {
@@ -222,28 +238,33 @@ async function refreshAll() {
   
   setStatus(t("statusFetching"), "muted");
   
-  let hasError = false;
+  let failedCount = 0;
   for (const source of remote) {
     const result = await config.fetchYamlFromUrl(source.url);
+    const index = sources.findIndex(s => s.url === source.url);
+    if (index < 0) continue;
+
     if (result.ok) {
-      const index = sources.findIndex(s => s.url === source.url);
-      if (index >= 0) {
-        sources[index] = {
-          url: source.url,
-          timestamp: Date.now(),
-          data: result.value
-        };
-      }
+      sources[index] = {
+        url: source.url,
+        timestamp: Date.now(),
+        data: result.value,
+        error: null
+      };
     } else {
-      hasError = true;
+      sources[index] = {
+        ...sources[index],
+        error: { key: result.errorKey, subs: result.errorSubs }
+      };
+      failedCount++;
     }
   }
   
   await config.saveSources(sources);
   renderRemoteSources();
   
-  if (hasError) {
-    setStatus(t("statusFetchError", "Some sources failed"), "error");
+  if (failedCount > 0) {
+    setStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
   } else {
     setStatus(t("statusFetched"), "ok");
   }
