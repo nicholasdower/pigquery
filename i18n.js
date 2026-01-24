@@ -166,6 +166,10 @@ const TRANSLATIONS = {
   optionsExample: {
     en: "Example",
     de: "Beispiel",
+  },
+  popupOldestUpdate: {
+    en: "Oldest update: $1",
+    de: "Älteste Aktualisierung: $1",
   }
 };
 

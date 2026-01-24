@@ -64,6 +64,14 @@
         color: #1177bb;
         text-decoration: underline;
       }
+      .status {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid #444;
+        font-size: 12px;
+        color: #888;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
@@ -91,11 +99,15 @@
       </div>
     </div>
 
+    <div class="status" id="status"></div>
+
     <div class="footer">
       <a href="#" id="options-link" data-i18n="extensionOptions">Extension Options</a>
     </div>
 
+    <script src="js-yaml.min.js"></script>
     <script src="i18n.js"></script>
+    <script src="config.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
