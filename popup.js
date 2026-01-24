@@ -29,7 +29,19 @@ async function loadStatus() {
   
   const oldestTimestamp = Math.min(...timestamps);
   const date = new Date(oldestTimestamp);
-  statusEl.textContent = t("popupOldestUpdate", date.toLocaleString());
+  
+  // Check for errors
+  const hasErrors = remote.some(s => s.error);
+  
+  statusEl.innerHTML = '';
+  statusEl.appendChild(document.createTextNode(t("popupOldestUpdate", date.toLocaleString())));
+  
+  if (hasErrors) {
+    const errorEl = document.createElement('div');
+    errorEl.className = 'status-error';
+    errorEl.textContent = t("popupHasErrors");
+    statusEl.appendChild(errorEl);
+  }
 }
 
 loadStatus();

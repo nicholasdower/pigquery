@@ -170,6 +170,10 @@ const TRANSLATIONS = {
   popupOldestUpdate: {
     en: "Oldest update: $1",
     de: "Älteste Aktualisierung: $1",
+  },
+  popupHasErrors: {
+    en: "Some sources have errors",
+    de: "Einige Quellen haben Fehler",
   }
 };
 
