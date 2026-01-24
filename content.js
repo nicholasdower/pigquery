@@ -26,8 +26,7 @@ async function loadConfig() {
 loadConfig();
 
 // Trigger background refresh of remote sources on page load
-chrome.runtime.sendMessage({ action: "refreshRemoteSources" })
-  .catch(() => {}); // Ignore errors if service worker isn't ready
+chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 
 chrome.storage.onChanged.addListener(loadConfig);
 

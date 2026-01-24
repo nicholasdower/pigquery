@@ -51,15 +51,10 @@ async function loadStatus() {
   const refreshBtn = document.createElement('button');
   refreshBtn.className = 'refresh-btn';
   refreshBtn.textContent = t("popupRefresh");
-  refreshBtn.addEventListener('click', async () => {
+  refreshBtn.addEventListener('click', () => {
     refreshBtn.disabled = true;
     refreshBtn.textContent = t("popupRefreshing");
-
-    try {
-      // Trigger a refresh. The storage listener will update the status.
-      await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
-    } catch (e) {
-    }
+    chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
   });
   rowEl.appendChild(refreshBtn);
   statusEl.appendChild(rowEl);
