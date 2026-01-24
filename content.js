@@ -1,4 +1,4 @@
-const configModule = window.pigquery.config;
+const config = window.pigquery.config;
 const i18n = window.pigquery.i18n;
 const search = window.pigquery.search;
 const LOCALE = i18n.getBigQueryLocale();
@@ -6,31 +6,27 @@ i18n.applyI18n(LOCALE);
 
 const ICON_URL = chrome.runtime.getURL("icon.svg");
 
-let config;
+let configuration;
 
-function setConfig(newConfig) {
-  config = {
-    snippets: newConfig.filter(option => !option.url),
-    sites: newConfig.filter(option => option.url).map(option => ({
+async function loadConfiguration() {
+  const sources = await config.loadSources();
+  const allItems = sources.flatMap(source => source.data);
+  configuration = {
+    snippets: allItems.filter(option => !option.url),
+    sites: allItems.filter(option => option.url).map(option => ({
       ...option,
       regex: new RegExp(option.regex),
     })),
-  }
+  };
 }
+loadConfiguration();
 
-async function loadConfig() {
-  const sources = await configModule.loadSources();
-  const allItems = sources.flatMap(source => source.data);
-  setConfig(allItems);
-}
-loadConfig();
-
-// Trigger background refresh of remote sources on page load
+// Trigger background refresh of remote sources on page load.
+// Listen for storage changes to update configuration.
+chrome.storage.onChanged.addListener(loadConfiguration);
 chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 
-chrome.storage.onChanged.addListener(loadConfig);
-
-// Extract and remove the 'pig' query parameter on page load
+// Extract and remove the 'pig' query parameter on page load.
 const url = new URL(window.location.href);
 const queryParam = url.searchParams.get("pig");
 let query = queryParam?.length ? base64Decode(queryParam.trim()).trim() : null;
@@ -609,7 +605,7 @@ document.addEventListener(
         showToast(i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
-      openPopup(config.snippets, (option) => {
+      openPopup(configuration.snippets, (option) => {
         insertIntoEditor(editor, option.value);
       });
       return;
@@ -667,7 +663,7 @@ document.addEventListener(
       return;
     }
 
-    const matchingOptions = config.sites.filter(option => option.regex.test(content));
+    const matchingOptions = configuration.sites.filter(option => option.regex.test(content));
     openPopup(matchingOptions, (option) => {
       window.open(option.url.replace('%s', encodeURIComponent(content)), "_blank", "noopener,noreferrer");
     });
