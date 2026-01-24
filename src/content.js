@@ -10,15 +10,7 @@ let configuration;
 let onConfigurationChange = null;
 
 async function loadConfiguration() {
-  const sources = await config.loadSources();
-  const allItems = sources.flatMap(source => source.data);
-  configuration = {
-    snippets: allItems.filter(option => !option.url),
-    sites: allItems.filter(option => option.url).map(option => ({
-      ...option,
-      regex: new RegExp(option.regex),
-    })),
-  };
+  configuration = await config.loadConfiguration();
   onConfigurationChange?.();
 }
 loadConfiguration();

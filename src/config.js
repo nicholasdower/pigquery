@@ -119,6 +119,22 @@ async function loadSources() {
 }
 
 /**
+ * Loads and processes configuration from all sources.
+ * Returns { snippets: [...], sites: [...] }.
+ */
+async function loadConfiguration() {
+  const sources = await loadSources();
+  const allItems = sources.flatMap(source => source.data);
+  return {
+    snippets: allItems.filter(item => !item.url),
+    sites: allItems.filter(item => item.url).map(item => ({
+      ...item,
+      regex: new RegExp(item.regex),
+    })),
+  };
+}
+
+/**
  * Saves sources to chrome.storage.local.
  */
 async function saveSources(sources) {
@@ -191,6 +207,7 @@ self.pigquery.config = {
   fetchYamlFromUrl,
   requestUrlPermission,
   loadSources,
+  loadConfiguration,
   saveSources,
   getLocalSource,
   getRemoteSources,
