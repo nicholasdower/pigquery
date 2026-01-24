@@ -7,7 +7,7 @@ const TRANSLATIONS = {
   // popup.html: Shortcut label for insert snippet into editor
   shortcutInsert: {
     en: "Insert",
-    de: "Einsetzen",
+    de: "Einfügen",
   },
   // popup.html: Shortcut label for create share link
   shortcutShare: {
@@ -27,7 +27,7 @@ const TRANSLATIONS = {
   // popup.html: Footer link to extension options page
   extensionOptions: {
     en: "Extension Options",
-    de: "Erweiterungsoptionen",
+    de: "Einstellungen",
   },
   // options.html: Local configuration textarea placeholder
   optionsPlaceholder: {
@@ -57,37 +57,37 @@ const TRANSLATIONS = {
   // config.js: YAML validation error. $1 = "snippet" or "site"
   statusInvalidConfigNameMissing: {
     en: "Invalid Config: $1 name missing",
-    de: "Ungültige Konfiguration: $1 name fehlt",
+    de: "Ungültige Konfiguration: name für $1 fehlt",
   },
   // config.js: YAML validation error. $1 = "snippet" or "site"
   statusInvalidConfigTagInvalid: {
     en: "Invalid Config: $1 tag invalid",
-    de: "Ungültige Konfiguration: $1 tag ungültig",
+    de: "Ungültige Konfiguration: tag für $1 ist ungültig",
   },
   // config.js: YAML validation error. $1 = "snippet" or "site"
   statusInvalidConfigGroupMissing: {
     en: "Invalid Config: $1 group missing",
-    de: "Ungültige Konfiguration: $1 group fehlt",
+    de: "Ungültige Konfiguration: group für $1 fehlt",
   },
   // config.js: YAML validation error for snippet
   statusInvalidConfigSnippetsValueMissing: {
     en: "Invalid Config: snippet value missing",
-    de: "Ungültige Konfiguration: snippet value fehlt",
+    de: "Ungültige Konfiguration: value für snippet fehlt",
   },
   // config.js: YAML validation error for site
   statusInvalidConfigSitesRegexMissing: {
     en: "Invalid Config: site regex missing",
-    de: "Ungültige Konfiguration: site regex fehlt",
+    de: "Ungültige Konfiguration: regex für site fehlt",
   },
   // config.js: YAML validation error for site
   statusInvalidConfigSitesUrlMissing: {
     en: "Invalid Config: site url missing",
-    de: "Ungültige Konfiguration: site url fehlt",
+    de: "Ungültige Konfiguration: url für site fehlt",
   },
   // config.js: YAML validation error for site
   statusInvalidConfigSitesRegexInvalid: {
     en: "Invalid Config: site regex invalid",
-    de: "Ungültige Konfiguration: site regex ungültig",
+    de: "Ungültige Konfiguration: regex für site ist ungültig",
   },
   // config.js: YAML validation error for site
   statusInvalidConfigSitesUrlMissingPlaceholder: {
@@ -107,7 +107,7 @@ const TRANSLATIONS = {
   // content.js: Toast when editor not focused while trying to trigger insertion or share link creation
   editorNotFocused: {
     en: "Editor not focused.",
-    de: "Editor nicht fokussiert.",
+    de: "Editor ist nicht fokussiert.",
   },
   // content.js: Toast after copying share link to clipboard
   linkCopied: {
@@ -174,7 +174,7 @@ const TRANSLATIONS = {
     en: "Fetch error: $1",
     de: "Abruffehler: $1",
   },
-  // options.js: Permission denied by user for access to remote YAML source URL
+  // options.js: Permission denied for access to remote YAML source URL
   statusPermissionDenied: {
     en: "Permission denied for this URL",
     de: "Zugriff auf diese URL verweigert",
