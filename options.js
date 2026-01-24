@@ -291,6 +291,14 @@ urlInput.addEventListener("keydown", (e) => {
   }
 });
 
+// Listen for storage changes from other contexts (popup, content script, etc.)
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes[config.STORAGE_KEY]) {
+    sources = JSON.parse(changes[config.STORAGE_KEY].newValue);
+    renderRemoteSources();
+  }
+});
+
 // Populate example
 const EXAMPLE_YAML = `- group: shakespeare
   name: shakespeare
