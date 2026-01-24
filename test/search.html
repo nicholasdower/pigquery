@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pig Query Unit Test</title>
+  <title>PigQuery Search Tests</title>
   <link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
   <style>
     body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <h1>Pig Query Unit Test</h1>
+  <h1>PigQuery Search Tests</h1>
   <div id="results"></div>
 
   <script src="../src/search.js"></script>
@@ -126,6 +126,20 @@
       const result = searchFilter(items, 'query');
       assertEquals(result.length, 1);
       assertEquals(result[0].tag, 'QUERY');
+    });
+
+    group('Late token match (regression)');
+    test('matches token at end of long name', () => {
+      // Bug: "apple" matches at index 4, position penalty makes score negative
+      // Item: group=bubba, name=foos to foos_blah_bar, tag=table
+      const testItems = [
+        { group: 'buckster', tag: 'table', name: 'foos to foos_blah_bar' },
+      ];
+      const r1 = searchFilter(testItems, 'bar');
+      assertEquals(r1.length, 1, 'Should match "bar" at end of name');
+      
+      const r2 = searchFilter(testItems, 'bar_');
+      assertEquals(r2.length, 1, 'Should match "bar_" (trailing underscore ignored)');
     });
 
     group('Field order independence');

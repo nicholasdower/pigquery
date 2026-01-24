@@ -153,7 +153,7 @@ function scoreItem({ group, name, tag }, query) {
   const fieldPerms = permutations(fields);
 
   let totalScore = 0;
-  const POSITION_PENALTY = 25; // Penalty per token index for later matches
+  const POSITION_PENALTY = 5; // Penalty per token index for later matches
 
   // Each query token must match somewhere (AND semantics)
   for (const qt of queryTokens) {
