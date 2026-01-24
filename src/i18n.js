@@ -29,6 +29,11 @@ const TRANSLATIONS = {
     en: "Extension Options",
     de: "Einstellungen",
   },
+  // popup.html: Footer link to report a bug
+  reportBug: {
+    en: "Report a Bug",
+    de: "Fehler melden",
+  },
   // options.html: Local configuration textarea placeholder
   optionsPlaceholder: {
     en: "Enter configuration",
