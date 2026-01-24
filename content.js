@@ -225,6 +225,14 @@ const styles = `
     font-size: 13px;
     user-select: none;
   }
+  .pig-modal-link {
+    color: #6cb6ff;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .pig-modal-link:hover {
+    text-decoration: underline;
+  }
   .pig-modal-item {
     padding: 12px;
     border-radius: 10px;
@@ -476,7 +484,14 @@ function openPopup(options, onOptionSelected) {
 
     if (filtered.length === 0) {
       const empty = makeEl("div", { className: "pig-modal-empty" });
-      empty.textContent = i18n.getMessage("noOptionsFound", LOCALE);
+      empty.textContent = i18n.getMessage("noOptionsFound", LOCALE) + " ";
+      const link = makeEl("a", { className: "pig-modal-link", text: i18n.getMessage("extensionOptions", LOCALE) });
+      link.href = "#";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        chrome.runtime.sendMessage({ action: "openOptionsPage" });
+      });
+      empty.appendChild(link);
       listEl.appendChild(empty);
       return;
     }

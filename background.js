@@ -6,4 +6,7 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.action === "refreshRemoteSources") {
     config.refreshRemoteSources();
   }
+  if (message.action === "openOptionsPage") {
+    chrome.runtime.openOptionsPage();
+  }
 });

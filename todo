@@ -11,7 +11,6 @@ Maybe support multiple tags.
 Clean up global state in content script.
 Allow override of keyboard shortcuts.
 Link to named queries. Problem is not all users have the same config. Maybe include full query in URL as backup.
-Link to config from no options found message.
 Add buttons to site link to open in background tab, new window, etc.
 It should be possible to copy a link to a site by right-clicking
 It should be possible to disable groups.
