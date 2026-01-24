@@ -120,17 +120,30 @@ async function loadSources() {
 
 /**
  * Loads and processes configuration from all sources.
+ * Deduplicates by name+group+tag within snippets and sites separately,
+ * preferring local over remote (last definition wins).
  * Returns { snippets: [...], sites: [...] }.
  */
 async function loadConfiguration() {
   const sources = await loadSources();
-  const allItems = sources.flatMap(source => source.data);
+  // Order remote then local, so local definitions come last and win
+  const allItems = [
+    ...sources.filter(s => s.url !== "local"),
+    ...sources.filter(s => s.url === "local"),
+  ].flatMap(source => source.data);
+
+  // Dedupe: first occurrence order, last occurrence value
+  const dedupe = (items) => {
+    const map = new Map();
+    for (const item of items) {
+      map.set(`${item.name}\0${item.group}\0${item.tag ?? ""}`, item);
+    }
+    return [...map.values()];
+  };
+
   return {
-    snippets: allItems.filter(item => !item.url),
-    sites: allItems.filter(item => item.url).map(item => ({
-      ...item,
-      regex: new RegExp(item.regex),
-    })),
+    snippets: dedupe(allItems.filter(item => !item.url)),
+    sites: dedupe(allItems.filter(item => item.url)).map(item => ({ ...item, regex: new RegExp(item.regex) })),
   };
 }
 
