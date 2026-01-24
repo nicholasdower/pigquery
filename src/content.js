@@ -7,6 +7,7 @@ i18n.applyI18n(LOCALE);
 const ICON_URL = chrome.runtime.getURL("icons/icon.svg");
 
 let configuration;
+let onConfigurationChange = null;
 
 async function loadConfiguration() {
   const sources = await config.loadSources();
@@ -18,6 +19,7 @@ async function loadConfiguration() {
       regex: new RegExp(option.regex),
     })),
   };
+  onConfigurationChange?.();
 }
 loadConfiguration();
 
@@ -390,9 +392,10 @@ function makeEl(tag, { id, className, text } = {}) {
   return el;
 }
 
-function openPopup(options, onOptionSelected) {
+function openPopup(getOptions, onOptionSelected) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
+  let options = getOptions();
   let filtered = options.slice();
   let activeIndex = 0;
 
@@ -403,6 +406,7 @@ function openPopup(options, onOptionSelected) {
 
   function closePopup() {
     if (!overlayEl) return;
+    onConfigurationChange = null;
     overlayEl.remove();
     lastFocusedEl.focus();
   }
@@ -568,6 +572,14 @@ function openPopup(options, onOptionSelected) {
     renderList();
   });
 
+  onConfigurationChange = () => {
+    options = getOptions();
+    const query = (inputEl.value || "").trim().toLowerCase();
+    filtered = search.filter(options, query);
+    activeIndex = 0;
+    renderList();
+  };
+
   header.appendChild(inputEl);
 
   modalEl.appendChild(header);
@@ -632,7 +644,7 @@ document.addEventListener(
         showToast(i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
-      openPopup(configuration.snippets, (option) => {
+      openPopup(() => configuration.snippets, (option) => {
         insertIntoEditor(editor, option.value);
       });
       return;
@@ -690,13 +702,13 @@ document.addEventListener(
       return;
     }
 
-    const matchingOptions = configuration.sites
+    const getMatchingOptions = () => configuration.sites
       .filter(option => option.regex.test(content))
       .map(option => ({
         ...option,
         url: option.url.replace('%s', encodeURIComponent(content))
       }));
-    openPopup(matchingOptions, (option) => {
+    openPopup(getMatchingOptions, (option) => {
       window.open(option.url, "_blank", "noopener,noreferrer");
     });
 
