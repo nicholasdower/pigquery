@@ -174,6 +174,14 @@ const TRANSLATIONS = {
   popupHasErrors: {
     en: "Some sources have errors",
     de: "Einige Quellen haben Fehler",
+  },
+  popupRefresh: {
+    en: "Refresh",
+    de: "Aktualisieren",
+  },
+  popupRefreshing: {
+    en: "Refreshing…",
+    de: "Wird aktualisiert…",
   }
 };
 

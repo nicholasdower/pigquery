@@ -17,6 +17,4 @@ It should be possible to copy a link to a site by right-clicking
 It should be possible to disable groups.
 Once a group is used, maybe this should add a bonus to that group in the search rankings.
 Precreate search index.
-Add a refresh config button to the popup. Show when last refreshed. Show errors.
-Show config-specific errors from last fetch on each remote config.
 Add link to chrome extension settings from popup.
