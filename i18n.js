@@ -232,8 +232,8 @@ function applyI18n(locale) {
   });
 }
 
-window.pigquery ||= {};
-window.pigquery.i18n = {
+self.pigquery ||= {};
+self.pigquery.i18n = {
   getBigQueryLocale,
   getSystemLocale,
   getMessage,

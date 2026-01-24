@@ -217,5 +217,5 @@ function filter(items, query) {
     .map(x => x.item);
 }
 
-window.pigquery ||= {};
-window.pigquery.search = { filter };
+self.pigquery ||= {};
+self.pigquery.search = { filter };

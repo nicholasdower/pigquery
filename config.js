@@ -182,10 +182,8 @@ async function refreshRemoteSources() {
   return { refreshed: refreshedCount, failed: failedCount };
 }
 
-// Export to pigquery.config (works in both window and service worker contexts)
-const global = typeof window !== 'undefined' ? window : self;
-global.pigquery = global.pigquery || {};
-global.pigquery.config = {
+self.pigquery = self.pigquery || {};
+self.pigquery.config = {
   STORAGE_KEY,
   safeYamlParse,
   jsonToYaml,
