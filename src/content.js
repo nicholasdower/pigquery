@@ -4,7 +4,7 @@ const search = window.pigquery.search;
 const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
-const ICON_URL = chrome.runtime.getURL("icon.svg");
+const ICON_URL = chrome.runtime.getURL("icons/icon.svg");
 
 let configuration;
 

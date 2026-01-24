@@ -1,4 +1,4 @@
-importScripts('js-yaml.min.js', 'config.js');
+importScripts('../lib/js-yaml.min.js', 'config.js');
 
 const config = self.pigquery.config;
 

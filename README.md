@@ -1,4 +1,4 @@
-# <picture><img src="icon.svg" height="32px"></img></picture> PigQuery
+# <picture><img src="icons/icon.svg" height="32px"></img></picture> PigQuery
 
 ## Intro
 

@@ -4,10 +4,10 @@
   "version": "1.0",
   "manifest_version": 3,
   "icons": {
-    "16": "icon-16.png",
-    "32": "icon-32.png",
-    "48": "icon-48.png",
-    "128": "icon-128.png"
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
   "host_permissions": [
     "https://console.cloud.google.com/*"
@@ -20,21 +20,21 @@
     "storage"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": ["js-yaml.min.js", "i18n.js", "config.js", "search.js", "content.js"]
+      "js": ["lib/js-yaml.min.js", "src/i18n.js", "src/config.js", "src/search.js", "src/content.js"]
     }
   ],
-  "options_page": "options.html",
+  "options_page": "src/options.html",
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "src/popup.html"
   },
   "web_accessible_resources": [
     {
-      "resources": ["icon.svg"],
+      "resources": ["icons/icon.svg"],
       "matches": ["https://console.cloud.google.com/*"]
     }
   ]
