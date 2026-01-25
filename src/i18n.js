@@ -44,11 +44,6 @@ const TRANSLATIONS = {
     en: "Save",
     de: "Speichern",
   },
-  // options.js: Status after configurations are successfully loaded from storage
-  statusLoaded: {
-    en: "Loaded",
-    de: "Geladen",
-  },
   // options.js: Status after saving local configuration to storage
   statusSaved: {
     en: "Saved",
@@ -193,16 +188,6 @@ const TRANSLATIONS = {
   statusPermissionDenied: {
     en: "Permission denied for this URL",
     de: "Zugriff auf diese URL verweigert",
-  },
-  // options.js: Status after adding remote YAML source URL
-  statusUrlAdded: {
-    en: "URL added",
-    de: "URL hinzugefügt",
-  },
-  // options.js: Status after removing remote YAML source URL
-  statusUrlRemoved: {
-    en: "URL removed",
-    de: "URL entfernt",
   },
   // options.js: Invalid YAML source URL error
   statusInvalidUrl: {
