@@ -18,9 +18,9 @@ function sortSnippets(items, priorityGroup) {
     }
     const groupCmp = a.group.localeCompare(b.group);
     if (groupCmp !== 0) return groupCmp;
-    const nameCmp = a.name.localeCompare(b.name);
-    if (nameCmp !== 0) return nameCmp;
-    return (a.tag ?? "").localeCompare(b.tag ?? "");
+    const tagCmp = (a.tag ?? "").localeCompare(b.tag ?? "");
+    if (tagCmp !== 0) return tagCmp;
+    return a.name.localeCompare(b.name);
   });
 }
 
@@ -33,9 +33,9 @@ function sortSites(items, prioritySite) {
     }
     const groupCmp = a.group.localeCompare(b.group);
     if (groupCmp !== 0) return groupCmp;
-    const nameCmp = a.name.localeCompare(b.name);
-    if (nameCmp !== 0) return nameCmp;
-    return (a.tag ?? "").localeCompare(b.tag ?? "");
+    const tagCmp = (a.tag ?? "").localeCompare(b.tag ?? "");
+    if (tagCmp !== 0) return tagCmp;
+    return a.name.localeCompare(b.name);
   });
 }
 

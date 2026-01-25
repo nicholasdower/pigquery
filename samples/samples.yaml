@@ -1,0 +1,67 @@
+- group: shakespeare
+  name: shakespeare
+  tag: table
+  value: "`bigquery-public-data.samples.shakespeare` s"
+- group: wikipedia
+  name: wikipedia
+  tag: table
+  value: "`bigquery-public-data.samples.wikipedia` w"
+- group: wikipedia
+  name: wikipedia all
+  tag: query
+  value: |-
+    select
+      *
+    from `bigquery-public-data.samples.wikipedia` w
+    limit 100;
+- group: wikipedia
+  name: wikipedia top contributors
+  tag: query
+  value: |-
+    select
+      w.contributor_username, count(*) as contributions
+    from `bigquery-public-data.samples.wikipedia` w
+    group by 1
+    order by 2 desc
+    limit 100;
+- group: wikipedia
+  name: wikipedia most contributions
+  tag: query
+  value: |-
+    select
+      w.title, count(*) as contributions
+    from `bigquery-public-data.samples.wikipedia` w
+    where w.title not like '%Wikipedia%'
+    group by 1
+    order by 2 desc
+    limit 100;
+- group: common
+  name: shakespeare to wikipedia
+  tag: join
+  value: "`bigquery-public-data.samples.shakespeare` s on s.word = w.title"
+- group: shakespeare
+  name: shakespeare top words
+  tag: query
+  value: |-
+    select
+      word, sum(word_count)
+    from `bigquery-public-data.samples.shakespeare` s
+    group by 1
+    order by 2 desc
+    limit 100;
+- group: wikipedia
+  name: timestamp
+  tag: column
+  value: "timestamp_seconds(w.timestamp) as timestamp"
+- group: wikipedia
+  name: timestamp
+  tag: where
+  value: "timestamp_seconds(w.timestamp)"
+- group: wikipedia
+  name: Wikipedia
+  regex: ^.*$
+  url: https://en.wikipedia.org/w/index.php?search=%s
+- group: common
+  name: Google
+  regex: ^.*$
+  url: https://www.google.com/search?q=%s
