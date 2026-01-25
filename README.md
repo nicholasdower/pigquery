@@ -8,5 +8,5 @@ A Chrome Extension offering some BigQuery enhancements.
 
 - Insert saved queries and query snippets.
 - Share queries via URL without saving.
-- Open external site for table cell.
+- Open external sites related to table cell data.
 - Copy table cell content to clipboard.
