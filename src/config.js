@@ -169,12 +169,27 @@ function getRemoteSources(sources) {
   return sources.filter(s => s.url !== "local");
 }
 
+let refreshPromise = null;
+
 /**
  * Refreshes all remote sources by fetching their URLs.
  * Updates storage with new data or error state.
  * Returns { refreshed: number, failed: number }
  */
 async function refreshRemoteSources() {
+  if (refreshPromise) {
+    await refreshPromise;
+  }
+
+  refreshPromise = doRefreshRemoteSources();
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+async function doRefreshRemoteSources() {
   const sources = await loadSources();
   const remoteSources = getRemoteSources(sources);
 
@@ -211,6 +226,51 @@ async function refreshRemoteSources() {
   return { refreshed: refreshedCount, failed: failedCount };
 }
 
+/**
+ * Refreshes a single remote source by URL.
+ * Waits for any in-progress refresh to complete first.
+ * Returns { ok: true } or { ok: false, errorKey, errorSubs }
+ */
+async function refreshSource(url) {
+  if (refreshPromise) {
+    await refreshPromise;
+  }
+
+  refreshPromise = doRefreshSource(url);
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+async function doRefreshSource(url) {
+  const sources = await loadSources();
+  const index = sources.findIndex(s => s.url === url);
+  if (index < 0) {
+    return { ok: false, errorKey: "statusSourceNotFound" };
+  }
+
+  const result = await fetchYamlFromUrl(url);
+
+  if (result.ok) {
+    sources[index] = {
+      url: url,
+      timestamp: Date.now(),
+      data: result.value,
+      error: null
+    };
+  } else {
+    sources[index] = {
+      ...sources[index],
+      error: { key: result.errorKey, subs: result.errorSubs }
+    };
+  }
+
+  await saveSources(sources);
+  return result.ok ? { ok: true } : { ok: false, errorKey: result.errorKey, errorSubs: result.errorSubs };
+}
+
 self.pigquery = self.pigquery || {};
 self.pigquery.config = {
   STORAGE_KEY,
@@ -224,5 +284,6 @@ self.pigquery.config = {
   saveSources,
   getLocalSource,
   getRemoteSources,
-  refreshRemoteSources
+  refreshRemoteSources,
+  refreshSource
 };

@@ -4,10 +4,16 @@ const config = self.pigquery.config;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "refreshRemoteSources") {
-    config.refreshRemoteSources().then(() => {
-      sendResponse({ done: true });
+    config.refreshRemoteSources().then((result) => {
+      sendResponse(result);
     });
-    return true; // Keep channel open for async response
+    return true;
+  }
+  if (message.action === "refreshSource") {
+    config.refreshSource(message.url).then((result) => {
+      sendResponse(result);
+    });
+    return true;
   }
   if (message.action === "openOptionsPage") {
     chrome.runtime.openOptionsPage();

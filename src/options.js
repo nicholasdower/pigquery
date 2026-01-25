@@ -230,27 +230,7 @@ async function refreshSource(url) {
     meta.className = 'source-meta muted';
     meta.textContent = t("statusRefreshing");
 
-    const result = await config.fetchYamlFromUrl(url);
-    const index = sources.findIndex(s => s.url === url);
-
-    if (index >= 0) {
-      if (result.ok) {
-        sources[index] = {
-          url: url,
-          timestamp: Date.now(),
-          data: result.value,
-          error: null
-        };
-      } else {
-        sources[index] = {
-          ...sources[index],
-          error: { key: result.errorKey, subs: result.errorSubs }
-        };
-      }
-    }
-
-    await config.saveSources(sources);
-    renderRemoteSources();
+    await chrome.runtime.sendMessage({ action: "refreshSource", url });
   } finally {
     setBusy(false);
   }
@@ -290,32 +270,9 @@ async function refreshAll() {
       }
     }
 
-    let failedCount = 0;
-    for (const source of remote) {
-      const result = await config.fetchYamlFromUrl(source.url);
-      const index = sources.findIndex(s => s.url === source.url);
-      if (index < 0) continue;
+    const result = await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 
-      if (result.ok) {
-        sources[index] = {
-          url: source.url,
-          timestamp: Date.now(),
-          data: result.value,
-          error: null
-        };
-      } else {
-        sources[index] = {
-          ...sources[index],
-          error: { key: result.errorKey, subs: result.errorSubs }
-        };
-        failedCount++;
-      }
-    }
-
-    await config.saveSources(sources);
-    renderRemoteSources();
-
-    if (failedCount > 0) {
+    if (result.failed > 0) {
       setRemoteStatus(t("statusRefreshAllFailed"), "error");
     } else {
       setRemoteStatus(t("statusFetched"), "ok");
