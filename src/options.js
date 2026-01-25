@@ -69,13 +69,17 @@ function renderRemoteSources() {
       : t("optionsLastUpdated", formatTimestamp(source.timestamp));
     return `
       <div class="source-card" data-url="${escapeHtml(source.url)}">
-        <div class="source-url">${escapeHtml(source.url)}</div>
-        <div class="${metaClass}">${escapeHtml(metaText)}</div>
-        <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
-        <div class="source-actions">
-          <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
-          <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
+        <div class="source-header">
+          <div class="source-info">
+            <div class="source-url">${escapeHtml(source.url)}</div>
+            <div class="${metaClass}">${escapeHtml(metaText)}</div>
+          </div>
+          <div class="source-actions">
+            <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
+            <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
+          </div>
         </div>
+        <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
       </div>
     `;
   }).join("");
