@@ -9,23 +9,41 @@ const ICON_URL = chrome.runtime.getURL("icons/icon.svg");
 let configuration;
 let onConfigurationChange = null;
 
+function sortSnippets(items, priorityGroup) {
+  return items.slice().sort((a, b) => {
+    if (priorityGroup) {
+      const aIsLast = a.group === priorityGroup;
+      const bIsLast = b.group === priorityGroup;
+      if (aIsLast !== bIsLast) return aIsLast ? -1 : 1;
+    }
+    const groupCmp = a.group.localeCompare(b.group);
+    if (groupCmp !== 0) return groupCmp;
+    const nameCmp = a.name.localeCompare(b.name);
+    if (nameCmp !== 0) return nameCmp;
+    return (a.tag ?? "").localeCompare(b.tag ?? "");
+  });
+}
+
+function sortSites(items, prioritySite) {
+  return items.slice().sort((a, b) => {
+    if (prioritySite) {
+      const aIsLast = a.group === prioritySite.group && a.name === prioritySite.name && a.tag === prioritySite.tag;
+      const bIsLast = b.group === prioritySite.group && b.name === prioritySite.name && b.tag === prioritySite.tag;
+      if (aIsLast !== bIsLast) return aIsLast ? -1 : 1;
+    }
+    const groupCmp = a.group.localeCompare(b.group);
+    if (groupCmp !== 0) return groupCmp;
+    const nameCmp = a.name.localeCompare(b.name);
+    if (nameCmp !== 0) return nameCmp;
+    return (a.tag ?? "").localeCompare(b.tag ?? "");
+  });
+}
+
 async function loadConfiguration() {
   const loaded = await config.loadConfiguration();
-
-  // Sort by group, then name, then tag
-  const sortItems = (items) => {
-    return items.sort((a, b) => {
-      const groupCmp = a.group.localeCompare(b.group);
-      if (groupCmp !== 0) return groupCmp;
-      const nameCmp = a.name.localeCompare(b.name);
-      if (nameCmp !== 0) return nameCmp;
-      return (a.tag ?? "").localeCompare(b.tag ?? "");
-    });
-  };
-
   configuration = {
-    snippets: sortItems(loaded.snippets),
-    sites: sortItems(loaded.sites),
+    snippets: sortSnippets(loaded.snippets, null),
+    sites: sortSites(loaded.sites, null),
   };
   onConfigurationChange?.();
 }
@@ -656,6 +674,7 @@ document.addEventListener(
         return;
       }
       openPopup(() => configuration.snippets, (option) => {
+        configuration.snippets = sortSnippets(configuration.snippets, option.group);
         insertIntoEditor(editor, option.value);
       });
       return;
@@ -720,6 +739,7 @@ document.addEventListener(
         url: option.url.replace('%s', encodeURIComponent(content))
       }));
     openPopup(getMatchingOptions, (option) => {
+      configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
       window.open(option.url, "_blank", "noopener,noreferrer");
     });
 
