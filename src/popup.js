@@ -10,8 +10,22 @@ document.getElementById('options-link').addEventListener('click', (e) => {
   chrome.runtime.openOptionsPage();
 });
 
+const statusEl = document.getElementById('status');
+const statusTextEl = document.getElementById('status-text');
+const statusErrorEl = document.getElementById('status-error');
+const refreshBtn = document.getElementById('refresh-btn');
+
+refreshBtn.textContent = t("popupRefresh");
+refreshBtn.addEventListener('click', () => {
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = t("popupRefreshing");
+  chrome.runtime.sendMessage({ action: "refreshRemoteSources" }, () => {
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = t("popupRefresh");
+  });
+});
+
 async function loadStatus() {
-  const statusEl = document.getElementById('status');
   const sources = await config.loadSources();
   const remote = config.getRemoteSources(sources);
 
@@ -33,33 +47,11 @@ async function loadStatus() {
   // Check for errors
   const hasErrors = remote.some(s => s.error);
 
-  // Build status content
+  // Update status content
   statusEl.style.display = '';
-  statusEl.innerHTML = '';
-  statusEl.appendChild(document.createTextNode(t("popupLastUpdated", date.toLocaleString())));
-
-  if (hasErrors) {
-    const errorEl = document.createElement('div');
-    errorEl.className = 'status-error';
-    errorEl.textContent = t("popupHasErrors");
-    statusEl.appendChild(errorEl);
-  }
-
-  const rowEl = document.createElement('div');
-  rowEl.className = 'status-row';
-
-  const refreshBtn = document.createElement('button');
-  refreshBtn.className = 'refresh-btn';
-  refreshBtn.textContent = t("popupRefresh");
-  refreshBtn.addEventListener('click', () => {
-    refreshBtn.disabled = true;
-    refreshBtn.textContent = t("popupRefreshing");
-    chrome.runtime.sendMessage({ action: "refreshRemoteSources" }, () => {
-      loadStatus();
-    });
-  });
-  rowEl.appendChild(refreshBtn);
-  statusEl.appendChild(rowEl);
+  statusTextEl.textContent = t("popupLastUpdated", date.toLocaleString());
+  statusErrorEl.textContent = hasErrors ? t("popupHasErrors") : '';
+  statusErrorEl.style.display = hasErrors ? '' : 'none';
 }
 
 // Listen for storage changes to update status
