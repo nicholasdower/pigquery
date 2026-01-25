@@ -11,3 +11,4 @@ Once a group is used, maybe this should add a bonus to that group in the search 
 Precreate search index.
 Add link to chrome extension settings from popup.
 Log errors somewhere
+Handle long urls on options.

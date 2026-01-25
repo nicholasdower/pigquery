@@ -18,6 +18,17 @@ const remoteSourcesEl = el("remoteSources");
 const exampleEl = el("example");
 
 let sources = [];
+let busy = false;
+
+function setBusy(value) {
+  busy = value;
+  saveBtn.disabled = value;
+  addUrlBtn.disabled = value;
+  refreshAllBtn.disabled = value;
+  remoteSourcesEl.querySelectorAll(".refresh-btn, .remove-btn").forEach(btn => {
+    btn.disabled = value;
+  });
+}
 
 function setLocalStatus(message, kind = "muted") {
   localStatusEl.className = "status " + kind;
@@ -85,7 +96,7 @@ function renderRemoteSources() {
   }).join("");
 
   remoteSourcesEl.querySelectorAll(".refresh-btn").forEach(btn => {
-    btn.addEventListener("click", () => refreshSource(btn.dataset.url, btn));
+    btn.addEventListener("click", () => refreshSource(btn.dataset.url));
   });
   remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
     btn.addEventListener("click", () => removeSource(btn.dataset.url));
@@ -99,12 +110,19 @@ function escapeHtml(str) {
 }
 
 async function saveLocal() {
+  if (busy) return;
+  
   const raw = textarea.value;
 
   if (raw.trim() === '') {
-    sources = sources.filter(s => s.url !== "local");
-    await config.saveSources(sources);
-    setLocalStatus(t("statusSaved"), "ok");
+    setBusy(true);
+    try {
+      sources = sources.filter(s => s.url !== "local");
+      await config.saveSources(sources);
+      setLocalStatus(t("statusSaved"), "ok");
+    } finally {
+      setBusy(false);
+    }
     return;
   }
 
@@ -120,25 +138,32 @@ async function saveLocal() {
     return;
   }
 
-  const localIndex = sources.findIndex(s => s.url === "local");
-  const localSource = {
-    url: "local",
-    timestamp: Date.now(),
-    data: parsed.value
-  };
+  setBusy(true);
+  try {
+    const localIndex = sources.findIndex(s => s.url === "local");
+    const localSource = {
+      url: "local",
+      timestamp: Date.now(),
+      data: parsed.value
+    };
 
-  if (localIndex >= 0) {
-    sources[localIndex] = localSource;
-  } else {
-    sources.unshift(localSource);
+    if (localIndex >= 0) {
+      sources[localIndex] = localSource;
+    } else {
+      sources.unshift(localSource);
+    }
+
+    textarea.value = config.jsonToYaml(parsed.value);
+    await config.saveSources(sources);
+    setLocalStatus(t("statusSaved"), "ok");
+  } finally {
+    setBusy(false);
   }
-
-  textarea.value = config.jsonToYaml(parsed.value);
-  await config.saveSources(sources);
-  setLocalStatus(t("statusSaved"), "ok");
 }
 
 async function addUrl() {
+  if (busy) return;
+  
   const url = urlInput.value.trim();
 
   if (!url) {
@@ -164,113 +189,135 @@ async function addUrl() {
     return;
   }
 
-  setRemoteStatus(t("statusFetching"), "muted");
+  setBusy(true);
+  try {
+    setRemoteStatus(t("statusFetching"), "muted");
 
-  const result = await config.fetchYamlFromUrl(url);
-  if (!result.ok) {
-    setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
-    return;
+    const result = await config.fetchYamlFromUrl(url);
+    if (!result.ok) {
+      setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
+      return;
+    }
+
+    sources.push({
+      url: url,
+      timestamp: Date.now(),
+      data: result.value,
+      error: null
+    });
+
+    await config.saveSources(sources);
+    urlInput.value = "";
+    renderRemoteSources();
+    setRemoteStatus("", "muted");
+  } finally {
+    setBusy(false);
   }
-
-  sources.push({
-    url: url,
-    timestamp: Date.now(),
-    data: result.value,
-    error: null
-  });
-
-  await config.saveSources(sources);
-  urlInput.value = "";
-  renderRemoteSources();
-  setRemoteStatus(t("statusUrlAdded"), "ok");
 }
 
-async function refreshSource(url, btn) {
-  if (btn) {
-    btn.disabled = true;
-  }
+async function refreshSource(url) {
+  if (busy) return;
+  
+  setBusy(true);
+  try {
+    setRemoteStatus("", "muted");
+    const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(url)}"]`);
+    const meta = card.querySelector('.source-meta');
+    meta.className = 'source-meta muted';
+    meta.textContent = t("statusRefreshing");
 
-  setRemoteStatus("", "muted");
-  const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(url)}"]`);
-  const meta = card.querySelector('.source-meta');
-  meta.className = 'source-meta muted';
-  meta.textContent = t("statusRefreshing");
+    const result = await config.fetchYamlFromUrl(url);
+    const index = sources.findIndex(s => s.url === url);
 
-  const result = await config.fetchYamlFromUrl(url);
-  const index = sources.findIndex(s => s.url === url);
-
-  if (index >= 0) {
-    if (result.ok) {
-      sources[index] = {
-        url: url,
-        timestamp: Date.now(),
-        data: result.value,
-        error: null
-      };
-    } else {
-      sources[index] = {
-        ...sources[index],
-        error: { key: result.errorKey, subs: result.errorSubs }
-      };
+    if (index >= 0) {
+      if (result.ok) {
+        sources[index] = {
+          url: url,
+          timestamp: Date.now(),
+          data: result.value,
+          error: null
+        };
+      } else {
+        sources[index] = {
+          ...sources[index],
+          error: { key: result.errorKey, subs: result.errorSubs }
+        };
+      }
     }
-  }
 
-  await config.saveSources(sources);
-  renderRemoteSources();
+    await config.saveSources(sources);
+    renderRemoteSources();
+  } finally {
+    setBusy(false);
+  }
 }
 
 async function removeSource(url) {
-  sources = sources.filter(s => s.url !== url);
-  await config.saveSources(sources);
-  renderRemoteSources();
-  setRemoteStatus("", "muted");
+  if (busy) return;
+  
+  setBusy(true);
+  try {
+    sources = sources.filter(s => s.url !== url);
+    await config.saveSources(sources);
+    renderRemoteSources();
+    setRemoteStatus("", "muted");
+  } finally {
+    setBusy(false);
+  }
 }
 
 async function refreshAll() {
+  if (busy) return;
+  
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
 
-  setRemoteStatus("", "muted");
+  setBusy(true);
+  try {
+    setRemoteStatus("", "muted");
 
-  // Show refreshing state on all sources
-  for (const source of remote) {
-    const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(source.url)}"]`);
-    if (card) {
-      const meta = card.querySelector('.source-meta');
-      meta.className = 'source-meta muted';
-      meta.textContent = t("statusRefreshing");
+    // Show refreshing state on all sources
+    for (const source of remote) {
+      const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(source.url)}"]`);
+      if (card) {
+        const meta = card.querySelector('.source-meta');
+        meta.className = 'source-meta muted';
+        meta.textContent = t("statusRefreshing");
+      }
     }
-  }
 
-  let failedCount = 0;
-  for (const source of remote) {
-    const result = await config.fetchYamlFromUrl(source.url);
-    const index = sources.findIndex(s => s.url === source.url);
-    if (index < 0) continue;
+    let failedCount = 0;
+    for (const source of remote) {
+      const result = await config.fetchYamlFromUrl(source.url);
+      const index = sources.findIndex(s => s.url === source.url);
+      if (index < 0) continue;
 
-    if (result.ok) {
-      sources[index] = {
-        url: source.url,
-        timestamp: Date.now(),
-        data: result.value,
-        error: null
-      };
+      if (result.ok) {
+        sources[index] = {
+          url: source.url,
+          timestamp: Date.now(),
+          data: result.value,
+          error: null
+        };
+      } else {
+        sources[index] = {
+          ...sources[index],
+          error: { key: result.errorKey, subs: result.errorSubs }
+        };
+        failedCount++;
+      }
+    }
+
+    await config.saveSources(sources);
+    renderRemoteSources();
+
+    if (failedCount > 0) {
+      setRemoteStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
     } else {
-      sources[index] = {
-        ...sources[index],
-        error: { key: result.errorKey, subs: result.errorSubs }
-      };
-      failedCount++;
+      setRemoteStatus(t("statusFetched"), "ok");
     }
-  }
-
-  await config.saveSources(sources);
-  renderRemoteSources();
-
-  if (failedCount > 0) {
-    setRemoteStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
-  } else {
-    setRemoteStatus(t("statusFetched"), "ok");
+  } finally {
+    setBusy(false);
   }
 }
 
