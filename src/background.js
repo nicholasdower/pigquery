@@ -9,8 +9,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
-  if (message.action === "refreshSource") {
-    config.refreshSource(message.url).then((result) => {
+  if (message.action === "addSource") {
+    config.addSource(message.url).then((result) => {
       sendResponse(result);
     });
     return true;

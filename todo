@@ -11,4 +11,3 @@ Precreate search index.
 Log errors somewhere
 Show toast or popup on bigquery when refreshing fails.
 Change icon when there are refresh errors.
-Ensure refresh and add remote calls don't compete (popup vs. content vs. options)

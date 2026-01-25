@@ -169,7 +169,19 @@ function getRemoteSources(sources) {
   return sources.filter(s => s.url !== "local");
 }
 
-let refreshPromise = null;
+const BUSY_KEY = "busy";
+let operationPromise = null;
+
+/**
+ * Updates the busy state in session storage.
+ */
+async function setBusyState(type) {
+  if (type) {
+    await chrome.storage.session.set({ [BUSY_KEY]: type });
+  } else {
+    await chrome.storage.session.remove(BUSY_KEY);
+  }
+}
 
 /**
  * Refreshes all remote sources by fetching their URLs.
@@ -177,15 +189,18 @@ let refreshPromise = null;
  * Returns { refreshed: number, failed: number }
  */
 async function refreshRemoteSources() {
-  if (refreshPromise) {
-    await refreshPromise;
+  await setBusyState('refreshing');
+
+  if (operationPromise) {
+    await operationPromise;
   }
 
-  refreshPromise = doRefreshRemoteSources();
+  operationPromise = doRefreshRemoteSources();
   try {
-    return await refreshPromise;
+    return await operationPromise;
   } finally {
-    refreshPromise = null;
+    operationPromise = null;
+    await setBusyState(null);
   }
 }
 
@@ -227,53 +242,53 @@ async function doRefreshRemoteSources() {
 }
 
 /**
- * Refreshes a single remote source by URL.
- * Waits for any in-progress refresh to complete first.
+ * Adds a new remote source by URL.
+ * Queues behind any in-progress operations.
  * Returns { ok: true } or { ok: false, errorKey, errorSubs }
  */
-async function refreshSource(url) {
-  if (refreshPromise) {
-    await refreshPromise;
+async function addSource(url) {
+  await setBusyState('adding');
+
+  if (operationPromise) {
+    await operationPromise;
   }
 
-  refreshPromise = doRefreshSource(url);
+  operationPromise = doAddSource(url);
   try {
-    return await refreshPromise;
+    return await operationPromise;
   } finally {
-    refreshPromise = null;
+    operationPromise = null;
+    await setBusyState(null);
   }
 }
 
-async function doRefreshSource(url) {
+async function doAddSource(url) {
   const sources = await loadSources();
-  const index = sources.findIndex(s => s.url === url);
-  if (index < 0) {
-    return { ok: false, errorKey: "statusSourceNotFound" };
+
+  if (sources.find(s => s.url === url)) {
+    return { ok: false, errorKey: "statusUrlExists" };
   }
 
   const result = await fetchYamlFromUrl(url);
-
-  if (result.ok) {
-    sources[index] = {
-      url: url,
-      timestamp: Date.now(),
-      data: result.value,
-      error: null
-    };
-  } else {
-    sources[index] = {
-      ...sources[index],
-      error: { key: result.errorKey, subs: result.errorSubs }
-    };
+  if (!result.ok) {
+    return result;
   }
 
+  sources.push({
+    url: url,
+    timestamp: Date.now(),
+    data: result.value,
+    error: null
+  });
+
   await saveSources(sources);
-  return result.ok ? { ok: true } : { ok: false, errorKey: result.errorKey, errorSubs: result.errorSubs };
+  return { ok: true };
 }
 
 self.pigquery = self.pigquery || {};
 self.pigquery.config = {
   STORAGE_KEY,
+  BUSY_KEY,
   safeYamlParse,
   jsonToYaml,
   validateConfigItems,
@@ -285,5 +300,5 @@ self.pigquery.config = {
   getLocalSource,
   getRemoteSources,
   refreshRemoteSources,
-  refreshSource
+  addSource
 };

@@ -17,13 +17,17 @@ const refreshBtn = document.getElementById('refresh-btn');
 
 refreshBtn.textContent = t("popupRefresh");
 refreshBtn.addEventListener('click', () => {
-  refreshBtn.disabled = true;
-  refreshBtn.textContent = t("popupRefreshing");
-  chrome.runtime.sendMessage({ action: "refreshRemoteSources" }, () => {
-    refreshBtn.disabled = false;
-    refreshBtn.textContent = t("popupRefresh");
-  });
+  chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 });
+
+function updateBusyUI(busy) {
+  refreshBtn.disabled = !!busy;
+  refreshBtn.textContent = busy === 'refreshing' ? t("popupRefreshing") : t("popupRefresh");
+  if (busy === 'refreshing') {
+    statusTextEl.textContent = t("popupRefreshing");
+    statusErrorEl.style.display = 'none';
+  }
+}
 
 async function loadStatus() {
   const sources = await config.loadSources();
@@ -54,11 +58,25 @@ async function loadStatus() {
   statusErrorEl.style.display = hasErrors ? '' : 'none';
 }
 
-// Listen for storage changes to update status
-chrome.storage.onChanged.addListener((changes) => {
-  if (changes[config.STORAGE_KEY]) {
+// Listen for storage changes
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes[config.STORAGE_KEY]) {
     loadStatus();
+  }
+  if (areaName === 'session' && changes[config.BUSY_KEY]) {
+    updateBusyUI(changes[config.BUSY_KEY].newValue);
+    // When operation completes, reload status
+    if (!changes[config.BUSY_KEY].newValue) {
+      loadStatus();
+    }
   }
 });
 
-loadStatus();
+// Initialize
+async function init() {
+  const { [config.BUSY_KEY]: busy } = await chrome.storage.session.get(config.BUSY_KEY);
+  updateBusyUI(busy);
+  loadStatus();
+}
+
+init();

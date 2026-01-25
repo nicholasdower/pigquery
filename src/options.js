@@ -18,15 +18,14 @@ const remoteSourcesEl = el("remoteSources");
 const exampleEl = el("example");
 
 let sources = [];
-let busy = false;
+let busy = null; // Current operation: 'refreshing', 'adding', or null
 
-function setBusy(value) {
-  busy = value;
-  saveBtn.disabled = value;
-  addUrlBtn.disabled = value;
-  refreshAllBtn.disabled = value;
-  remoteSourcesEl.querySelectorAll(".refresh-btn, .remove-btn").forEach(btn => {
-    btn.disabled = value;
+function updateButtonStates() {
+  saveBtn.disabled = !!busy;
+  addUrlBtn.disabled = !!busy;
+  refreshAllBtn.disabled = !!busy;
+  remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.disabled = !!busy;
   });
 }
 
@@ -90,7 +89,6 @@ function renderRemoteSources() {
             <div class="${metaClass}">${escapeHtml(metaText)}</div>
           </div>
           <div class="source-actions">
-            <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
             <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
           </div>
         </div>
@@ -99,12 +97,12 @@ function renderRemoteSources() {
     `;
   }).join("");
 
-  remoteSourcesEl.querySelectorAll(".refresh-btn").forEach(btn => {
-    btn.addEventListener("click", () => refreshSource(btn.dataset.url));
-  });
   remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
     btn.addEventListener("click", () => removeSource(btn.dataset.url));
   });
+
+  applyBusyState();
+  updateButtonStates();
 }
 
 function escapeHtml(str) {
@@ -113,20 +111,53 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+/**
+ * Applies the current busy state to source cards.
+ * Only shows "Refreshing..." when actually refreshing, not when adding.
+ */
+function applyBusyState() {
+  const remote = config.getRemoteSources(sources);
+  for (const source of remote) {
+    const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(source.url)}"]`);
+    if (!card) continue;
+
+    const meta = card.querySelector('.source-meta');
+    if (busy === 'refreshing') {
+      meta.className = 'source-meta muted';
+      meta.textContent = t("statusRefreshing");
+    } else {
+      const metaClass = source.error ? 'source-meta error' : 'source-meta';
+      const metaText = source.error
+        ? t("optionsLastUpdatedError", [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+        : t("optionsLastUpdated", formatTimestamp(source.timestamp));
+      meta.className = metaClass;
+      meta.textContent = metaText;
+    }
+  }
+}
+
+function onBusyStateChanged(newBusy) {
+  busy = newBusy;
+
+  applyBusyState();
+  updateButtonStates();
+
+  if (busy === 'refreshing') {
+    setRemoteStatus(t("statusRefreshing"), "muted");
+  } else if (busy === 'adding') {
+    setRemoteStatus(t("statusFetching"), "muted");
+  }
+}
+
 async function saveLocal() {
   if (busy) return;
   
   const raw = textarea.value;
 
   if (raw.trim() === '') {
-    setBusy(true);
-    try {
-      sources = sources.filter(s => s.url !== "local");
-      await config.saveSources(sources);
-      setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
-    } finally {
-      setBusy(false);
-    }
+    sources = sources.filter(s => s.url !== "local");
+    await config.saveSources(sources);
+    setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
     return;
   }
 
@@ -142,27 +173,22 @@ async function saveLocal() {
     return;
   }
 
-  setBusy(true);
-  try {
-    const localIndex = sources.findIndex(s => s.url === "local");
-    const localSource = {
-      url: "local",
-      timestamp: Date.now(),
-      data: parsed.value
-    };
+  const localIndex = sources.findIndex(s => s.url === "local");
+  const localSource = {
+    url: "local",
+    timestamp: Date.now(),
+    data: parsed.value
+  };
 
-    if (localIndex >= 0) {
-      sources[localIndex] = localSource;
-    } else {
-      sources.unshift(localSource);
-    }
-
-    textarea.value = config.jsonToYaml(parsed.value);
-    await config.saveSources(sources);
-    setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
-  } finally {
-    setBusy(false);
+  if (localIndex >= 0) {
+    sources[localIndex] = localSource;
+  } else {
+    sources.unshift(localSource);
   }
+
+  textarea.value = config.jsonToYaml(parsed.value);
+  await config.saveSources(sources);
+  setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
 }
 
 async function addUrl() {
@@ -193,61 +219,25 @@ async function addUrl() {
     return;
   }
 
-  setBusy(true);
-  try {
-    setRemoteStatus(t("statusFetching"), "muted");
+  // Use background worker to queue behind any refresh and avoid race conditions
+  const result = await chrome.runtime.sendMessage({ action: "addSource", url });
 
-    const result = await config.fetchYamlFromUrl(url);
-    if (!result.ok) {
-      setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
-      return;
-    }
-
-    sources.push({
-      url: url,
-      timestamp: Date.now(),
-      data: result.value,
-      error: null
-    });
-
-    await config.saveSources(sources);
-    urlInput.value = "";
-    renderRemoteSources();
-    setRemoteStatus("", "muted");
-  } finally {
-    setBusy(false);
+  if (!result.ok) {
+    setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
+    return;
   }
-}
 
-async function refreshSource(url) {
-  if (busy) return;
-  
-  setBusy(true);
-  try {
-    setRemoteStatus("", "muted");
-    const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(url)}"]`);
-    const meta = card.querySelector('.source-meta');
-    meta.className = 'source-meta muted';
-    meta.textContent = t("statusRefreshing");
-
-    await chrome.runtime.sendMessage({ action: "refreshSource", url });
-  } finally {
-    setBusy(false);
-  }
+  urlInput.value = "";
+  setRemoteStatus("", "muted");
 }
 
 async function removeSource(url) {
   if (busy) return;
   
-  setBusy(true);
-  try {
-    sources = sources.filter(s => s.url !== url);
-    await config.saveSources(sources);
-    renderRemoteSources();
-    setRemoteStatus("", "muted");
-  } finally {
-    setBusy(false);
-  }
+  sources = sources.filter(s => s.url !== url);
+  await config.saveSources(sources);
+  renderRemoteSources();
+  setRemoteStatus("", "muted");
 }
 
 async function refreshAll() {
@@ -256,29 +246,12 @@ async function refreshAll() {
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
 
-  setBusy(true);
-  try {
+  const result = await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+
+  if (result.failed > 0) {
+    setRemoteStatus(t("statusRefreshAllFailed"), "error");
+  } else {
     setRemoteStatus("", "muted");
-
-    // Show refreshing state on all sources
-    for (const source of remote) {
-      const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(source.url)}"]`);
-      if (card) {
-        const meta = card.querySelector('.source-meta');
-        meta.className = 'source-meta muted';
-        meta.textContent = t("statusRefreshing");
-      }
-    }
-
-    const result = await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
-
-    if (result.failed > 0) {
-      setRemoteStatus(t("statusRefreshAllFailed"), "error");
-    } else {
-      setRemoteStatus(t("statusFetched"), "ok");
-    }
-  } finally {
-    setBusy(false);
   }
 }
 
@@ -300,12 +273,15 @@ urlInput.addEventListener("keydown", (e) => {
   }
 });
 
-// Listen for storage changes from other contexts (popup, content script, etc.)
-chrome.storage.onChanged.addListener((changes) => {
-  if (changes[config.STORAGE_KEY]) {
+// Listen for storage changes
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes[config.STORAGE_KEY]) {
     sources = JSON.parse(changes[config.STORAGE_KEY].newValue);
     renderRemoteSources();
     setRemoteStatus("", "muted");
+  }
+  if (areaName === 'session' && changes[config.BUSY_KEY]) {
+    onBusyStateChanged(changes[config.BUSY_KEY].newValue);
   }
 });
 
@@ -329,4 +305,11 @@ const EXAMPLE_YAML = `- group: shakespeare
 exampleEl.value = EXAMPLE_YAML;
 exampleEl.style.height = exampleEl.scrollHeight + "px";
 
-void load();
+// Initialize
+async function init() {
+  const { [config.BUSY_KEY]: currentBusy } = await chrome.storage.session.get(config.BUSY_KEY);
+  busy = currentBusy;
+  await load();
+}
+
+void init();
