@@ -136,7 +136,7 @@ async function loadConfiguration() {
   const dedupe = (items) => {
     const map = new Map();
     for (const item of items) {
-      map.set(`${item.name}\0${item.group}\0${item.tag ?? ""}`, item);
+      map.set(`${item.name}\0${item.group}\0${item.tag ?? ""}\0${item.regex ?? ""}`, item);
     }
     return [...map.values()];
   };
