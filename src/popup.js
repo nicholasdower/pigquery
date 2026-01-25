@@ -54,7 +54,9 @@ async function loadStatus() {
   refreshBtn.addEventListener('click', () => {
     refreshBtn.disabled = true;
     refreshBtn.textContent = t("popupRefreshing");
-    chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+    chrome.runtime.sendMessage({ action: "refreshRemoteSources" }, () => {
+      loadStatus();
+    });
   });
   rowEl.appendChild(refreshBtn);
   statusEl.appendChild(rowEl);
