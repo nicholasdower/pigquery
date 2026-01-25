@@ -9,3 +9,5 @@ Allow override of keyboard shortcuts.
 It should be possible to disable groups.
 Precreate search index.
 Log errors somewhere
+Show toast or popup on bigquery when refreshing fails.
+Change icon when there are refresh errors.
