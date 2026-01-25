@@ -186,8 +186,8 @@ const TRANSLATIONS = {
   },
   // options.js: Status when some sources failed during refresh all. $1 = count
   statusRefreshAllFailed: {
-    en: "$1 source(s) failed",
-    de: "$1 Quelle(n) fehlgeschlagen",
+    en: "Some sources have errors",
+    de: "Einige Quellen haben Fehler",
   },
   // options.js: Permission denied for access to remote YAML source URL
   statusPermissionDenied: {
