@@ -26,8 +26,8 @@ const TRANSLATIONS = {
   },
   // popup.html: Footer link to extension options page
   extensionOptions: {
-    en: "Extension Options",
-    de: "Einstellungen",
+    en: "Configuration",
+    de: "Konfiguration",
   },
   // popup.html: Footer link to report a bug
   reportBug: {
