@@ -56,25 +56,25 @@ function renderLocalConfig() {
 
 function renderRemoteSources() {
   const remote = config.getRemoteSources(sources);
-  
+
   if (remote.length === 0) {
     remoteSourcesEl.innerHTML = "";
     return;
   }
-  
+
   remoteSourcesEl.innerHTML = remote.map((source, index) => {
-    const errorHtml = source.error 
-      ? `<span class="source-status error">${escapeHtml(t(source.error.key, source.error.subs))}</span>` 
-      : '';
+    const metaClass = source.error ? 'source-meta error' : 'source-meta';
+    const metaText = source.error
+      ? t("optionsLastUpdatedError", [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+      : t("optionsLastUpdated", formatTimestamp(source.timestamp));
     return `
       <div class="source-card" data-url="${escapeHtml(source.url)}">
         <div class="source-url">${escapeHtml(source.url)}</div>
-        <div class="source-meta">${t("optionsLastUpdated", formatTimestamp(source.timestamp))}</div>
+        <div class="${metaClass}">${escapeHtml(metaText)}</div>
         <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
         <div class="source-actions">
           <button type="button" class="secondary refresh-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRefresh">${t("optionsRefresh")}</button>
           <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
-          ${errorHtml}
         </div>
       </div>
     `;
@@ -96,39 +96,39 @@ function escapeHtml(str) {
 
 async function saveLocal() {
   const raw = textarea.value;
-  
+
   if (raw.trim() === '') {
     sources = sources.filter(s => s.url !== "local");
     await config.saveSources(sources);
     setLocalStatus(t("statusSaved"), "ok");
     return;
   }
-  
+
   const parsed = config.safeYamlParse(raw);
   if (!parsed.ok) {
     setLocalStatus(t("statusInvalidYaml", parsed.error.message), "error");
     return;
   }
-  
+
   const validation = config.validateConfigItems(parsed.value);
   if (!validation.ok) {
     setLocalStatus(t(validation.errorKey, validation.errorSubs), "error");
     return;
   }
-  
+
   const localIndex = sources.findIndex(s => s.url === "local");
   const localSource = {
     url: "local",
     timestamp: Date.now(),
     data: parsed.value
   };
-  
+
   if (localIndex >= 0) {
     sources[localIndex] = localSource;
   } else {
     sources.unshift(localSource);
   }
-  
+
   textarea.value = config.jsonToYaml(parsed.value);
   await config.saveSources(sources);
   setLocalStatus(t("statusSaved"), "ok");
@@ -136,12 +136,12 @@ async function saveLocal() {
 
 async function addUrl() {
   const url = urlInput.value.trim();
-  
+
   if (!url) {
     setRemoteStatus(t("statusInvalidUrl"), "error");
     return;
   }
-  
+
   try {
     new URL(url);
   } catch (e) {
@@ -150,7 +150,7 @@ async function addUrl() {
   }
 
   if (sources.find(s => s.url === url)) {
-    await refreshSource(url);
+    setRemoteStatus(t("statusUrlExists"), "error");
     return;
   }
 
@@ -159,22 +159,22 @@ async function addUrl() {
     setRemoteStatus(t("statusPermissionDenied"), "error");
     return;
   }
-  
+
   setRemoteStatus(t("statusFetching"), "muted");
-  
+
   const result = await config.fetchYamlFromUrl(url);
   if (!result.ok) {
     setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
-  
+
   sources.push({
     url: url,
     timestamp: Date.now(),
     data: result.value,
     error: null
   });
-  
+
   await config.saveSources(sources);
   urlInput.value = "";
   renderRemoteSources();
@@ -186,22 +186,15 @@ async function refreshSource(url, btn) {
     btn.disabled = true;
   }
 
+  setRemoteStatus("", "muted");
   const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(url)}"]`);
-  if (card) {
-    const actions = card.querySelector('.source-actions');
-    let status = actions.querySelector('.source-status');
-    if (!status) {
-      status = document.createElement('span');
-      status.className = 'source-status muted';
-      actions.appendChild(status);
-    }
-    status.className = 'source-status muted';
-    status.textContent = t("statusFetching");
-  }
-  
+  const meta = card.querySelector('.source-meta');
+  meta.className = 'source-meta muted';
+  meta.textContent = t("statusRefreshing");
+
   const result = await config.fetchYamlFromUrl(url);
   const index = sources.findIndex(s => s.url === url);
-  
+
   if (index >= 0) {
     if (result.ok) {
       sources[index] = {
@@ -217,30 +210,34 @@ async function refreshSource(url, btn) {
       };
     }
   }
-  
+
   await config.saveSources(sources);
   renderRemoteSources();
-  
-  if (result.ok) {
-    setRemoteStatus(t("statusFetched"), "ok");
-  } else {
-    setRemoteStatus("", "muted");
-  }
 }
 
 async function removeSource(url) {
   sources = sources.filter(s => s.url !== url);
   await config.saveSources(sources);
   renderRemoteSources();
-  setRemoteStatus(t("statusUrlRemoved"), "ok");
+  setRemoteStatus("", "muted");
 }
 
 async function refreshAll() {
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
-  
-  setRemoteStatus(t("statusFetching"), "muted");
-  
+
+  setRemoteStatus("", "muted");
+
+  // Show refreshing state on all sources
+  for (const source of remote) {
+    const card = remoteSourcesEl.querySelector(`[data-url="${CSS.escape(source.url)}"]`);
+    if (card) {
+      const meta = card.querySelector('.source-meta');
+      meta.className = 'source-meta muted';
+      meta.textContent = t("statusRefreshing");
+    }
+  }
+
   let failedCount = 0;
   for (const source of remote) {
     const result = await config.fetchYamlFromUrl(source.url);
@@ -262,10 +259,10 @@ async function refreshAll() {
       failedCount++;
     }
   }
-  
+
   await config.saveSources(sources);
   renderRemoteSources();
-  
+
   if (failedCount > 0) {
     setRemoteStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
   } else {

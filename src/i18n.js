@@ -149,6 +149,16 @@ const TRANSLATIONS = {
     en: "Last updated: $1",
     de: "Zuletzt aktualisiert: $1",
   },
+  // options.js: Remote sources last updated with error. $1 = formatted date, $2 = error message
+  optionsLastUpdatedError: {
+    en: "Last updated: $1 — $2",
+    de: "Zuletzt aktualisiert: $1 — $2",
+  },
+  // options.js: Status while refreshing remote YAML source
+  statusRefreshing: {
+    en: "Refreshing…",
+    de: "Wird aktualisiert…",
+  },
   // options.js: Refresh button for individual remote YAML source
   optionsRefresh: {
     en: "Refresh",
@@ -198,6 +208,11 @@ const TRANSLATIONS = {
   statusInvalidUrl: {
     en: "Invalid URL",
     de: "Ungültige URL",
+  },
+  // options.js: Error when trying to add a URL that already exists
+  statusUrlExists: {
+    en: "URL already exists",
+    de: "URL existiert bereits",
   },
   // config.js: Validation error when YAML configuration is not an array
   statusInvalidConfigArray: {
