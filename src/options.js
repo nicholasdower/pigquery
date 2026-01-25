@@ -348,6 +348,7 @@ chrome.storage.onChanged.addListener((changes) => {
   if (changes[config.STORAGE_KEY]) {
     sources = JSON.parse(changes[config.STORAGE_KEY].newValue);
     renderRemoteSources();
+    setRemoteStatus("", "muted");
   }
 });
 
