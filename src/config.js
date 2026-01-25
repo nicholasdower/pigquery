@@ -122,7 +122,7 @@ async function loadSources() {
  * Loads and processes configuration from all sources.
  * Deduplicates by name+group+tag within snippets and sites separately,
  * preferring local over remote (last definition wins).
- * Returns { snippets: [...], sites: [...] }.
+ * Returns { snippets: [...], sites: [...], hasErrors: boolean }.
  */
 async function loadConfiguration() {
   const sources = await loadSources();
@@ -141,9 +141,12 @@ async function loadConfiguration() {
     return [...map.values()];
   };
 
+  const hasErrors = sources.some(source => source.error != null);
+
   return {
     snippets: dedupe(allItems.filter(item => !item.url)),
     sites: dedupe(allItems.filter(item => item.url)).map(item => ({ ...item, regex: new RegExp(item.regex) })),
+    hasErrors,
   };
 }
 

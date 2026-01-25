@@ -5,6 +5,7 @@ const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
 const ICON_URL = chrome.runtime.getURL("icons/icon.svg");
+const ICON_ERROR_URL = chrome.runtime.getURL("icons/icon-badge-error.svg");
 
 let configuration;
 let onConfigurationChange = null;
@@ -44,6 +45,7 @@ async function loadConfiguration() {
   configuration = {
     snippets: sortSnippets(loaded.snippets, null),
     sites: sortSites(loaded.sites, null),
+    hasErrors: loaded.hasErrors,
   };
   onConfigurationChange?.();
 }
@@ -350,10 +352,24 @@ const styles = `
     min-width: 24px;
     text-align: center;
   }
-  .pig-modal-logo {
+  .pig-modal-logo-container {
+    position: relative;
     width: 24px;
     height: 24px;
     flex-shrink: 0;
+    cursor: pointer;
+  }
+  .pig-modal-logo {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
+  .pig-modal-logo-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
     display: block;
   }
 `;
@@ -421,12 +437,13 @@ function makeEl(tag, { id, className, text } = {}) {
   return el;
 }
 
-function openPopup(getOptions, onOptionSelected) {
+function openPopup(getOptions, onOptionSelected, getHasErrors) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
   let options = getOptions();
   let filtered = options.slice();
   let activeIndex = 0;
+  let hasErrors = getHasErrors();
 
   const lastFocusedEl = document.activeElement;
 
@@ -583,11 +600,34 @@ function openPopup(getOptions, onOptionSelected) {
   }
 
   const header = makeEl("div", { className: "pig-modal-header" });
+  const iconContainer = makeEl("div", { className: "pig-modal-logo-container" });
+  iconContainer.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    chrome.runtime.sendMessage({ action: "openOptionsPage" });
+    closePopup();
+  });
   const iconEl = document.createElement("img");
   iconEl.className = "pig-modal-logo";
   iconEl.alt = "PigQuery";
   iconEl.src = ICON_URL;
-  header.appendChild(iconEl);
+  iconContainer.appendChild(iconEl);
+
+  function updateErrorBadge() {
+    const existingBadge = iconContainer.querySelector('.pig-modal-logo-badge');
+    if (hasErrors && !existingBadge) {
+      const badgeEl = document.createElement("img");
+      badgeEl.className = "pig-modal-logo-badge";
+      badgeEl.alt = "Error";
+      badgeEl.src = ICON_ERROR_URL;
+      iconContainer.appendChild(badgeEl);
+    } else if (!hasErrors && existingBadge) {
+      existingBadge.remove();
+    }
+  }
+
+  updateErrorBadge();
+  header.appendChild(iconContainer);
 
   const inputEl = makeEl("input", { className: "pig-modal-input" });
   inputEl.type = "text";
@@ -607,6 +647,9 @@ function openPopup(getOptions, onOptionSelected) {
     filtered = search.filter(options, query);
     activeIndex = 0;
     renderList();
+
+    hasErrors = getHasErrors();
+    updateErrorBadge();
   };
 
   header.appendChild(inputEl);
@@ -676,7 +719,7 @@ document.addEventListener(
       openPopup(() => configuration.snippets, (option) => {
         configuration.snippets = sortSnippets(configuration.snippets, option.group);
         insertIntoEditor(editor, option.value);
-      });
+      }, () => configuration.hasErrors);
       return;
     }
 
@@ -741,7 +784,7 @@ document.addEventListener(
     openPopup(getMatchingOptions, (option) => {
       configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
       window.open(option.url, "_blank", "noopener,noreferrer");
-    });
+    }, () => configuration.hasErrors);
 
     // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
     const onFocusIn = () => {
