@@ -10,7 +10,23 @@ let configuration;
 let onConfigurationChange = null;
 
 async function loadConfiguration() {
-  configuration = await config.loadConfiguration();
+  const loaded = await config.loadConfiguration();
+
+  // Sort by group, then name, then tag
+  const sortItems = (items) => {
+    return items.sort((a, b) => {
+      const groupCmp = a.group.localeCompare(b.group);
+      if (groupCmp !== 0) return groupCmp;
+      const nameCmp = a.name.localeCompare(b.name);
+      if (nameCmp !== 0) return nameCmp;
+      return (a.tag ?? "").localeCompare(b.tag ?? "");
+    });
+  };
+
+  configuration = {
+    snippets: sortItems(loaded.snippets),
+    sites: sortItems(loaded.sites),
+  };
   onConfigurationChange?.();
 }
 loadConfiguration();
