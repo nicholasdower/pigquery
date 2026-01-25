@@ -46,6 +46,10 @@ function formatTimestamp(ts) {
   return date.toLocaleString();
 }
 
+function formatTime(date) {
+  return date.toLocaleTimeString();
+}
+
 async function load() {
   sources = await config.loadSources();
   renderAll();
@@ -119,7 +123,7 @@ async function saveLocal() {
     try {
       sources = sources.filter(s => s.url !== "local");
       await config.saveSources(sources);
-      setLocalStatus(t("statusSaved"), "ok");
+      setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
     } finally {
       setBusy(false);
     }
@@ -155,7 +159,7 @@ async function saveLocal() {
 
     textarea.value = config.jsonToYaml(parsed.value);
     await config.saveSources(sources);
-    setLocalStatus(t("statusSaved"), "ok");
+    setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
   } finally {
     setBusy(false);
   }

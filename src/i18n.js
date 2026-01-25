@@ -44,10 +44,10 @@ const TRANSLATIONS = {
     en: "Save",
     de: "Speichern",
   },
-  // options.js: Status after saving local configuration to storage
+  // options.js: Status after saving local configuration to storage. $1 = time
   statusSaved: {
-    en: "Saved",
-    de: "Gespeichert",
+    en: "Saved at $1",
+    de: "Gespeichert um $1",
   },
   // options.js, config.js: YAML parse error. $1 = error message
   statusInvalidYaml: {
@@ -141,13 +141,13 @@ const TRANSLATIONS = {
   },
   // options.js: Remote sources last updated timestamp. $1 = formatted date
   optionsLastUpdated: {
-    en: "Last updated: $1",
-    de: "Zuletzt aktualisiert: $1",
+    en: "Last updated at $1",
+    de: "Zuletzt aktualisiert um $1",
   },
   // options.js: Remote sources last updated with error. $1 = formatted date, $2 = error message
   optionsLastUpdatedError: {
-    en: "Last updated: $1 — $2",
-    de: "Zuletzt aktualisiert: $1 — $2",
+    en: "Last updated at $1 — $2",
+    de: "Zuletzt aktualisiert um $1 — $2",
   },
   // options.js: Status while refreshing remote YAML source
   statusRefreshing: {
@@ -216,8 +216,8 @@ const TRANSLATIONS = {
   },
   // popup.js: Remote sources last updated timestamp. $1 = formatted date
   popupLastUpdated: {
-    en: "Last updated: $1",
-    de: "Zuletzt aktualisiert: $1",
+    en: "Last updated at $1",
+    de: "Zuletzt aktualisiert um $1",
   },
   // popup.js: Error indicator when there were one or more errors refreshing remote YAML sources
   popupHasErrors: {
