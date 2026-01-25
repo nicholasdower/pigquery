@@ -312,7 +312,7 @@ async function refreshAll() {
     renderRemoteSources();
 
     if (failedCount > 0) {
-      setRemoteStatus(t("statusFetchError", `${failedCount} source(s) failed`), "error");
+      setRemoteStatus(t("statusRefreshAllFailed", failedCount), "error");
     } else {
       setRemoteStatus(t("statusFetched"), "ok");
     }
