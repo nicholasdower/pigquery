@@ -7,6 +7,8 @@ i18n.applyI18n(LOCALE);
 const ICON_URL = chrome.runtime.getURL("icons/icon.svg");
 const ICON_ERROR_URL = chrome.runtime.getURL("icons/icon-badge-error.svg");
 
+const isMac = navigator.userAgentData.platform === 'macOS';
+
 let configuration;
 let onConfigurationChange = null;
 
@@ -701,7 +703,7 @@ document.addEventListener(
       window.copyTimeoutId = null;
     }
 
-    if (!e.isComposing && !e.repeat && e.key === 'i' && e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
+    if (!e.isComposing && !e.repeat && e.key === 'Y' && e.shiftKey && !e.metaKey && !e.altKey && e.ctrlKey) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -723,7 +725,7 @@ document.addEventListener(
       return;
     }
 
-    if (!e.isComposing && !e.repeat && e.key === 'a' && !e.shiftKey && e.metaKey && !e.altKey && !e.ctrlKey) {
+    if (!e.isComposing && !e.repeat && e.key === 'a' && !e.shiftKey && !e.altKey && (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)) {
       if (!e.target.closest('cfc-code-editor')) {
         showToast(i18n.getMessage("editorNotFocused", LOCALE));
         return;
@@ -769,7 +771,7 @@ document.addEventListener(
 
     const content = cell.innerText.trim();
 
-    if (e.metaKey) {
+    if (isMac ? e.metaKey : e.ctrlKey) {
       navigator.clipboard.writeText(content);
       showToast(i18n.getMessage("cellCopied", LOCALE));
       return;

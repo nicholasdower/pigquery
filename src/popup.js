@@ -5,6 +5,10 @@ i18n.applyI18n(LOCALE);
 
 const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
 
+const isMac = navigator.userAgentData.platform === 'macOS';
+document.getElementById('shortcut-share').textContent = isMac ? '⌘+A' : 'Ctrl+A';
+document.getElementById('shortcut-copy-cell').textContent = isMac ? 'Alt+⌘+Click' : 'Ctrl+Alt+Click';
+
 document.getElementById('options-link').addEventListener('click', (e) => {
   e.preventDefault();
   chrome.runtime.openOptionsPage();
