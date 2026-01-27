@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-zip -r pigquery.zip manifest.json src icons lib _locales LICENSE.txt

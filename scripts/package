@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+rm -rf dist
+mkdir -p dist
+
+cp manifest.json dist/
+cp LICENSE.txt dist/
+cp -R src dist/
+cp -R icons dist/
+cp -R lib dist/
+cp -R _locales dist/
+
+google-chrome --pack-extension="$PWD/dist" --pack-extension-key="$PWD/privatekey.pem"
