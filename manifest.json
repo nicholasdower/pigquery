@@ -1,7 +1,8 @@
 {
   "name": "PigQuery",
-  "description": "Some Big Query enhancements",
+  "description": "__MSG_extDescription__",
   "version": "1.0",
+  "default_locale": "en",
   "manifest_version": 3,
   "icons": {
     "16": "icons/icon-16.png",

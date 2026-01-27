@@ -1,0 +1,6 @@
+{
+  "extDescription": {
+    "message": "Enhance BigQuery: insert snippets, share URLs, link to sites",
+    "description": "Description of the extension shown in the Chrome Web Store and extension management page"
+  }
+}
