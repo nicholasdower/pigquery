@@ -7,3 +7,4 @@ It should be possible to disable groups.
 Precreate search index.
 Log errors somewhere
 Test cell copy with newlines and a lot of content.
+Add multiline viewer for large content. Parse json, yaml, etc.
