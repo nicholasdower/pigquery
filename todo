@@ -8,4 +8,3 @@ Precreate search index.
 Log errors somewhere
 Add multiline viewer for large content. Parse json, yaml, etc.
 Test production version on Windows.
-Include commit in crx file.

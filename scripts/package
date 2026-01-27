@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 version=$(jq .version manifest.json -r)
+commit=$(git rev-parse HEAD)
 dir="dist/pigquery-$version"
 
-echo "Building PigQuery version $version"
+echo "Building PigQuery version $version ($commit)"
 
 rm -rf dist
 mkdir -p "$dir"
@@ -14,5 +15,7 @@ cp -R src "$dir/"
 cp -R icons "$dir/"
 cp -R lib "$dir/"
 cp -R _locales "$dir/"
+
+echo "$commit" > "$dir/commit.txt"
 
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --pack-extension="$PWD/$dir" --pack-extension-key="$PWD/privatekey.pem"
