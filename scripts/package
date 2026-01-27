@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 
+version=$(jq .version manifest.json -r)
+dir="dist/pigquery-$version"
+
+echo "Building PigQuery version $version"
+
 rm -rf dist
-mkdir -p dist
+mkdir -p "$dir"
 
-cp manifest.json dist/
-cp LICENSE.txt dist/
-cp -R src dist/
-cp -R icons dist/
-cp -R lib dist/
-cp -R _locales dist/
+cp manifest.json "$dir/"
+cp LICENSE.txt "$dir/"
+cp -R src "$dir/"
+cp -R icons "$dir/"
+cp -R lib "$dir/"
+cp -R _locales "$dir/"
 
-google-chrome --pack-extension="$PWD/dist" --pack-extension-key="$PWD/privatekey.pem"
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --pack-extension="$PWD/$dir" --pack-extension-key="$PWD/privatekey.pem"
