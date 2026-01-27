@@ -8,3 +8,4 @@ Precreate search index.
 Log errors somewhere
 Add multiline viewer for large content. Parse json, yaml, etc.
 Test production version on Windows.
+Fix bug where a refresh is triggered by reloading bigquery but there aren't any remote sources. The options page shows refreshing and never clears it.
