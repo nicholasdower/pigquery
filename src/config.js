@@ -1,4 +1,6 @@
 const STORAGE_KEY = "userPayload";
+const BUSY_KEY = "busy";
+let operationPromise = null;
 
 function safeYamlParse(text) {
   try {
@@ -159,6 +161,20 @@ async function saveSources(sources) {
 }
 
 /**
+ * Saves the local source. Pass null to remove it.
+ */
+async function saveLocalSource(source) {
+  if (operationPromise) return;
+
+  const sources = await loadSources();
+  const filtered = sources.filter(s => s.url !== "local");
+  if (source) {
+    filtered.unshift({ ...source, url: "local" });
+  }
+  await saveSources(filtered);
+}
+
+/**
  * Gets the local source from sources array.
  */
 function getLocalSource(sources) {
@@ -171,9 +187,6 @@ function getLocalSource(sources) {
 function getRemoteSources(sources) {
   return sources.filter(s => s.url !== "local");
 }
-
-const BUSY_KEY = "busy";
-let operationPromise = null;
 
 /**
  * Updates the busy state in local storage.
@@ -189,18 +202,15 @@ async function setBusyState(type) {
 /**
  * Refreshes all remote sources by fetching their URLs.
  * Updates storage with new data or error state.
- * Returns { refreshed: number, failed: number }
  */
 async function refreshRemoteSources() {
-  if (operationPromise) {
-    return { refreshed: 0, failed: 0 };
-  }
+  if (operationPromise) return;
 
   await setBusyState('refreshing');
 
   operationPromise = doRefreshRemoteSources();
   try {
-    return await operationPromise;
+    await operationPromise;
   } finally {
     operationPromise = null;
     await setBusyState(null);
@@ -211,12 +221,7 @@ async function doRefreshRemoteSources() {
   const sources = await loadSources();
   const remoteSources = getRemoteSources(sources);
 
-  if (remoteSources.length === 0) {
-    return { refreshed: 0, failed: 0 };
-  }
-
-  let refreshedCount = 0;
-  let failedCount = 0;
+  if (remoteSources.length === 0) return;
 
   for (const source of remoteSources) {
     const result = await fetchYamlFromUrl(source.url);
@@ -230,18 +235,15 @@ async function doRefreshRemoteSources() {
         data: result.value,
         error: null
       };
-      refreshedCount++;
     } else {
       sources[index] = {
         ...sources[index],
         error: { key: result.errorKey, subs: result.errorSubs }
       };
-      failedCount++;
     }
   }
 
   await saveSources(sources);
-  return { refreshed: refreshedCount, failed: failedCount };
 }
 
 /**
@@ -284,9 +286,19 @@ async function doAddSource(url) {
     error: null
   });
 
-  console.log('saving sources', sources);
   await saveSources(sources);
   return { ok: true };
+}
+
+/**
+ * Removes a source by URL.
+ */
+async function removeSource(url) {
+  if (operationPromise) return;
+
+  const sources = await loadSources();
+  const filtered = sources.filter(s => s.url !== url);
+  await saveSources(filtered);
 }
 
 self.pigquery = self.pigquery || {};
@@ -300,9 +312,10 @@ self.pigquery.config = {
   requestUrlPermission,
   loadSources,
   loadConfiguration,
-  saveSources,
+  saveLocalSource,
   getLocalSource,
   getRemoteSources,
   refreshRemoteSources,
-  addSource
+  addSource,
+  removeSource
 };

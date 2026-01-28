@@ -4,14 +4,23 @@ const config = self.pigquery.config;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "refreshRemoteSources") {
-    config.refreshRemoteSources().then((result) => {
-      sendResponse(result);
-    });
-    return true;
+    config.refreshRemoteSources();
   }
   if (message.action === "addSource") {
     config.addSource(message.url).then((result) => {
       sendResponse(result);
+    });
+    return true;
+  }
+  if (message.action === "removeSource") {
+    config.removeSource(message.url).then(() => {
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+  if (message.action === "saveLocalSource") {
+    config.saveLocalSource(message.source).then(() => {
+      sendResponse({ ok: true });
     });
     return true;
   }

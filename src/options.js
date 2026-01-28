@@ -20,7 +20,7 @@ const exampleEl = el("example");
 
 let sources = [];
 let busy = null; // Current operation: 'refreshing', 'adding', or null
-let lastLoadedLocal = null; // Track the last loaded local config to detect unsaved edits
+let lastLoadedLocal = ""; // Track the last loaded local config to detect unsaved edits
 
 function updateButtonStates() {
   const unchanged = textarea.value === lastLoadedLocal;
@@ -66,7 +66,7 @@ async function load() {
   const newLocalValue = local ? config.jsonToYaml(local.data) : "";
 
   // Only update the textarea if the user hasn't made unsaved edits
-  const hasUnsavedEdits = lastLoadedLocal !== null && textarea.value !== lastLoadedLocal;
+  const hasUnsavedEdits = textarea.value !== lastLoadedLocal;
   if (!hasUnsavedEdits) {
     textarea.value = newLocalValue;
     lastLoadedLocal = newLocalValue;
@@ -155,9 +155,8 @@ async function saveLocal() {
   const raw = textarea.value;
 
   if (raw.trim() === '') {
-    sources = sources.filter(s => s.url !== "local");
     lastLoadedLocal = "";
-    await config.saveSources(sources);
+    await chrome.runtime.sendMessage({ action: "saveLocalSource", source: null });
     setLocalStatus("", "muted");
     updateButtonStates();
     return;
@@ -175,22 +174,9 @@ async function saveLocal() {
     return;
   }
 
-  const localIndex = sources.findIndex(s => s.url === "local");
-  const localSource = {
-    url: "local",
-    timestamp: Date.now(),
-    data: parsed.value
-  };
-
-  if (localIndex >= 0) {
-    sources[localIndex] = localSource;
-  } else {
-    sources.unshift(localSource);
-  }
-
   textarea.value = config.jsonToYaml(parsed.value);
   lastLoadedLocal = textarea.value;
-  await config.saveSources(sources);
+  await chrome.runtime.sendMessage({ action: "saveLocalSource", source: { timestamp: Date.now(), data: parsed.value } });
   setLocalStatus("", "muted");
   updateButtonStates();
 }
@@ -223,7 +209,6 @@ async function addUrl() {
     return;
   }
 
-  // Use background worker to queue behind any refresh and avoid race conditions
   const result = await chrome.runtime.sendMessage({ action: "addSource", url });
   if (!result.ok) {
     setAddUrlStatus(t(result.errorKey, result.errorSubs), "error");
@@ -237,8 +222,7 @@ async function addUrl() {
 async function removeSource(url) {
   if (busy) return;
   
-  sources = sources.filter(s => s.url !== url);
-  await config.saveSources(sources);
+  await chrome.runtime.sendMessage({ action: "removeSource", url });
 }
 
 async function refreshAll() {
