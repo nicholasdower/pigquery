@@ -151,32 +151,16 @@ function applyBusyState() {
 
 async function saveLocal() {
   if (busy) return;
-  
-  const raw = textarea.value;
 
-  if (raw.trim() === '') {
-    lastLoadedLocal = "";
-    await chrome.runtime.sendMessage({ action: "saveLocalSource", source: null });
-    setLocalStatus("", "muted");
-    updateButtonStates();
+  const result = await chrome.runtime.sendMessage({ action: "saveLocalSource", yaml: textarea.value });
+
+  if (!result.ok) {
+    setLocalStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
 
-  const parsed = config.safeYamlParse(raw);
-  if (!parsed.ok) {
-    setLocalStatus(t("statusInvalidYaml", parsed.error.message), "error");
-    return;
-  }
-
-  const validation = config.validateConfigItems(parsed.value);
-  if (!validation.ok) {
-    setLocalStatus(t(validation.errorKey, validation.errorSubs), "error");
-    return;
-  }
-
-  textarea.value = config.jsonToYaml(parsed.value);
-  lastLoadedLocal = textarea.value;
-  await chrome.runtime.sendMessage({ action: "saveLocalSource", source: { timestamp: Date.now(), data: parsed.value } });
+  textarea.value = result.yaml;
+  lastLoadedLocal = result.yaml;
   setLocalStatus("", "muted");
   updateButtonStates();
 }

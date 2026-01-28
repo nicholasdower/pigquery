@@ -161,17 +161,38 @@ async function saveSources(sources) {
 }
 
 /**
- * Saves the local source. Pass null to remove it.
+ * Saves the local source from raw YAML text.
+ * Pass empty string to remove it.
+ * Returns { ok: true, yaml: string } or { ok: false, errorKey, errorSubs }
  */
-async function saveLocalSource(source) {
-  if (operationPromise) return;
+async function saveLocalSource(rawYaml) {
+  if (operationPromise) return { ok: false, errorKey: "statusBusy" };
 
   const sources = await loadSources();
   const filtered = sources.filter(s => s.url !== "local");
-  if (source) {
-    filtered.unshift({ ...source, url: "local" });
+
+  if (rawYaml.trim() === '') {
+    await saveSources(filtered);
+    return { ok: true, yaml: "" };
   }
+
+  const parsed = safeYamlParse(rawYaml);
+  if (!parsed.ok) {
+    return { ok: false, errorKey: "statusInvalidYaml", errorSubs: parsed.error.message };
+  }
+
+  const validation = validateConfigItems(parsed.value);
+  if (!validation.ok) {
+    return { ok: false, errorKey: validation.errorKey, errorSubs: validation.errorSubs };
+  }
+
+  filtered.unshift({
+    url: "local",
+    timestamp: Date.now(),
+    data: parsed.value
+  });
   await saveSources(filtered);
+  return { ok: true, yaml: jsonToYaml(parsed.value) };
 }
 
 /**
@@ -305,10 +326,7 @@ self.pigquery = self.pigquery || {};
 self.pigquery.config = {
   STORAGE_KEY,
   BUSY_KEY,
-  safeYamlParse,
   jsonToYaml,
-  validateConfigItems,
-  fetchYamlFromUrl,
   requestUrlPermission,
   loadSources,
   loadConfiguration,

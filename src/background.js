@@ -19,8 +19,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.action === "saveLocalSource") {
-    config.saveLocalSource(message.source).then(() => {
-      sendResponse({ ok: true });
+    config.saveLocalSource(message.yaml).then((result) => {
+      sendResponse(result);
     });
     return true;
   }
