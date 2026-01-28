@@ -19,9 +19,14 @@ const exampleEl = el("example");
 
 let sources = [];
 let busy = null; // Current operation: 'refreshing', 'adding', or null
+let lastLoadedLocal = null; // Track the last loaded local config to detect unsaved edits
 
 function updateButtonStates() {
-  saveBtn.disabled = !!busy;
+  const unchanged = textarea.value === lastLoadedLocal;
+  saveBtn.disabled = busy || unchanged;
+  if (unchanged) {
+    setLocalStatus("", "muted");
+  }
   addUrlBtn.disabled = !!busy;
   refreshAllBtn.disabled = !!busy;
   remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
@@ -45,30 +50,21 @@ function formatTimestamp(ts) {
   return date.toLocaleString();
 }
 
-function formatTime(date) {
-  return date.toLocaleTimeString();
-}
-
 async function load() {
   sources = await config.loadSources();
-  renderAll();
-}
 
-function renderAll() {
-  renderLocalConfig();
-  renderRemoteSources();
-}
+  const local = sources.find(s => s.url === "local");
+  const newLocalValue = local ? config.jsonToYaml(local.data) : "";
 
-function renderLocalConfig() {
-  const local = config.getLocalSource(sources);
-  if (local) {
-    textarea.value = config.jsonToYaml(local.data);
-  } else {
-    textarea.value = "";
+  // Only update the textarea if the user hasn't made unsaved edits
+  const hasUnsavedEdits = lastLoadedLocal !== null && textarea.value !== lastLoadedLocal;
+  if (!hasUnsavedEdits) {
+    textarea.value = newLocalValue;
+    lastLoadedLocal = newLocalValue;
   }
-}
 
-function renderRemoteSources() {
+  updateButtonStates();
+
   const remote = config.getRemoteSources(sources);
 
   if (remote.length === 0) {
@@ -158,8 +154,10 @@ async function saveLocal() {
 
   if (raw.trim() === '') {
     sources = sources.filter(s => s.url !== "local");
+    lastLoadedLocal = "";
     await config.saveSources(sources);
-    setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
+    setLocalStatus("", "muted");
+    updateButtonStates();
     return;
   }
 
@@ -189,8 +187,10 @@ async function saveLocal() {
   }
 
   textarea.value = config.jsonToYaml(parsed.value);
+  lastLoadedLocal = textarea.value;
   await config.saveSources(sources);
-  setLocalStatus(t("statusSaved", formatTime(new Date())), "ok");
+  setLocalStatus("", "muted");
+  updateButtonStates();
 }
 
 async function addUrl() {
@@ -238,8 +238,6 @@ async function removeSource(url) {
   
   sources = sources.filter(s => s.url !== url);
   await config.saveSources(sources);
-  renderRemoteSources();
-  setRemoteStatus("", "muted");
 }
 
 async function refreshAll() {
@@ -260,6 +258,7 @@ async function refreshAll() {
 saveBtn.addEventListener("click", () => void saveLocal());
 addUrlBtn.addEventListener("click", () => void addUrl());
 refreshAllBtn.addEventListener("click", () => void refreshAll());
+textarea.addEventListener("input", () => updateButtonStates());
 
 document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -278,11 +277,10 @@ urlInput.addEventListener("keydown", (e) => {
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && changes[config.STORAGE_KEY]) {
-    sources = JSON.parse(changes[config.STORAGE_KEY].newValue);
-    renderRemoteSources();
+    load();
     setRemoteStatus("", "muted");
   }
-  if (areaName === 'session' && changes[config.BUSY_KEY]) {
+  if (areaName === 'local' && changes[config.BUSY_KEY]) {
     onBusyStateChanged(changes[config.BUSY_KEY].newValue);
   }
 });
@@ -309,7 +307,7 @@ exampleEl.style.height = exampleEl.scrollHeight + "px";
 
 // Initialize
 async function init() {
-  const { [config.BUSY_KEY]: currentBusy } = await chrome.storage.session.get(config.BUSY_KEY);
+  const { [config.BUSY_KEY]: currentBusy } = await chrome.storage.local.get(config.BUSY_KEY);
   busy = currentBusy;
   await load();
 }

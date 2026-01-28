@@ -8,6 +8,4 @@ Precreate search index.
 Log errors somewhere
 Add multiline viewer for large content. Parse json, yaml, etc.
 Test production version on Windows.
-Stop using events for refreshing. Use storage.
-Separate local and remote storage.
 Update from modal.

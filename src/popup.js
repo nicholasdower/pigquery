@@ -67,7 +67,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && changes[config.STORAGE_KEY]) {
     loadStatus();
   }
-  if (areaName === 'session' && changes[config.BUSY_KEY]) {
+  if (areaName === 'local' && changes[config.BUSY_KEY]) {
     updateBusyUI(changes[config.BUSY_KEY].newValue);
     // When operation completes, reload status
     if (!changes[config.BUSY_KEY].newValue) {
@@ -78,7 +78,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
 // Initialize
 async function init() {
-  const { [config.BUSY_KEY]: busy } = await chrome.storage.session.get(config.BUSY_KEY);
+  const { [config.BUSY_KEY]: busy } = await chrome.storage.local.get(config.BUSY_KEY);
   updateBusyUI(busy);
   loadStatus();
 }

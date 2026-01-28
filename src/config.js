@@ -176,13 +176,13 @@ const BUSY_KEY = "busy";
 let operationPromise = null;
 
 /**
- * Updates the busy state in session storage.
+ * Updates the busy state in local storage.
  */
 async function setBusyState(type) {
   if (type) {
-    await chrome.storage.session.set({ [BUSY_KEY]: type });
+    await chrome.storage.local.set({ [BUSY_KEY]: type });
   } else {
-    await chrome.storage.session.remove(BUSY_KEY);
+    await chrome.storage.local.remove(BUSY_KEY);
   }
 }
 
@@ -192,11 +192,11 @@ async function setBusyState(type) {
  * Returns { refreshed: number, failed: number }
  */
 async function refreshRemoteSources() {
-  await setBusyState('refreshing');
-
   if (operationPromise) {
-    await operationPromise;
+    return { refreshed: 0, failed: 0 };
   }
+
+  await setBusyState('refreshing');
 
   operationPromise = doRefreshRemoteSources();
   try {
@@ -250,11 +250,11 @@ async function doRefreshRemoteSources() {
  * Returns { ok: true } or { ok: false, errorKey, errorSubs }
  */
 async function addSource(url) {
-  await setBusyState('adding');
-
   if (operationPromise) {
-    await operationPromise;
+    return { ok: false, errorKey: "statusBusy" };
   }
+
+  await setBusyState('adding');
 
   operationPromise = doAddSource(url);
   try {
