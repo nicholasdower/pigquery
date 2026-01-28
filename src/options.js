@@ -146,6 +146,8 @@ function onBusyStateChanged(newBusy) {
     setRemoteStatus(t("statusRefreshing"), "muted");
   } else if (busy === 'adding') {
     setRemoteStatus(t("statusFetching"), "muted");
+  } else {
+    setRemoteStatus("", "muted");
   }
 }
 
