@@ -21,7 +21,8 @@
       button.secondary { background: #3c3c3c; }
       button.secondary:hover { background: #505050; }
       button.secondary:disabled:hover { background: #3c3c3c; }
-      .status { font-size: 12px; margin-top: 4px; }
+      .status { font-size: 12px; margin-top: 4px; min-height: 1.4em; display: block; }
+      .row .status { margin-top: 0; display: inline; min-height: auto; }
       .error { color: #f48771; }
       .ok { color: #89d185; }
       .muted { color: #999; }
@@ -40,6 +41,8 @@
       .source-actions button { padding: 4px 8px; font-size: 12px; }
       .empty-state { color: #888; font-style: italic; padding-top: 16px; text-align: center; }
       .example-textarea { font-size: 12px; height: auto; min-height: auto; overflow: hidden; resize: none; }
+      .row input[type="text"] { flex: 1; margin-top: 0; }
+      .refresh-row { margin-top: 24px; }
     </style>
   </head>
   <body>
@@ -54,11 +57,14 @@
 
     <!-- Remote Sources Section -->
     <h2 data-i18n="optionsRemoteSources">Remote Sources</h2>
-    <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
     <div class="row">
+      <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
       <button id="addUrl" type="button" data-i18n="optionsAddUrl">Add URL</button>
+    </div>
+    <span id="addUrlStatus" class="status muted"></span>
+    <div class="row refresh-row">
       <button id="refreshAll" type="button" class="secondary" data-i18n="optionsRefreshAll">Refresh All</button>
-      <span id="remoteStatus" class="muted"></span>
+      <span id="refreshStatus" class="status muted"></span>
     </div>
     <div id="remoteSources"></div>
 

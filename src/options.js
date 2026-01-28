@@ -10,7 +10,8 @@ const el = (id) => document.getElementById(id);
 const textarea = el("payload");
 const saveBtn = el("save");
 const localStatusEl = el("localStatus");
-const remoteStatusEl = el("remoteStatus");
+const addUrlStatusEl = el("addUrlStatus");
+const refreshStatusEl = el("refreshStatus");
 const urlInput = el("urlInput");
 const addUrlBtn = el("addUrl");
 const refreshAllBtn = el("refreshAll");
@@ -28,7 +29,8 @@ function updateButtonStates() {
     setLocalStatus("", "muted");
   }
   addUrlBtn.disabled = !!busy;
-  refreshAllBtn.disabled = !!busy;
+  const hasRemoteSources = sources.some(s => s.url !== "local");
+  refreshAllBtn.disabled = !!busy || !hasRemoteSources;
   remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
     btn.disabled = !!busy;
   });
@@ -39,9 +41,14 @@ function setLocalStatus(message, kind = "muted") {
   localStatusEl.textContent = message;
 }
 
-function setRemoteStatus(message, kind = "muted") {
-  remoteStatusEl.className = "status " + kind;
-  remoteStatusEl.textContent = message;
+function setAddUrlStatus(message, kind = "muted") {
+  addUrlStatusEl.className = "status " + kind;
+  addUrlStatusEl.textContent = message;
+}
+
+function setRefreshStatus(message, kind = "muted") {
+  refreshStatusEl.className = "status " + kind;
+  refreshStatusEl.textContent = message;
 }
 
 function formatTimestamp(ts) {
@@ -51,7 +58,9 @@ function formatTimestamp(ts) {
 }
 
 async function load() {
-  sources = await config.loadSources();
+  const storage = await chrome.storage.local.get([config.STORAGE_KEY, config.BUSY_KEY]);
+  sources = JSON.parse(storage[config.STORAGE_KEY] || "[]");
+  busy = storage[config.BUSY_KEY] || null;
 
   const local = sources.find(s => s.url === "local");
   const newLocalValue = local ? config.jsonToYaml(local.data) : "";
@@ -63,12 +72,20 @@ async function load() {
     lastLoadedLocal = newLocalValue;
   }
 
-  updateButtonStates();
+  // Update refresh status based on busy state
+  if (busy === 'refreshing') {
+    setRefreshStatus(t("statusRefreshing"), "muted");
+  } else if (busy === 'adding') {
+    setRefreshStatus(t("statusFetching"), "muted");
+  } else {
+    setRefreshStatus("", "muted");
+  }
 
   const remote = config.getRemoteSources(sources);
 
   if (remote.length === 0) {
     remoteSourcesEl.innerHTML = "";
+    updateButtonStates();
     return;
   }
 
@@ -132,21 +149,6 @@ function applyBusyState() {
   }
 }
 
-function onBusyStateChanged(newBusy) {
-  busy = newBusy;
-
-  applyBusyState();
-  updateButtonStates();
-
-  if (busy === 'refreshing') {
-    setRemoteStatus(t("statusRefreshing"), "muted");
-  } else if (busy === 'adding') {
-    setRemoteStatus(t("statusFetching"), "muted");
-  } else {
-    setRemoteStatus("", "muted");
-  }
-}
-
 async function saveLocal() {
   if (busy) return;
   
@@ -199,38 +201,37 @@ async function addUrl() {
   const url = urlInput.value.trim();
 
   if (!url) {
-    setRemoteStatus(t("statusInvalidUrl"), "error");
+    setAddUrlStatus(t("statusInvalidUrl"), "error");
     return;
   }
 
   try {
     new URL(url);
   } catch (e) {
-    setRemoteStatus(t("statusInvalidUrl"), "error");
+    setAddUrlStatus(t("statusInvalidUrl"), "error");
     return;
   }
 
   if (sources.find(s => s.url === url)) {
-    setRemoteStatus(t("statusUrlExists"), "error");
+    setAddUrlStatus(t("statusUrlExists"), "error");
     return;
   }
 
   const granted = await config.requestUrlPermission(url);
   if (!granted) {
-    setRemoteStatus(t("statusPermissionDenied"), "error");
+    setAddUrlStatus(t("statusPermissionDenied"), "error");
     return;
   }
 
   // Use background worker to queue behind any refresh and avoid race conditions
   const result = await chrome.runtime.sendMessage({ action: "addSource", url });
-
   if (!result.ok) {
-    setRemoteStatus(t(result.errorKey, result.errorSubs), "error");
+    setAddUrlStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
 
   urlInput.value = "";
-  setRemoteStatus("", "muted");
+  setAddUrlStatus("", "muted");
 }
 
 async function removeSource(url) {
@@ -246,13 +247,7 @@ async function refreshAll() {
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
 
-  const result = await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
-
-  if (result.failed > 0) {
-    setRemoteStatus(t("statusRefreshAllFailed"), "error");
-  } else {
-    setRemoteStatus("", "muted");
-  }
+  await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 }
 
 saveBtn.addEventListener("click", () => void saveLocal());
@@ -274,14 +269,16 @@ urlInput.addEventListener("keydown", (e) => {
   }
 });
 
+urlInput.addEventListener("input", () => {
+  if (!urlInput.value.trim()) {
+    setAddUrlStatus("", "muted");
+  }
+});
+
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes[config.STORAGE_KEY]) {
+  if (areaName === 'local' && (changes[config.STORAGE_KEY] || changes[config.BUSY_KEY])) {
     load();
-    setRemoteStatus("", "muted");
-  }
-  if (areaName === 'local' && changes[config.BUSY_KEY]) {
-    onBusyStateChanged(changes[config.BUSY_KEY].newValue);
   }
 });
 
@@ -305,11 +302,4 @@ const EXAMPLE_YAML = `- group: shakespeare
 exampleEl.value = EXAMPLE_YAML;
 exampleEl.style.height = exampleEl.scrollHeight + "px";
 
-// Initialize
-async function init() {
-  const { [config.BUSY_KEY]: currentBusy } = await chrome.storage.local.get(config.BUSY_KEY);
-  busy = currentBusy;
-  await load();
-}
-
-void init();
+void load();

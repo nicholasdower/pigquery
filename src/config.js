@@ -284,6 +284,7 @@ async function doAddSource(url) {
     error: null
   });
 
+  console.log('saving sources', sources);
   await saveSources(sources);
   return { ok: true };
 }
