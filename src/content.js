@@ -11,20 +11,24 @@ const isMac = navigator.userAgentData.platform === 'macOS';
 
 let configuration;
 let onConfigurationChange = null;
+let recentSnippetGroups = [];
 
-function sortSnippets(items, priorityGroup) {
+function sortSnippets(items) {
   return items.slice().sort((a, b) => {
-    if (priorityGroup) {
-      const aIsLast = a.group === priorityGroup;
-      const bIsLast = b.group === priorityGroup;
-      if (aIsLast !== bIsLast) return aIsLast ? -1 : 1;
-    }
-    const groupCmp = a.group.localeCompare(b.group);
-    if (groupCmp !== 0) return groupCmp;
-    const tagCmp = (a.tag ?? "").localeCompare(b.tag ?? "");
-    if (tagCmp !== 0) return tagCmp;
-    return a.name.localeCompare(b.name);
+    const aIndex = recentSnippetGroups.indexOf(a.group);
+    const bIndex = recentSnippetGroups.indexOf(b.group);
+    // Both in recent list: sort by recency (lower index = more recent)
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    // Only one in recent list: that one comes first
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    // Neither in recent list: sort by group name
+    return a.group.localeCompare(b.group);
   });
+}
+
+function addRecentSnippetGroup(group) {
+  recentSnippetGroups = [group, ...recentSnippetGroups.filter(g => g !== group)];
 }
 
 function sortSites(items, prioritySite) {
@@ -45,7 +49,7 @@ function sortSites(items, prioritySite) {
 async function loadConfiguration() {
   const loaded = await config.loadConfiguration();
   configuration = {
-    snippets: sortSnippets(loaded.snippets, null),
+    snippets: sortSnippets(loaded.snippets),
     sites: sortSites(loaded.sites, null),
     hasErrors: loaded.hasErrors,
   };
@@ -721,7 +725,8 @@ document.addEventListener(
         return;
       }
       openPopup(() => configuration.snippets, (option) => {
-        configuration.snippets = sortSnippets(configuration.snippets, option.group);
+        addRecentSnippetGroup(option.group);
+        configuration.snippets = sortSnippets(configuration.snippets);
         insertIntoEditor(editor, option.value);
       }, () => configuration.hasErrors);
       return;
