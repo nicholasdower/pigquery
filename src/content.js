@@ -1,6 +1,7 @@
 const config = window.pigquery.config;
 const i18n = window.pigquery.i18n;
 const search = window.pigquery.search;
+const formatters = window.pigquery.formatters;
 const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
@@ -380,6 +381,129 @@ const styles = `
     height: 12px;
     display: block;
   }
+  .pig-modal.pig-modal-with-content {
+    width: min(1100px, 100%);
+  }
+  .pig-modal-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .pig-modal-body.pig-modal-two-panel {
+    flex-direction: row;
+  }
+  .pig-modal-two-panel .pig-modal-list {
+    flex: 1;
+    min-width: 0;
+    border-right: 1px solid rgba(255,255,255,0.10);
+  }
+  .pig-modal-content-panel {
+    flex: 1;
+    min-width: 0;
+    max-height: min(50vh, 480px);
+    overflow: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pig-modal-content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .pig-modal-content-type {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+  }
+  .pig-modal-content-type.json {
+    background: rgba(250, 204, 21, 0.15);
+    color: rgb(250, 204, 21);
+  }
+  .pig-modal-content-type.yaml {
+    background: rgba(139, 92, 246, 0.15);
+    color: rgb(196, 181, 253);
+  }
+  .pig-modal-content-type.jwt {
+    background: rgba(236, 72, 153, 0.15);
+    color: rgb(249, 168, 212);
+  }
+  .pig-modal-content-type.base64 {
+    background: rgba(34, 197, 94, 0.15);
+    color: rgb(134, 239, 172);
+  }
+  .pig-modal-content-type.timestamp {
+    background: rgba(59, 130, 246, 0.15);
+    color: rgb(147, 197, 253);
+  }
+  .pig-modal-content-type.url {
+    background: rgba(6, 182, 212, 0.15);
+    color: rgb(103, 232, 249);
+  }
+  .pig-modal-content-type.xml {
+    background: rgba(245, 158, 11, 0.15);
+    color: rgb(251, 191, 36);
+  }
+  .pig-modal-content-type.hex {
+    background: rgba(168, 85, 247, 0.15);
+    color: rgb(216, 180, 254);
+  }
+  .pig-modal-content-type.uuid {
+    background: rgba(239, 68, 68, 0.15);
+    color: rgb(252, 165, 165);
+  }
+  .pig-modal-content-type.sql {
+    background: rgba(99, 102, 241, 0.15);
+    color: rgb(165, 180, 252);
+  }
+  .pig-modal-content-copy {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .pig-modal-content-copy:hover {
+    background: rgba(255,255,255,0.12);
+  }
+  .pig-modal-content-pre {
+    flex: 1;
+    margin: 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+  }
+  @media (max-width: 900px) {
+    .pig-modal-body.pig-modal-two-panel {
+      flex-direction: column;
+    }
+    .pig-modal-two-panel .pig-modal-list {
+      border-right: none;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      max-height: min(30vh, 300px);
+    }
+    .pig-modal-content-panel {
+      max-height: min(30vh, 300px);
+    }
+  }
 `;
 
 document.head.appendChild(makeEl("style", { id: "pig-modal-style", text: styles }));
@@ -445,7 +569,7 @@ function makeEl(tag, { id, className, text } = {}) {
   return el;
 }
 
-function openPopup(getOptions, onOptionSelected, getHasErrors) {
+function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
   let options = getOptions();
@@ -500,7 +624,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors) {
     scrollActiveIntoView();
   }
 
-  const modalEl = makeEl("div", { className: "pig-modal" });
+  const modalEl = makeEl("div", { className: "pig-modal pig-modal-with-content" });
   modalEl.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -515,6 +639,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors) {
       if (filtered.length) {
         activeIndex = (activeIndex + 1) % filtered.length;
         updateActiveStyles();
+        updateContentPanel();
       }
       return;
     }
@@ -525,6 +650,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors) {
       if (filtered.length) {
         activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
         updateActiveStyles();
+        updateContentPanel();
       }
       return;
     }
@@ -647,6 +773,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors) {
     filtered = search.filter(options, query);
     activeIndex = 0;
     renderList();
+    updateContentPanel();
   });
 
   onConfigurationChange = () => {
@@ -655,6 +782,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors) {
     filtered = search.filter(options, query);
     activeIndex = 0;
     renderList();
+    updateContentPanel();
 
     hasErrors = getHasErrors();
     updateErrorBadge();
@@ -663,11 +791,62 @@ function openPopup(getOptions, onOptionSelected, getHasErrors) {
   header.appendChild(inputEl);
 
   modalEl.appendChild(header);
-  modalEl.appendChild(listEl);
+
+  // Create body container for list and content panel
+  const bodyEl = makeEl("div", { className: "pig-modal-body pig-modal-two-panel" });
+  bodyEl.appendChild(listEl);
+
+  // Content panel elements (will be populated by updateContentPanel)
+  let currentFormattedContent = null;
+
+  const contentPanel = makeEl("div", { className: "pig-modal-content-panel" });
+
+  const contentHeader = makeEl("div", { className: "pig-modal-content-header" });
+  const typeLabel = makeEl("span", { className: "pig-modal-content-type" });
+  contentHeader.appendChild(typeLabel);
+
+  const copyBtn = makeEl("button", { className: "pig-modal-content-copy", text: i18n.getMessage("copy", LOCALE) || "Copy" });
+  copyBtn.addEventListener("click", () => {
+    if (currentFormattedContent) {
+      navigator.clipboard.writeText(currentFormattedContent);
+      showToast(i18n.getMessage("contentCopied", LOCALE) || "Copied to clipboard");
+    }
+  });
+  contentHeader.appendChild(copyBtn);
+  contentPanel.appendChild(contentHeader);
+
+  const pre = makeEl("pre", { className: "pig-modal-content-pre" });
+  contentPanel.appendChild(pre);
+
+  bodyEl.appendChild(contentPanel);
+
+  function updateContentPanel() {
+    const selectedItem = filtered[activeIndex] || null;
+    const contentInfo = getContent(selectedItem);
+
+    if (contentInfo && contentInfo.formatted) {
+      currentFormattedContent = contentInfo.formatted;
+
+      // Update type label
+      typeLabel.className = `pig-modal-content-type ${contentInfo.type || 'text'}`;
+      typeLabel.textContent = (contentInfo.type || 'text').toUpperCase();
+
+      // Update content
+      pre.textContent = contentInfo.formatted;
+
+      contentPanel.style.display = '';
+    } else {
+      currentFormattedContent = null;
+      contentPanel.style.display = 'none';
+    }
+  }
+
+  modalEl.appendChild(bodyEl);
 
   overlayEl.appendChild(modalEl);
   document.body.appendChild(overlayEl);
   renderList();
+  updateContentPanel();
 
   inputEl.focus();
 }
@@ -716,7 +895,7 @@ document.addEventListener(
 
       if (!(e.target instanceof Element)) {
         showToast(i18n.getMessage("editorNotFocused", LOCALE));
-        
+
         return;
       }
       const editor = e.target.closest('cfc-code-editor');
@@ -728,7 +907,7 @@ document.addEventListener(
         addRecentSnippetGroup(option.group);
         configuration.snippets = sortSnippets(configuration.snippets);
         insertIntoEditor(editor, option.value);
-      }, () => configuration.hasErrors);
+      }, () => configuration.hasErrors, (item) => item ? { type: 'sql', formatted: item.value } : null);
       return;
     }
 
@@ -790,10 +969,11 @@ document.addEventListener(
         ...option,
         url: option.url.replace('%s', encodeURIComponent(content))
       }));
+    const contentInfo = formatters.detectContentType(content);
     openPopup(getMatchingOptions, (option) => {
       configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
       window.open(option.url, "_blank", "noopener,noreferrer");
-    }, () => configuration.hasErrors);
+    }, () => configuration.hasErrors, () => contentInfo);
 
     // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
     const onFocusIn = () => {

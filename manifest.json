@@ -26,7 +26,7 @@
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": ["lib/js-yaml.min.js", "src/i18n.js", "src/config.js", "src/search.js", "src/content.js"]
+      "js": ["lib/js-yaml.min.js", "src/i18n.js", "src/config.js", "src/search.js", "src/formatters.js", "src/content.js"]
     }
   ],
   "options_page": "src/options.html",

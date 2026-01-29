@@ -233,6 +233,16 @@ const TRANSLATIONS = {
   popupRefreshing: {
     en: "Refreshing…",
     de: "Wird aktualisiert…",
+  },
+  // content.js: Copy button in content panel
+  copy: {
+    en: "Copy",
+    de: "Kopieren",
+  },
+  // content.js: Toast after copying formatted content to clipboard
+  contentCopied: {
+    en: "Copied to clipboard.",
+    de: "In die Zwischenablage kopiert.",
   }
 };
 
