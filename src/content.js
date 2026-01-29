@@ -51,11 +51,13 @@ async function loadConfiguration() {
   };
   onConfigurationChange?.();
 }
+
 loadConfiguration();
 
-// Trigger background refresh of remote sources on page load.
-// Listen for storage changes to update configuration.
-chrome.storage.onChanged.addListener(loadConfiguration);
+chrome.storage.onChanged.addListener((changes) => {
+  if (!(config.STORAGE_KEY in changes)) return;
+  loadConfiguration();
+});
 chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 
 // Extract and remove the 'pig' query parameter on page load.
