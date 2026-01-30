@@ -7,6 +7,21 @@ const DEFAULT_SHORTCUTS = {
   insertSnippet: { code: 'KeyY', key: 'y', ctrl: true, shift: true, alt: false, meta: false },
 };
 
+/**
+ * Formats a shortcut object as a human-readable string.
+ * e.g., { key: 'y', ctrl: true, shift: true } -> "Ctrl+Shift+Y"
+ */
+function formatShortcut(shortcut) {
+  const isMac = typeof navigator !== 'undefined' && navigator.userAgentData?.platform === 'macOS';
+  const parts = [];
+  if (shortcut.ctrl) parts.push("Ctrl");
+  if (shortcut.alt) parts.push("Alt");
+  if (shortcut.shift) parts.push("Shift");
+  if (shortcut.meta) parts.push(isMac ? "⌘" : "Win");
+  parts.push(shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key);
+  return parts.join("+");
+}
+
 function safeYamlParse(text) {
   try {
     return { ok: true, value: jsyaml.load(text) };
@@ -416,6 +431,7 @@ self.pigquery.config = {
   BUSY_KEY,
   SHORTCUTS_KEY,
   DEFAULT_SHORTCUTS,
+  formatShortcut,
   jsonToYaml,
   loadSources,
   loadBusy,

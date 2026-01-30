@@ -55,6 +55,14 @@
       <h1>PigQuery</h1>
     </div>
 
+    <!-- Keyboard Shortcuts Section -->
+    <h2 data-i18n="shortcutInsertSnippet">Insert Snippet Shortcut</h2>
+    <div class="row">
+      <button type="button" class="shortcut-btn" id="shortcut-insertSnippet"></button>
+      <button id="resetShortcuts" type="button" class="secondary" data-i18n="optionsResetShortcut">Reset</button>
+      <span id="shortcutsStatus" class="status muted"></span>
+    </div>
+
     <!-- Example Section -->
     <h2 data-i18n="optionsExample">Example</h2>
     <textarea id="example" class="example-textarea" readonly spellcheck="false"></textarea>
@@ -78,14 +86,6 @@
     <div class="row">
       <button id="save" type="button" data-i18n="optionsSave">Save</button>
       <span id="localStatus" class="muted"></span>
-    </div>
-
-    <!-- Keyboard Shortcuts Section -->
-    <h2 data-i18n="shortcutInsertSnippet">Insert Snippet Shortcut</h2>
-    <div class="row">
-      <button type="button" class="shortcut-btn" id="shortcut-insertSnippet"></button>
-      <button id="resetShortcuts" type="button" class="secondary" data-i18n="optionsResetShortcut">Reset</button>
-      <span id="shortcutsStatus" class="status muted"></span>
     </div>
 
     <script src="../lib/js-yaml.min.js"></script>

@@ -11,22 +11,9 @@ document.getElementById('shortcut-copy-cell').textContent = isMac ? 'Alt+⌘+Cli
 
 const shortcutInsertEl = document.getElementById('shortcut-insert');
 
-/**
- * Formats a shortcut object as a human-readable string.
- */
-function formatShortcut(shortcut) {
-  const parts = [];
-  if (shortcut.ctrl) parts.push("Ctrl");
-  if (shortcut.alt) parts.push("Alt");
-  if (shortcut.shift) parts.push("Shift");
-  if (shortcut.meta) parts.push(isMac ? "⌘" : "Win");
-  parts.push(shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key);
-  return parts.join("+");
-}
-
 async function loadShortcuts() {
   const shortcuts = await config.loadShortcuts();
-  shortcutInsertEl.textContent = formatShortcut(shortcuts.insertSnippet);
+  shortcutInsertEl.textContent = config.formatShortcut(shortcuts.insertSnippet);
 }
 
 document.getElementById('options-link').addEventListener('click', (e) => {
