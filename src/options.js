@@ -214,16 +214,15 @@ function formatTimestamp(ts) {
 }
 
 async function load() {
-  const storage = await chrome.storage.local.get([config.STORAGE_KEY, config.BUSY_KEY]);
-  sources = JSON.parse(storage[config.STORAGE_KEY] || "[]");
-  busy = storage[config.BUSY_KEY] || null;
+  sources = await config.loadSources();
+  busy = await config.loadBusy();
 
   // Cancel recording if busy (e.g., another page triggered an operation)
   if (busy && recordingShortcut) {
     cancelRecording();
   }
 
-  const local = sources.find(s => s.url === "local");
+  const local = config.getLocalSource(sources);
   const newLocalValue = local ? config.jsonToYaml(local.data) : "";
 
   // Only update the textarea if the user hasn't made unsaved edits
@@ -345,12 +344,6 @@ async function addUrl() {
 
   if (sources.find(s => s.url === url)) {
     setAddUrlStatus(t("statusUrlExists"), "error");
-    return;
-  }
-
-  const granted = await config.requestUrlPermission(url);
-  if (!granted) {
-    setAddUrlStatus(t("statusPermissionDenied"), "error");
     return;
   }
 

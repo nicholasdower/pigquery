@@ -180,6 +180,15 @@ async function saveSources(sources) {
 async function saveLocalSource(rawYaml) {
   if (operationPromise) return { ok: false, errorKey: "statusBusy" };
 
+  operationPromise = doSaveLocalSource(rawYaml);
+  try {
+    return await operationPromise;
+  } finally {
+    operationPromise = null;
+  }
+}
+
+async function doSaveLocalSource(rawYaml) {
   const sources = await loadSources();
   const filtered = sources.filter(s => s.url !== "local");
 
@@ -222,6 +231,26 @@ function getRemoteSources(sources) {
 }
 
 /**
+ * Loads the busy state from storage.
+ * Returns the busy type string or null.
+ */
+async function loadBusy() {
+  const data = await chrome.storage.local.get([BUSY_KEY]);
+  return data[BUSY_KEY] || null;
+}
+
+/**
+ * Clears stale busy state if no operation is in progress.
+ * Should only be called from the service worker on startup.
+ */
+async function clearStaleBusy() {
+  const busy = await loadBusy();
+  if (busy && !operationPromise) {
+    await setBusyState(null);
+  }
+}
+
+/**
  * Updates the busy state in local storage.
  */
 async function setBusyState(type) {
@@ -239,8 +268,6 @@ async function setBusyState(type) {
 async function refreshRemoteSources() {
   if (operationPromise) return;
 
-  await setBusyState('refreshing');
-
   operationPromise = doRefreshRemoteSources();
   try {
     await operationPromise;
@@ -251,6 +278,8 @@ async function refreshRemoteSources() {
 }
 
 async function doRefreshRemoteSources() {
+  await setBusyState('refreshing');
+
   const sources = await loadSources();
   const remoteSources = getRemoteSources(sources);
 
@@ -281,6 +310,7 @@ async function doRefreshRemoteSources() {
 
 /**
  * Adds a new remote source by URL.
+ * Requests permission for the URL's origin if needed.
  * Queues behind any in-progress operations.
  * Returns { ok: true } or { ok: false, errorKey, errorSubs }
  */
@@ -288,8 +318,6 @@ async function addSource(url) {
   if (operationPromise) {
     return { ok: false, errorKey: "statusBusy" };
   }
-
-  await setBusyState('adding');
 
   operationPromise = doAddSource(url);
   try {
@@ -301,6 +329,13 @@ async function addSource(url) {
 }
 
 async function doAddSource(url) {
+  const granted = await requestUrlPermission(url);
+  if (!granted) {
+    return { ok: false, errorKey: "statusPermissionDenied" };
+  }
+
+  await setBusyState('adding');
+
   const sources = await loadSources();
 
   if (sources.find(s => s.url === url)) {
@@ -329,8 +364,6 @@ async function doAddSource(url) {
 async function removeSource(url) {
   if (operationPromise) return;
 
-  await setBusyState('removing');
-
   operationPromise = doRemoveSource(url);
   try {
     await operationPromise;
@@ -341,6 +374,8 @@ async function removeSource(url) {
 }
 
 async function doRemoveSource(url) {
+  await setBusyState('removing');
+
   const sources = await loadSources();
   const filtered = sources.filter(s => s.url !== url);
   await saveSources(filtered);
@@ -362,10 +397,8 @@ async function loadShortcuts() {
 async function saveShortcuts(shortcuts) {
   if (operationPromise) return { ok: false, errorKey: "statusBusy" };
 
-  await setBusyState('saving');
-
   operationPromise = (async () => {
-    await new Promise(resolve => setTimeout(resolve, 5000)); // TODO: remove - testing delay
+    await setBusyState('saving');
     await chrome.storage.local.set({ [SHORTCUTS_KEY]: shortcuts });
   })();
   try {
@@ -384,8 +417,9 @@ self.pigquery.config = {
   SHORTCUTS_KEY,
   DEFAULT_SHORTCUTS,
   jsonToYaml,
-  requestUrlPermission,
   loadSources,
+  loadBusy,
+  clearStaleBusy,
   loadConfiguration,
   saveLocalSource,
   getLocalSource,

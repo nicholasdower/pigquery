@@ -57,3 +57,4 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
 // Check on startup
 updateErrorBadge();
+config.clearStaleBusy();
