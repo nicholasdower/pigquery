@@ -66,6 +66,8 @@ function setShortcutsStatus(message, kind = "muted") {
   shortcutsStatusEl.textContent = message;
 }
 
+const isMac = navigator.userAgentData?.platform === 'macOS';
+
 /**
  * Formats a shortcut object as a human-readable string.
  * e.g., { key: 'Y', ctrl: true, shift: true } -> "Ctrl+Shift+Y"
@@ -75,7 +77,7 @@ function formatShortcut(shortcut) {
   if (shortcut.ctrl) parts.push("Ctrl");
   if (shortcut.alt) parts.push("Alt");
   if (shortcut.shift) parts.push("Shift");
-  if (shortcut.meta) parts.push("⌘");
+  if (shortcut.meta) parts.push(isMac ? "⌘" : "Win");
   parts.push(shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key);
   return parts.join("+");
 }
