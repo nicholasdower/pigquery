@@ -441,7 +441,6 @@ const EXAMPLE_YAML = `- group: shakespeare
   url: https://en.wikipedia.org/w/index.php?search=%s`;
 
 exampleEl.value = EXAMPLE_YAML;
-exampleEl.style.height = exampleEl.scrollHeight + "px";
 
 void load();
 void loadShortcuts();
