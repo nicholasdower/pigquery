@@ -443,6 +443,14 @@ const styles = `
     background: rgba(59, 130, 246, 0.15);
     color: rgb(147, 197, 253);
   }
+  .pig-modal-content-type.date {
+    background: rgba(20, 184, 166, 0.15);
+    color: rgb(94, 234, 212);
+  }
+  .pig-modal-content-type.datetime {
+    background: rgba(14, 165, 233, 0.15);
+    color: rgb(125, 211, 252);
+  }
   .pig-modal-content-type.url {
     background: rgba(6, 182, 212, 0.15);
     color: rgb(103, 232, 249);
