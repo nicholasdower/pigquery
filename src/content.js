@@ -368,17 +368,50 @@ const styles = `
     flex-shrink: 0;
     cursor: pointer;
   }
+  .pig-modal-refresh {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .pig-modal-refresh:hover {
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.08);
+  }
+  .pig-modal-refresh.busy {
+    pointer-events: none;
+  }
+  .pig-modal-refresh.busy svg {
+    animation: pig-spin 1s linear infinite;
+  }
+  .pig-modal-refresh.error {
+    color: rgb(248, 113, 113);
+  }
+  .pig-modal-refresh-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    display: block;
+  }
+  @keyframes pig-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
   .pig-modal-logo {
     width: 24px;
     height: 24px;
-    display: block;
-  }
-  .pig-modal-logo-badge {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 12px;
-    height: 12px;
     display: block;
   }
   .pig-modal.pig-modal-with-content {
@@ -584,6 +617,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   let filtered = options.slice();
   let activeIndex = 0;
   let hasErrors = getHasErrors();
+  let busyListener = null;
 
   const lastFocusedEl = document.activeElement;
 
@@ -593,6 +627,9 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   function closePopup() {
     if (!overlayEl) return;
     onConfigurationChange = null;
+    if (busyListener) {
+      chrome.storage.onChanged.removeListener(busyListener);
+    }
     overlayEl.remove();
     lastFocusedEl.focus();
   }
@@ -748,21 +785,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   iconEl.alt = "PigQuery";
   iconEl.src = ICON_URL;
   iconContainer.appendChild(iconEl);
-
-  function updateErrorBadge() {
-    const existingBadge = iconContainer.querySelector('.pig-modal-logo-badge');
-    if (hasErrors && !existingBadge) {
-      const badgeEl = document.createElement("img");
-      badgeEl.className = "pig-modal-logo-badge";
-      badgeEl.alt = "Error";
-      badgeEl.src = ICON_ERROR_URL;
-      iconContainer.appendChild(badgeEl);
-    } else if (!hasErrors && existingBadge) {
-      existingBadge.remove();
-    }
-  }
-
-  updateErrorBadge();
   header.appendChild(iconContainer);
 
   const inputEl = makeEl("input", { className: "pig-modal-input" });
@@ -799,6 +821,64 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   };
 
   header.appendChild(inputEl);
+
+  // Refresh button
+  const refreshBtn = makeEl("button", { className: "pig-modal-refresh" });
+  refreshBtn.type = "button";
+  refreshBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>`;
+  refreshBtn.title = "Refresh";
+
+  let isBusy = false;
+
+  function updateRefreshState(busy) {
+    isBusy = busy;
+    if (busy) {
+      refreshBtn.classList.add('busy');
+    } else {
+      refreshBtn.classList.remove('busy');
+    }
+  }
+
+  function updateErrorBadge() {
+    const existingBadge = refreshBtn.querySelector('.pig-modal-refresh-badge');
+    if (hasErrors && !existingBadge) {
+      const badgeEl = document.createElement("img");
+      badgeEl.className = "pig-modal-refresh-badge";
+      badgeEl.alt = "Error";
+      badgeEl.src = ICON_ERROR_URL;
+      refreshBtn.appendChild(badgeEl);
+      refreshBtn.classList.add('error');
+    } else if (!hasErrors && existingBadge) {
+      existingBadge.remove();
+      refreshBtn.classList.remove('error');
+    }
+  }
+
+  updateErrorBadge();
+
+  // Check initial busy state
+  chrome.storage.local.get(config.BUSY_KEY, (result) => {
+    updateRefreshState(!!result[config.BUSY_KEY]);
+  });
+
+  // Listen for busy state changes
+  busyListener = (changes) => {
+    if (config.BUSY_KEY in changes) {
+      updateRefreshState(!!changes[config.BUSY_KEY].newValue);
+    }
+  };
+  chrome.storage.onChanged.addListener(busyListener);
+
+  refreshBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isBusy) {
+      chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+    }
+    inputEl.focus();
+  });
+
+  header.appendChild(refreshBtn);
 
   modalEl.appendChild(header);
 

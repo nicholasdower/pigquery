@@ -7,5 +7,4 @@ It should be possible to disable groups.
 Precreate search index.
 Log errors somewhere
 Test production version on Windows.
-Update from modal.
 Add default site Url which opens cell content that are URLs.
