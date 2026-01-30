@@ -258,6 +258,26 @@ const TRANSLATIONS = {
   optionsResetShortcut: {
     en: "Reset",
     de: "Zurücksetzen",
+  },
+  // options.html: Footer link to BigQuery
+  footerBigQuery: {
+    en: "BigQuery",
+    de: "BigQuery",
+  },
+  // options.html: Footer link to Chrome Web Store
+  footerStore: {
+    en: "Store",
+    de: "Store",
+  },
+  // options.html: Footer link to source code
+  footerSource: {
+    en: "Source",
+    de: "Quellcode",
+  },
+  // options.html: Footer link to report a bug
+  footerBug: {
+    en: "Bug",
+    de: "Fehler",
   }
 };
 
