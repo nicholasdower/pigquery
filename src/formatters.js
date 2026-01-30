@@ -166,10 +166,8 @@ function formatDateTimeOutput(date, type, originalValue, originalTzOffset = null
   const localOffset = formatOffset(localOffsetMin);
 
   // Original value
-  const lines = [
-    '── Original ──',
-    originalValue,
-  ];
+  const lines = []
+  lines.push(`Original:     ${originalValue}`);
 
   // Times section
   lines.push('', '── Times ──');
@@ -182,13 +180,13 @@ function formatDateTimeOutput(date, type, originalValue, originalTzOffset = null
     lines.push(`Original: ${originalFormatted} (${formatOffset(originalTzOffset)})`);
   }
 
-  lines.push(`UTC:      ${formatInTimezone(date, 'UTC')}`);
-  lines.push(`Local:    ${formatInTimezone(date, localTz)} (${localOffset})`);
+  lines.push(`UTC:          ${formatInTimezone(date, 'UTC')}`);
+  lines.push(`Local:        ${formatInTimezone(date, localTz)} (${localOffset})`);
 
   // Formats section
   lines.push('', '── Formats ──');
-  lines.push(`ISO 8601:   ${date.toISOString()}`);
-  lines.push(`RFC 2822:   ${date.toUTCString()}`);
+  lines.push(`ISO 8601:     ${date.toISOString()}`);
+  lines.push(`RFC 2822:     ${date.toUTCString()}`);
 
   // Unix timestamps
   lines.push('', '── Unix Timestamp ──');
@@ -223,36 +221,6 @@ function formatDateTimeOutput(date, type, originalValue, originalTzOffset = null
   lines.push('', `(${relative})`);
 
   return { type, formatted: lines.join('\n'), showPanel: true };
-}
-
-// ============================================================================
-// Unix Timestamp
-// ============================================================================
-function tryTimestamp(text) {
-  // Only digits, 10-13 chars (seconds or milliseconds)
-  if (!/^\d{10,13}$/.test(text)) return null;
-
-  const num = parseInt(text, 10);
-
-  // Determine if seconds or milliseconds based on magnitude
-  // Seconds: 10 digits, roughly 1970-2100
-  // Milliseconds: 13 digits
-  let date;
-
-  if (text.length === 13) {
-    date = new Date(num);
-  } else if (text.length >= 10) {
-    date = new Date(num * 1000);
-  } else {
-    return null;
-  }
-
-  // Sanity check: date should be between 1990 and 2100
-  const year = date.getFullYear();
-  if (year < 1990 || year > 2100) return null;
-
-  // Timestamps are inherently UTC, no original timezone offset
-  return formatDateTimeOutput(date, 'timestamp', text, null);
 }
 
 // ============================================================================
@@ -323,6 +291,154 @@ function tryDate(text) {
 }
 
 // ============================================================================
+// Number
+// ============================================================================
+function tryNumber(text) {
+  // Match integers and decimals, with optional negative sign
+  if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
+
+  // Skip very short numbers (not interesting)
+  if (text.replace('-', '').replace('.', '').length < 4) return null;
+
+  const num = parseFloat(text);
+  if (!isFinite(num)) return null;
+
+  const isInteger = Number.isInteger(num);
+  const absNum = Math.abs(num);
+
+  const lines = [`Original:    ${text}`];
+
+  // Formatted with thousands separators
+  if (isInteger) {
+    lines.push(`Formatted:   ${num.toLocaleString('en-US')}`);
+  } else {
+    // For decimals, preserve reasonable precision
+    lines.push(`Formatted:   ${num.toLocaleString('en-US', { maximumFractionDigits: 10 })}`);
+  }
+
+  // Percentage (if between -100 and 100, show as percentage)
+  if (absNum <= 100) {
+    lines.push(`Percentage:  ${(num * 100).toLocaleString('en-US', { maximumFractionDigits: 4 })}%`);
+  }
+
+  // Hex and binary for positive integers
+  if (isInteger && num >= 0 && num <= Number.MAX_SAFE_INTEGER) {
+    lines.push('', '── Integer Representations ──');
+    lines.push(`Hex:         0x${num.toString(16).toUpperCase()}`);
+    if (num <= 0xFFFFFFFF) {
+      lines.push(`Binary:      0b${num.toString(2)}`);
+    }
+    lines.push(`Octal:       0o${num.toString(8)}`);
+  }
+
+  // File size interpretation (for large numbers)
+  if (isInteger && num > 0) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    let size = num;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    if (unitIndex > 0) {
+      lines.push('', '── As File Size ──');
+      lines.push(`Binary:      ${size.toFixed(2)} ${units[unitIndex]}`);
+      // Also show SI units (1000-based)
+      const siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
+      let siSize = num;
+      let siIndex = 0;
+      while (siSize >= 1000 && siIndex < siUnits.length - 1) {
+        siSize /= 1000;
+        siIndex++;
+      }
+      lines.push(`SI:          ${siSize.toFixed(2)} ${siUnits[siIndex]}`);
+    }
+  }
+
+  // Timestamp interpretation for positive integers
+  if (isInteger && num > 0) {
+    // Try as seconds (10-digit range) or milliseconds (13-digit range)
+    let date = null;
+    let unit = null;
+
+    // Try as milliseconds first (13 digits, or smaller numbers that make sense as ms)
+    if (num >= 1e12 && num < 1e14) {
+      date = new Date(num);
+      unit = 'milliseconds';
+    }
+    // Try as seconds (10 digits, or reasonable range)
+    else if (num >= 1e8 && num < 1e12) {
+      date = new Date(num * 1000);
+      unit = 'seconds';
+    }
+
+    if (date && !isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      if (year >= 1990 && year <= 2100) {
+        // Format times consistently
+        const formatInTimezone = (d, timeZone) => {
+          const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          }).formatToParts(d);
+          const get = (type) => parts.find(p => p.type === type)?.value || '';
+          return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`;
+        };
+
+        const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const localOffsetMin = -date.getTimezoneOffset();
+        const sign = localOffsetMin >= 0 ? '+' : '-';
+        const hours = Math.floor(Math.abs(localOffsetMin) / 60);
+        const mins = Math.abs(localOffsetMin) % 60;
+        const localOffset = mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
+
+        lines.push('', `── As Timestamp (${unit}) ──`);
+        lines.push('', '── Times ──');
+        lines.push(`UTC:         ${formatInTimezone(date, 'UTC')}`);
+        lines.push(`Local:       ${formatInTimezone(date, localTz)} (${localOffset})`);
+
+        lines.push('', '── Time Formats ──');
+        lines.push(`ISO 8601:    ${date.toISOString()}`);
+        lines.push(`RFC 2822:    ${date.toUTCString()}`);
+
+        // Relative time
+        const now = Date.now();
+        const diff = date.getTime() - now;
+        const absDiff = Math.abs(diff);
+        let relative;
+        if (absDiff < 60000) {
+          relative = diff >= 0 ? 'in a few seconds' : 'a few seconds ago';
+        } else if (absDiff < 3600000) {
+          const m = Math.round(absDiff / 60000);
+          relative = diff >= 0 ? `in ${m} minute${m > 1 ? 's' : ''}` : `${m} minute${m > 1 ? 's' : ''} ago`;
+        } else if (absDiff < 86400000) {
+          const h = Math.round(absDiff / 3600000);
+          relative = diff >= 0 ? `in ${h} hour${h > 1 ? 's' : ''}` : `${h} hour${h > 1 ? 's' : ''} ago`;
+        } else if (absDiff < 2592000000) {
+          const d = Math.round(absDiff / 86400000);
+          relative = diff >= 0 ? `in ${d} day${d > 1 ? 's' : ''}` : `${d} day${d > 1 ? 's' : ''} ago`;
+        } else if (absDiff < 31536000000) {
+          const mo = Math.round(absDiff / 2592000000);
+          relative = diff >= 0 ? `in ${mo} month${mo > 1 ? 's' : ''}` : `${mo} month${mo > 1 ? 's' : ''} ago`;
+        } else {
+          const y = Math.round(absDiff / 31536000000);
+          relative = diff >= 0 ? `in ${y} year${y > 1 ? 's' : ''}` : `${y} year${y > 1 ? 's' : ''} ago`;
+        }
+        lines.push('', `(${relative})`);
+      }
+    }
+  }
+
+  return { type: 'number', formatted: lines.join('\n'), showPanel: true };
+}
+
+// ============================================================================
 // URL with Query Parameters
 // ============================================================================
 function tryUrl(text) {
@@ -339,7 +455,9 @@ function tryUrl(text) {
 
     if (!hasParams && !hasFragment && !longPath) return null;
 
-    const lines = ['── URL Components ──', ''];
+    const lines = []
+    lines.push(`Original: ${text}`, '');
+    lines.push('── URL Components ──');
     lines.push(`Protocol: ${url.protocol.replace(':', '')}`);
     lines.push(`Host:     ${url.host}`);
 
@@ -355,7 +473,7 @@ function tryUrl(text) {
           const decoded = decodeURIComponent(value);
           if (decoded !== value) displayValue = decoded;
         } catch (_) {}
-        lines.push(`  ${key}: ${displayValue}`);
+        lines.push(`${key}: ${displayValue}`);
       }
     }
 
@@ -444,7 +562,7 @@ function tryHex(text) {
   // Check if it's printable ASCII
   const printable = bytes.every(b => (b >= 32 && b < 127) || b === 9 || b === 10 || b === 13);
 
-  const lines = ['── Hex String ──', ''];
+  const lines = ['── Hex String ──'];
   lines.push(`Bytes: ${bytes.length}`);
 
   if (printable) {
@@ -484,7 +602,6 @@ function tryUuid(text) {
 
   const lines = [
     '── UUID ──',
-    '',
     `Version: ${version} - ${versionNames[version] || 'Unknown'}`,
     `Value:   ${text.toLowerCase()}`
   ];
@@ -527,8 +644,8 @@ function detectContentType(text) {
     tryJson(trimmed) ||
     tryYaml(trimmed) ||
     tryUuid(trimmed) ||
-    tryTimestamp(trimmed) ||
     tryDate(trimmed) ||
+    tryNumber(trimmed) ||
     tryUrl(trimmed) ||
     tryXml(trimmed) ||
     tryBase64(trimmed) ||

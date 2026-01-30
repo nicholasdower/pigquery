@@ -9,5 +9,4 @@ Log errors somewhere
 Add multiline viewer for large content. Parse json, yaml, etc.
 Test production version on Windows.
 Update from modal.
-Formats: number (show commas)
 Add default site Url which opens cell content that are URLs.
