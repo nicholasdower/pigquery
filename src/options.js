@@ -213,23 +213,16 @@ function formatTimestamp(ts) {
   return date.toLocaleString();
 }
 
-async function load() {
-  sources = await config.loadSources();
+/**
+ * Loads just the busy state and updates UI accordingly.
+ * Used when only BUSY_KEY changes, to avoid re-rendering sources.
+ */
+async function loadBusyState() {
   busy = await config.loadBusy();
 
   // Cancel recording if busy (e.g., another page triggered an operation)
   if (busy && recordingShortcut) {
     cancelRecording();
-  }
-
-  const local = config.getLocalSource(sources);
-  const newLocalValue = local ? config.jsonToYaml(local.data) : "";
-
-  // Only update the textarea if the user hasn't made unsaved edits
-  const hasUnsavedEdits = textarea.value !== lastLoadedLocal;
-  if (!hasUnsavedEdits) {
-    textarea.value = newLocalValue;
-    lastLoadedLocal = newLocalValue;
   }
 
   // Update refresh status based on busy state
@@ -239,6 +232,24 @@ async function load() {
     setRefreshStatus(t("statusFetching"), "muted");
   } else {
     setRefreshStatus("", "muted");
+  }
+
+  applyBusyState();
+  updateButtonStates();
+}
+
+async function load() {
+  sources = await config.loadSources();
+  await loadBusyState();
+
+  const local = config.getLocalSource(sources);
+  const newLocalValue = local ? config.jsonToYaml(local.data) : "";
+
+  // Only update the textarea if the user hasn't made unsaved edits
+  const hasUnsavedEdits = textarea.value !== lastLoadedLocal;
+  if (!hasUnsavedEdits) {
+    textarea.value = newLocalValue;
+    lastLoadedLocal = newLocalValue;
   }
 
   const remote = config.getRemoteSources(sources);
@@ -410,8 +421,11 @@ urlInput.addEventListener("input", () => {
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local') {
-    if (changes[config.STORAGE_KEY] || changes[config.BUSY_KEY]) {
+    if (changes[config.STORAGE_KEY]) {
       load();
+    }
+    if (changes[config.BUSY_KEY]) {
+      loadBusyState();
     }
     if (changes[config.SHORTCUTS_KEY]) {
       loadShortcuts();
