@@ -86,10 +86,8 @@ function formatShortcut(shortcut) {
 function updateShortcutButtons() {
   if (recordingShortcut === 'insertSnippet') {
     shortcutInsertBtn.textContent = t("shortcutRecording") || "Press keys...";
-    shortcutInsertBtn.classList.add("recording");
   } else {
     shortcutInsertBtn.textContent = formatShortcut(shortcuts.insertSnippet);
-    shortcutInsertBtn.classList.remove("recording");
   }
 }
 
@@ -389,7 +387,13 @@ refreshAllBtn.addEventListener("click", () => void refreshAll());
 textarea.addEventListener("input", () => updateButtonStates());
 
 // Shortcut recording event listeners
-shortcutInsertBtn.addEventListener("click", () => startRecording("insertSnippet"));
+shortcutInsertBtn.addEventListener("click", () => {
+  if (recordingShortcut === "insertSnippet") {
+    cancelRecording();
+  } else {
+    startRecording("insertSnippet");
+  }
+});
 resetShortcutsBtn.addEventListener("click", () => void resetShortcuts());
 
 document.addEventListener("keydown", (e) => {
