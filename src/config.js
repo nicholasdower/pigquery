@@ -145,9 +145,16 @@ async function loadConfiguration() {
 
   const hasErrors = sources.some(source => source.error != null);
 
+  // Default built-in sites
+  const defaultSites = [
+    { name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false },
+  ];
+
+  const userSites = dedupe(allItems.filter(item => item.url)).map(item => ({ ...item, regex: new RegExp(item.regex) }));
+
   return {
     snippets: dedupe(allItems.filter(item => !item.url)),
-    sites: dedupe(allItems.filter(item => item.url)).map(item => ({ ...item, regex: new RegExp(item.regex) })),
+    sites: [...userSites, ...defaultSites],
     hasErrors,
   };
 }

@@ -1104,7 +1104,7 @@ document.addEventListener(
       .filter(option => option.regex.test(content))
       .map(option => ({
         ...option,
-        url: option.url.replace('%s', encodeURIComponent(content))
+        url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content))
       }));
     const contentInfo = formatters.detectContentType(content);
     openPopup(getMatchingOptions, (option) => {

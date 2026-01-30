@@ -448,21 +448,16 @@ function tryUrl(text) {
   try {
     const url = new URL(text);
 
-    // Only show panel if there's something interesting (query params, long path, or fragment)
     const hasParams = url.searchParams.toString().length > 0;
-    const hasFragment = url.hash.length > 0;
-    const longPath = url.pathname.length > 20;
-
-    if (!hasParams && !hasFragment && !longPath) return null;
 
     const lines = []
     lines.push(`Original: ${text}`, '');
     lines.push('── URL Components ──');
     lines.push(`Protocol: ${url.protocol.replace(':', '')}`);
     lines.push(`Host:     ${url.host}`);
-
     if (url.port) lines.push(`Port:     ${url.port}`);
     if (url.pathname !== '/') lines.push(`Path:     ${url.pathname}`);
+    if (url.hash) lines.push(`Fragment: ${url.hash.slice(1)}`);
 
     if (hasParams) {
       lines.push('', '── Query Parameters ──');
@@ -475,10 +470,6 @@ function tryUrl(text) {
         } catch (_) {}
         lines.push(`${key}: ${displayValue}`);
       }
-    }
-
-    if (hasFragment) {
-      lines.push('', `Fragment: ${url.hash.slice(1)}`);
     }
 
     return { type: 'url', formatted: lines.join('\n'), showPanel: true };

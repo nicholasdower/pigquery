@@ -7,4 +7,3 @@ It should be possible to disable groups.
 Precreate search index.
 Log errors somewhere
 Test production version on Windows.
-Add default site Url which opens cell content that are URLs.
