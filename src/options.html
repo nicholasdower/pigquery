@@ -26,8 +26,11 @@
       .error { color: #f48771; }
       .ok { color: #89d185; }
       .muted { color: #999; }
-      .header { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+      .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+      .header .logo { display: flex; align-items: center; gap: 12px; }
       .header img { width: 32px; height: 32px; }
+      .header .shortcuts { display: flex; align-items: center; gap: 8px; }
+      .header .shortcuts h2 { margin: 0; font-size: 14px; }
       h1 { color: #e0e0e0; margin: 0; }
       h2 { color: #e0e0e0; margin: 24px 0 0 0; font-size: 16px; }
       .source-card { margin-top: 24px; }
@@ -41,51 +44,55 @@
       .source-actions button { padding: 4px 8px; font-size: 12px; }
       .empty-state { color: #888; font-style: italic; padding-top: 16px; text-align: center; }
       .example-textarea { font-size: 12px; resize: none; }
-      .row input[type="text"] { flex: 1; margin-top: 0; }
-      .refresh-row { margin-top: 6px; }
+      .two-col { display: flex; gap: 16px; margin-top: 24px; }
+      .two-col > div { flex: 1; min-width: 0; }
+      .two-col h2 { margin-top: 0; }
+      .two-col textarea { margin-top: 8px; }
       .shortcut-btn { min-width: 200px; padding: 6px 12px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #444; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-size: 13px; text-align: center; cursor: pointer; }
       .shortcut-btn:hover { background: #383838; border-color: #555; }
       .shortcut-btn:disabled { opacity: 0.5; cursor: not-allowed; }
       .shortcut-btn:disabled:hover { background: #2d2d2d; border-color: #444; }
+      .header .shortcuts button.secondary { padding: 6px 12px; border: 1px solid #444; font-size: 13px; }
     </style>
   </head>
   <body>
     <div class="header">
-      <img src="../icons/icon.svg" alt="PigQuery Logo">
-      <h1>PigQuery</h1>
+      <div class="logo">
+        <img src="../icons/icon.svg" alt="PigQuery Logo">
+        <h1>PigQuery</h1>
+      </div>
+      <div class="shortcuts">
+        <h2 data-i18n="shortcutInsertSnippet">Insert Snippet Shortcut</h2>
+        <button type="button" class="shortcut-btn" id="shortcut-insertSnippet"></button>
+        <button id="resetShortcuts" type="button" class="secondary" data-i18n="optionsResetShortcut">Reset</button>
+        <span id="shortcutsStatus" class="status muted"></span>
+      </div>
     </div>
-
-    <!-- Keyboard Shortcuts Section -->
-    <h2 data-i18n="shortcutInsertSnippet">Insert Snippet Shortcut</h2>
-    <div class="row">
-      <button type="button" class="shortcut-btn" id="shortcut-insertSnippet"></button>
-      <button id="resetShortcuts" type="button" class="secondary" data-i18n="optionsResetShortcut">Reset</button>
-      <span id="shortcutsStatus" class="status muted"></span>
-    </div>
-
-    <!-- Example Section -->
-    <h2 data-i18n="optionsExample">Example</h2>
-    <textarea id="example" class="example-textarea" readonly spellcheck="false"></textarea>
 
     <!-- Remote Sources Section -->
     <h2 data-i18n="optionsRemoteSources">Remote Sources</h2>
+    <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
     <div class="row">
-      <input type="text" id="urlInput" placeholder="Enter YAML URL" data-i18n-placeholder="optionsUrlPlaceholder" />
       <button id="addUrl" type="button" data-i18n="optionsAddUrl">Add URL</button>
-    </div>
-    <span id="addUrlStatus" class="status muted"></span>
-    <div class="row refresh-row">
       <button id="refreshAll" type="button" class="secondary" data-i18n="optionsRefreshAll">Refresh All</button>
-      <span id="refreshStatus" class="status muted"></span>
+      <span id="addUrlStatus" class="status muted"></span>
     </div>
     <div id="remoteSources"></div>
 
-    <!-- Local Configuration Section -->
-    <h2 data-i18n="optionsLocalConfig">Local Configuration</h2>
-    <textarea id="payload" spellcheck="false" placeholder="Enter configuration" data-i18n-placeholder="optionsPlaceholder"></textarea>
-    <div class="row">
-      <button id="save" type="button" data-i18n="optionsSave">Save</button>
-      <span id="localStatus" class="muted"></span>
+    <!-- Example and Local Configuration Side by Side -->
+    <div class="two-col">
+      <div>
+        <h2 data-i18n="optionsExample">Example</h2>
+        <textarea id="example" class="example-textarea" readonly spellcheck="false"></textarea>
+      </div>
+      <div>
+        <h2 data-i18n="optionsLocalConfig">Local Configuration</h2>
+        <textarea id="payload" spellcheck="false" placeholder="Enter configuration" data-i18n-placeholder="optionsPlaceholder"></textarea>
+        <div class="row">
+          <button id="save" type="button" data-i18n="optionsSave">Save</button>
+          <span id="localStatus" class="muted"></span>
+        </div>
+      </div>
     </div>
 
     <script src="../lib/js-yaml.min.js"></script>

@@ -246,8 +246,8 @@ const TRANSLATIONS = {
   },
   // options.html: Header for insert snippet shortcut section
   shortcutInsertSnippet: {
-    en: "Insert Snippet Shortcut",
-    de: "Snippet-Tastenkürzel",
+    en: "Insert",
+    de: "Einfügen",
   },
   // options.js: Shortcut button text when recording a new shortcut
   shortcutRecording: {

@@ -11,7 +11,6 @@ const textarea = el("payload");
 const saveBtn = el("save");
 const localStatusEl = el("localStatus");
 const addUrlStatusEl = el("addUrlStatus");
-const refreshStatusEl = el("refreshStatus");
 const urlInput = el("urlInput");
 const addUrlBtn = el("addUrl");
 const refreshAllBtn = el("refreshAll");
@@ -54,11 +53,6 @@ function setLocalStatus(message, kind = "muted") {
 function setAddUrlStatus(message, kind = "muted") {
   addUrlStatusEl.className = "status " + kind;
   addUrlStatusEl.textContent = message;
-}
-
-function setRefreshStatus(message, kind = "muted") {
-  refreshStatusEl.className = "status " + kind;
-  refreshStatusEl.textContent = message;
 }
 
 function setShortcutsStatus(message, kind = "muted") {
@@ -207,15 +201,6 @@ async function loadBusyState() {
   // Cancel recording if busy (e.g., another page triggered an operation)
   if (busy && recordingShortcut) {
     cancelRecording();
-  }
-
-  // Update refresh status based on busy state
-  if (busy === 'refreshing') {
-    setRefreshStatus(t("statusRefreshing"), "muted");
-  } else if (busy === 'adding') {
-    setRefreshStatus(t("statusFetching"), "muted");
-  } else {
-    setRefreshStatus("", "muted");
   }
 
   applyBusyState();
