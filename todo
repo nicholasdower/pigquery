@@ -6,7 +6,6 @@ Allow override of keyboard shortcuts.
 It should be possible to disable groups.
 Precreate search index.
 Log errors somewhere
-Add multiline viewer for large content. Parse json, yaml, etc.
 Test production version on Windows.
 Update from modal.
 Add default site Url which opens cell content that are URLs.
