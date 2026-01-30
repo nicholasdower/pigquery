@@ -363,10 +363,15 @@ const styles = `
   }
   .pig-modal-logo-container {
     position: relative;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
     cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 4px;
+    border-radius: 4px;
+    box-sizing: border-box;
   }
   .pig-modal-refresh {
     position: relative;
@@ -624,11 +629,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   const overlayEl = makeEl("div", { className: "pig-modal-overlay" });
   const listEl = makeEl("div", { className: "pig-modal-list" });
 
+  let focusRedirectHandler = null;
+
   function closePopup() {
     if (!overlayEl) return;
     onConfigurationChange = null;
     if (busyListener) {
       chrome.storage.onChanged.removeListener(busyListener);
+    }
+    if (focusRedirectHandler) {
+      document.removeEventListener('focusin', focusRedirectHandler);
     }
     overlayEl.remove();
     lastFocusedEl.focus();
@@ -670,11 +680,32 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   }
 
   const modalEl = makeEl("div", { className: "pig-modal pig-modal-with-content" });
+
+  // Focusable elements in desired order - will be populated after elements are created
+  let focusableElements = [];
+
   modalEl.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
       closePopup();
+      return;
+    }
+
+    // Trap focus within modal
+    if (e.key === "Tab") {
+      const currentIndex = focusableElements.indexOf(document.activeElement);
+      if (currentIndex !== -1) {
+        e.preventDefault();
+        e.stopPropagation();
+        let nextIndex;
+        if (e.shiftKey) {
+          nextIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+        } else {
+          nextIndex = (currentIndex + 1) % focusableElements.length;
+        }
+        focusableElements[nextIndex].focus();
+      }
       return;
     }
 
@@ -701,10 +732,13 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     }
 
     if (e.key === "Enter") {
-      e.preventDefault();
-      e.stopPropagation();
-      onOptionSelected(filtered[activeIndex]);
-      closePopup();
+      // Only select item if input is focused, let buttons handle their own Enter
+      if (document.activeElement === inputEl) {
+        e.preventDefault();
+        e.stopPropagation();
+        onOptionSelected(filtered[activeIndex]);
+        closePopup();
+      }
       return;
     }
 
@@ -779,7 +813,9 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   }
 
   const header = makeEl("div", { className: "pig-modal-header" });
-  const iconContainer = makeEl("div", { className: "pig-modal-logo-container" });
+  const iconContainer = makeEl("button", { className: "pig-modal-logo-container" });
+  iconContainer.type = "button";
+  iconContainer.title = "Options";
   const iconEl = document.createElement("img");
   iconEl.className = "pig-modal-logo";
   iconEl.alt = "PigQuery";
@@ -937,6 +973,17 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   document.body.appendChild(overlayEl);
   renderList();
   updateContentPanel();
+
+  // Set up focus trap order: input → refresh → copy → logo
+  focusableElements = [inputEl, refreshBtn, copyBtn, iconContainer];
+
+  // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
+  focusRedirectHandler = (e) => {
+    if (!modalEl.contains(e.target)) {
+      inputEl.focus();
+    }
+  };
+  document.addEventListener('focusin', focusRedirectHandler);
 
   inputEl.focus();
 }
