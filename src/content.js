@@ -743,12 +743,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
   const header = makeEl("div", { className: "pig-modal-header" });
   const iconContainer = makeEl("div", { className: "pig-modal-logo-container" });
-  iconContainer.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    chrome.runtime.sendMessage({ action: "openOptionsPage" });
-    closePopup();
-  });
   const iconEl = document.createElement("img");
   iconEl.className = "pig-modal-logo";
   iconEl.alt = "PigQuery";
@@ -776,6 +770,14 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   inputEl.placeholder = i18n.getMessage("searchPlaceholder", LOCALE);
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
+
+  iconContainer.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    chrome.runtime.sendMessage({ action: "openOptionsPage" });
+    inputEl.focus();
+  });
+
   inputEl.addEventListener("input", () => {
     const query = (inputEl.value || "").trim().toLowerCase();
     filtered = search.filter(options, query);
