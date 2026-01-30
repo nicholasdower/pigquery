@@ -11,8 +11,20 @@ const ICON_ERROR_URL = chrome.runtime.getURL("icons/icon-badge-error.svg");
 const isMac = navigator.userAgentData.platform === 'macOS';
 
 let configuration;
+let shortcuts = config.DEFAULT_SHORTCUTS;
 let onConfigurationChange = null;
 let recentSnippetGroups = [];
+
+/**
+ * Checks if a keyboard event matches a shortcut configuration.
+ */
+function matchesShortcut(e, shortcut) {
+  return e.code === shortcut.code &&
+         e.ctrlKey === shortcut.ctrl &&
+         e.altKey === shortcut.alt &&
+         e.shiftKey === shortcut.shift &&
+         e.metaKey === shortcut.meta;
+}
 
 function sortSnippets(items) {
   return items.slice().sort((a, b) => {
@@ -59,9 +71,18 @@ async function loadConfiguration() {
 
 loadConfiguration();
 
+async function loadShortcuts() {
+  shortcuts = await config.loadShortcuts();
+}
+loadShortcuts();
+
 chrome.storage.onChanged.addListener((changes) => {
-  if (!(config.STORAGE_KEY in changes)) return;
-  loadConfiguration();
+  if (config.STORAGE_KEY in changes) {
+    loadConfiguration();
+  }
+  if (config.SHORTCUTS_KEY in changes) {
+    loadShortcuts();
+  }
 });
 chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 
@@ -1025,7 +1046,7 @@ document.addEventListener(
       window.copyTimeoutId = null;
     }
 
-    if (!e.isComposing && !e.repeat && e.key === 'Y' && e.shiftKey && !e.metaKey && !e.altKey && e.ctrlKey) {
+    if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();

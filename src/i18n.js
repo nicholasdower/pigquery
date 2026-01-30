@@ -243,6 +243,21 @@ const TRANSLATIONS = {
   contentCopied: {
     en: "Copied to clipboard.",
     de: "In die Zwischenablage kopiert.",
+  },
+  // options.html: Label for insert snippet shortcut
+  shortcutInsertSnippet: {
+    en: "Insert snippet shortcut:",
+    de: "Snippet-Tastenkürzel:",
+  },
+  // options.js: Shortcut button text when recording a new shortcut
+  shortcutRecording: {
+    en: "Press keys…",
+    de: "Tasten drücken…",
+  },
+  // options.html: Reset shortcut button
+  optionsResetShortcut: {
+    en: "Reset",
+    de: "Zurücksetzen",
   }
 };
 

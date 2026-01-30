@@ -18,9 +18,16 @@ const refreshAllBtn = el("refreshAll");
 const remoteSourcesEl = el("remoteSources");
 const exampleEl = el("example");
 
+// Shortcuts elements
+const shortcutInsertBtn = el("shortcut-insertSnippet");
+const resetShortcutsBtn = el("resetShortcuts");
+const shortcutsStatusEl = el("shortcutsStatus");
+
 let sources = [];
 let busy = null; // Current operation: 'refreshing', 'adding', or null
 let lastLoadedLocal = ""; // Track the last loaded local config to detect unsaved edits
+let shortcuts = {}; // Current shortcut configuration
+let recordingShortcut = null; // Which shortcut is being recorded ('insertSnippet' or null)
 
 function updateButtonStates() {
   const unchanged = textarea.value === lastLoadedLocal;
@@ -34,6 +41,9 @@ function updateButtonStates() {
   remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
     btn.disabled = !!busy;
   });
+  // Shortcut buttons - disabled when busy (unless currently recording that shortcut)
+  shortcutInsertBtn.disabled = !!busy && recordingShortcut !== 'insertSnippet';
+  resetShortcutsBtn.disabled = !!busy;
 }
 
 function setLocalStatus(message, kind = "muted") {
@@ -51,6 +61,152 @@ function setRefreshStatus(message, kind = "muted") {
   refreshStatusEl.textContent = message;
 }
 
+function setShortcutsStatus(message, kind = "muted") {
+  shortcutsStatusEl.className = "status " + kind;
+  shortcutsStatusEl.textContent = message;
+}
+
+/**
+ * Formats a shortcut object as a human-readable string.
+ * e.g., { key: 'Y', ctrl: true, shift: true } -> "Ctrl+Shift+Y"
+ */
+function formatShortcut(shortcut) {
+  const parts = [];
+  if (shortcut.ctrl) parts.push("Ctrl");
+  if (shortcut.alt) parts.push("Alt");
+  if (shortcut.shift) parts.push("Shift");
+  if (shortcut.meta) parts.push("⌘");
+  parts.push(shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key);
+  return parts.join("+");
+}
+
+/**
+ * Updates the shortcut button displays with current shortcuts.
+ */
+function updateShortcutButtons() {
+  if (recordingShortcut === 'insertSnippet') {
+    shortcutInsertBtn.textContent = t("shortcutRecording") || "Press keys...";
+    shortcutInsertBtn.classList.add("recording");
+  } else {
+    shortcutInsertBtn.textContent = formatShortcut(shortcuts.insertSnippet);
+    shortcutInsertBtn.classList.remove("recording");
+  }
+}
+
+/**
+ * Loads shortcuts from storage and updates the UI.
+ */
+async function loadShortcuts() {
+  shortcuts = await config.loadShortcuts();
+  updateShortcutButtons();
+}
+
+/**
+ * Starts recording a shortcut for the given key.
+ */
+function startRecording(shortcutKey) {
+  if (busy) return;
+  recordingShortcut = shortcutKey;
+  updateShortcutButtons();
+  updateButtonStates();
+}
+
+/**
+ * Cancels the current shortcut recording.
+ */
+function cancelRecording() {
+  recordingShortcut = null;
+  updateShortcutButtons();
+  updateButtonStates();
+}
+
+/**
+ * Converts a KeyboardEvent.code to a readable key name.
+ * e.g., "KeyO" -> "o", "Digit1" -> "1", "BracketLeft" -> "["
+ */
+function codeToKey(code) {
+  if (code.startsWith("Key")) return code.slice(3).toLowerCase();
+  if (code.startsWith("Digit")) return code.slice(5);
+  const specialKeys = {
+    Backquote: "`", Minus: "-", Equal: "=", BracketLeft: "[", BracketRight: "]",
+    Backslash: "\\", Semicolon: ";", Quote: "'", Comma: ",", Period: ".", Slash: "/",
+    Space: "Space", Enter: "Enter", Tab: "Tab", Backspace: "Backspace",
+    ArrowUp: "ArrowUp", ArrowDown: "ArrowDown", ArrowLeft: "ArrowLeft", ArrowRight: "ArrowRight",
+    Home: "Home", End: "End", PageUp: "PageUp", PageDown: "PageDown",
+    Insert: "Insert", Delete: "Delete",
+  };
+  return specialKeys[code] || code;
+}
+
+/**
+ * Handles a keydown event during shortcut recording.
+ */
+function handleShortcutKeydown(e) {
+  if (!recordingShortcut) return;
+
+  // Escape cancels recording
+  if (e.code === "Escape") {
+    e.preventDefault();
+    cancelRecording();
+    return;
+  }
+
+  // Ignore modifier-only keypresses
+  if (["ControlLeft", "ControlRight", "AltLeft", "AltRight", "ShiftLeft", "ShiftRight", "MetaLeft", "MetaRight"].includes(e.code)) {
+    return;
+  }
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const newShortcut = {
+    code: e.code,
+    key: codeToKey(e.code),
+    ctrl: e.ctrlKey,
+    alt: e.altKey,
+    shift: e.shiftKey,
+    meta: e.metaKey
+  };
+
+  const shortcutKey = recordingShortcut;
+  recordingShortcut = null;
+
+  // Update local state immediately
+  shortcuts[shortcutKey] = newShortcut;
+  updateShortcutButtons();
+
+  // Save through service worker
+  saveShortcuts();
+}
+
+/**
+ * Saves the current shortcuts configuration.
+ */
+async function saveShortcuts() {
+  if (busy) return;
+
+  const result = await chrome.runtime.sendMessage({ action: "saveShortcuts", shortcuts });
+
+  if (!result.ok) {
+    setShortcutsStatus(t(result.errorKey, result.errorSubs), "error");
+    return;
+  }
+
+  setShortcutsStatus("", "muted");
+  updateButtonStates();
+}
+
+/**
+ * Resets shortcuts to defaults.
+ */
+async function resetShortcuts() {
+  if (busy) return;
+
+  shortcuts = { ...config.DEFAULT_SHORTCUTS };
+  updateShortcutButtons();
+  await saveShortcuts();
+}
+
 function formatTimestamp(ts) {
   if (!ts) return "Never";
   const date = new Date(ts);
@@ -61,6 +217,11 @@ async function load() {
   const storage = await chrome.storage.local.get([config.STORAGE_KEY, config.BUSY_KEY]);
   sources = JSON.parse(storage[config.STORAGE_KEY] || "[]");
   busy = storage[config.BUSY_KEY] || null;
+
+  // Cancel recording if busy (e.g., another page triggered an operation)
+  if (busy && recordingShortcut) {
+    cancelRecording();
+  }
 
   const local = sources.find(s => s.url === "local");
   const newLocalValue = local ? config.jsonToYaml(local.data) : "";
@@ -167,7 +328,7 @@ async function saveLocal() {
 
 async function addUrl() {
   if (busy) return;
-  
+
   const url = urlInput.value.trim();
 
   if (!url) {
@@ -205,13 +366,13 @@ async function addUrl() {
 
 async function removeSource(url) {
   if (busy) return;
-  
+
   await chrome.runtime.sendMessage({ action: "removeSource", url });
 }
 
 async function refreshAll() {
   if (busy) return;
-  
+
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
 
@@ -223,7 +384,17 @@ addUrlBtn.addEventListener("click", () => void addUrl());
 refreshAllBtn.addEventListener("click", () => void refreshAll());
 textarea.addEventListener("input", () => updateButtonStates());
 
+// Shortcut recording event listeners
+shortcutInsertBtn.addEventListener("click", () => startRecording("insertSnippet"));
+resetShortcutsBtn.addEventListener("click", () => void resetShortcuts());
+
 document.addEventListener("keydown", (e) => {
+  // Handle shortcut recording
+  if (recordingShortcut) {
+    handleShortcutKeydown(e);
+    return;
+  }
+
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
     e.preventDefault();
     void saveLocal();
@@ -245,8 +416,13 @@ urlInput.addEventListener("input", () => {
 
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && (changes[config.STORAGE_KEY] || changes[config.BUSY_KEY])) {
-    load();
+  if (areaName === 'local') {
+    if (changes[config.STORAGE_KEY] || changes[config.BUSY_KEY]) {
+      load();
+    }
+    if (changes[config.SHORTCUTS_KEY]) {
+      loadShortcuts();
+    }
   }
 });
 
@@ -271,3 +447,4 @@ exampleEl.value = EXAMPLE_YAML;
 exampleEl.style.height = exampleEl.scrollHeight + "px";
 
 void load();
+void loadShortcuts();

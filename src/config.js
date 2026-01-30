@@ -1,6 +1,11 @@
 const STORAGE_KEY = "userPayload";
 const BUSY_KEY = "busy";
+const SHORTCUTS_KEY = "shortcuts";
 let operationPromise = null;
+
+const DEFAULT_SHORTCUTS = {
+  insertSnippet: { code: 'KeyY', key: 'y', ctrl: true, shift: true, alt: false, meta: false },
+};
 
 function safeYamlParse(text) {
   try {
@@ -324,15 +329,60 @@ async function doAddSource(url) {
 async function removeSource(url) {
   if (operationPromise) return;
 
+  await setBusyState('removing');
+
+  operationPromise = doRemoveSource(url);
+  try {
+    await operationPromise;
+  } finally {
+    operationPromise = null;
+    await setBusyState(null);
+  }
+}
+
+async function doRemoveSource(url) {
   const sources = await loadSources();
   const filtered = sources.filter(s => s.url !== url);
   await saveSources(filtered);
+}
+
+/**
+ * Loads keyboard shortcuts from storage.
+ * Returns merged defaults with user overrides.
+ */
+async function loadShortcuts() {
+  const data = await chrome.storage.local.get([SHORTCUTS_KEY]);
+  return { ...DEFAULT_SHORTCUTS, ...data[SHORTCUTS_KEY] };
+}
+
+/**
+ * Saves keyboard shortcuts to storage.
+ * Returns { ok: true } or { ok: false, errorKey }
+ */
+async function saveShortcuts(shortcuts) {
+  if (operationPromise) return { ok: false, errorKey: "statusBusy" };
+
+  await setBusyState('saving');
+
+  operationPromise = (async () => {
+    await new Promise(resolve => setTimeout(resolve, 5000)); // TODO: remove - testing delay
+    await chrome.storage.local.set({ [SHORTCUTS_KEY]: shortcuts });
+  })();
+  try {
+    await operationPromise;
+    return { ok: true };
+  } finally {
+    operationPromise = null;
+    await setBusyState(null);
+  }
 }
 
 self.pigquery = self.pigquery || {};
 self.pigquery.config = {
   STORAGE_KEY,
   BUSY_KEY,
+  SHORTCUTS_KEY,
+  DEFAULT_SHORTCUTS,
   jsonToYaml,
   requestUrlPermission,
   loadSources,
@@ -342,5 +392,7 @@ self.pigquery.config = {
   getRemoteSources,
   refreshRemoteSources,
   addSource,
-  removeSource
+  removeSource,
+  loadShortcuts,
+  saveShortcuts
 };

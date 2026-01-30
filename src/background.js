@@ -24,6 +24,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  if (message.action === "saveShortcuts") {
+    config.saveShortcuts(message.shortcuts).then((result) => {
+      sendResponse(result);
+    });
+    return true;
+  }
   if (message.action === "openOptionsPage") {
     chrome.runtime.openOptionsPage();
   }
@@ -33,7 +39,7 @@ async function updateErrorBadge() {
   const sources = await config.loadSources();
   const remote = config.getRemoteSources(sources);
   const hasErrors = remote.some(s => s.error);
-  
+
   if (hasErrors) {
     chrome.action.setBadgeText({ text: '!' });
     chrome.action.setBadgeBackgroundColor({ color: '#dc2626' });

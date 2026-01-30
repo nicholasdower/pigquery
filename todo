@@ -2,7 +2,6 @@ Add light mode.
 Add tests.
 Maybe support multiple tags.
 Clean up global state in content script.
-Allow override of keyboard shortcuts.
 It should be possible to disable groups.
 Precreate search index.
 Log errors somewhere
