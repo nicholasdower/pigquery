@@ -244,6 +244,11 @@ const TRANSLATIONS = {
     en: "Copied to clipboard.",
     de: "In die Zwischenablage kopiert.",
   },
+  // content.js: Copy original button in content panel (when formatted differs from original)
+  copyOriginal: {
+    en: "Copy Original",
+    de: "Original kopieren",
+  },
   // options.html: Header for insert snippet shortcut section
   shortcutInsertSnippet: {
     en: "Insert",

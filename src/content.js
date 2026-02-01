@@ -530,6 +530,10 @@ const styles = `
     background: rgba(99, 102, 241, 0.15);
     color: rgb(165, 180, 252);
   }
+  .pig-modal-content-copy-buttons {
+    display: flex;
+    gap: 6px;
+  }
   .pig-modal-content-copy {
     padding: 4px 10px;
     border-radius: 6px;
@@ -715,17 +719,19 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
     // Trap focus within modal
     if (e.key === "Tab") {
-      const currentIndex = focusableElements.indexOf(document.activeElement);
+      // Filter to only visible elements
+      const visibleElements = focusableElements.filter(el => el.style.display !== 'none');
+      const currentIndex = visibleElements.indexOf(document.activeElement);
       if (currentIndex !== -1) {
         e.preventDefault();
         e.stopPropagation();
         let nextIndex;
         if (e.shiftKey) {
-          nextIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+          nextIndex = (currentIndex - 1 + visibleElements.length) % visibleElements.length;
         } else {
-          nextIndex = (currentIndex + 1) % focusableElements.length;
+          nextIndex = (currentIndex + 1) % visibleElements.length;
         }
-        focusableElements[nextIndex].focus();
+        visibleElements[nextIndex].focus();
       }
       return;
     }
@@ -945,6 +951,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
   // Content panel elements (will be populated by updateContentPanel)
   let currentFormattedContent = null;
+  let currentOriginalContent = null;
 
   const contentPanel = makeEl("div", { className: "pig-modal-content-panel" });
 
@@ -952,14 +959,27 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   const typeLabel = makeEl("span", { className: "pig-modal-content-type" });
   contentHeader.appendChild(typeLabel);
 
-  const copyBtn = makeEl("button", { className: "pig-modal-content-copy", text: i18n.getMessage("copy", LOCALE) || "Copy" });
+  const copyBtnContainer = makeEl("div", { className: "pig-modal-content-copy-buttons" });
+
+  const copyOriginalBtn = makeEl("button", { className: "pig-modal-content-copy", text: i18n.getMessage("copyOriginal", LOCALE) });
+  copyOriginalBtn.addEventListener("click", () => {
+    if (currentOriginalContent) {
+      navigator.clipboard.writeText(currentOriginalContent);
+      showToast(i18n.getMessage("contentCopied", LOCALE));
+    }
+  });
+  copyBtnContainer.appendChild(copyOriginalBtn);
+
+  const copyBtn = makeEl("button", { className: "pig-modal-content-copy", text: i18n.getMessage("copy", LOCALE) });
   copyBtn.addEventListener("click", () => {
     if (currentFormattedContent) {
       navigator.clipboard.writeText(currentFormattedContent);
-      showToast(i18n.getMessage("contentCopied", LOCALE) || "Copied to clipboard");
+      showToast(i18n.getMessage("contentCopied", LOCALE));
     }
   });
-  contentHeader.appendChild(copyBtn);
+  copyBtnContainer.appendChild(copyBtn);
+
+  contentHeader.appendChild(copyBtnContainer);
   contentPanel.appendChild(contentHeader);
 
   const pre = makeEl("pre", { className: "pig-modal-content-pre" });
@@ -973,6 +993,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
     if (contentInfo && contentInfo.formatted) {
       currentFormattedContent = contentInfo.formatted;
+      currentOriginalContent = contentInfo.original;
 
       // Update type label
       typeLabel.className = `pig-modal-content-type ${contentInfo.type || 'text'}`;
@@ -981,9 +1002,14 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       // Update content
       pre.textContent = contentInfo.formatted;
 
+      // Show/hide copy original button based on whether original differs from formatted
+      const showCopyOriginal = currentOriginalContent && currentOriginalContent !== currentFormattedContent;
+      copyOriginalBtn.style.display = showCopyOriginal ? '' : 'none';
+
       contentPanel.style.display = '';
     } else {
       currentFormattedContent = null;
+      currentOriginalContent = null;
       contentPanel.style.display = 'none';
     }
   }
@@ -995,8 +1021,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   renderList();
   updateContentPanel();
 
-  // Set up focus trap order: input → refresh → copy → logo
-  focusableElements = [inputEl, refreshBtn, copyBtn, iconContainer];
+  // Set up focus trap order: input → refresh → copy original → copy → logo
+  focusableElements = [inputEl, refreshBtn, copyOriginalBtn, copyBtn, iconContainer];
 
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
   focusRedirectHandler = (e) => {
@@ -1065,7 +1091,7 @@ document.addEventListener(
         addRecentSnippetGroup(option.group);
         configuration.snippets = sortSnippets(configuration.snippets);
         insertIntoEditor(editor, option.value);
-      }, () => configuration.hasErrors, (item) => item ? { type: 'sql', formatted: item.value } : null);
+      }, () => configuration.hasErrors, (item) => item ? { type: 'sql', formatted: item.value, original: item.value } : null);
       return;
     }
 

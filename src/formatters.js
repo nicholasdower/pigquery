@@ -624,7 +624,7 @@ function tryUuid(text) {
 // ============================================================================
 function detectContentType(text) {
   if (!text || typeof text !== 'string') {
-    return { type: 'text', formatted: null, showPanel: false };
+    return { type: 'text', formatted: null, original: null, showPanel: false };
   }
 
   const trimmed = text.trim();
@@ -642,11 +642,11 @@ function detectContentType(text) {
     tryBase64(trimmed) ||
     tryHex(trimmed);
 
-  if (result) return result;
+  if (result) return { ...result, original: trimmed };
 
   // Plain text - only show if very long (truncated in cell)
   const showPanel = trimmed.length >= MIN_CONTENT_LENGTH_FOR_DISPLAY;
-  return { type: 'text', formatted: trimmed, showPanel };
+  return { type: 'text', formatted: trimmed, original: trimmed, showPanel };
 }
 
 self.pigquery ||= {};
