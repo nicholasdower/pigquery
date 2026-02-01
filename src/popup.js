@@ -11,11 +11,6 @@ document.getElementById('shortcut-copy-cell').textContent = isMac ? 'Alt+⌘+Cli
 
 const shortcutInsertEl = document.getElementById('shortcut-insert');
 
-async function loadShortcuts() {
-  const shortcuts = await config.loadShortcuts();
-  shortcutInsertEl.textContent = config.formatShortcut(shortcuts.insertSnippet);
-}
-
 document.getElementById('options-link').addEventListener('click', (e) => {
   e.preventDefault();
   chrome.runtime.openOptionsPage();
@@ -26,22 +21,31 @@ const statusTextEl = document.getElementById('status-text');
 const statusErrorEl = document.getElementById('status-error');
 const refreshBtn = document.getElementById('refresh-btn');
 
-refreshBtn.textContent = t("popupRefresh");
 refreshBtn.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
 });
 
-function updateBusyUI(busy) {
+async function load() {
+  const [sources, shortcuts, busy] = await Promise.all([
+    config.loadSources(),
+    config.loadShortcuts(),
+    config.loadBusy(),
+  ]);
+
+  // Update shortcuts display
+  shortcutInsertEl.textContent = config.formatShortcut(shortcuts.insertSnippet);
+
+  // Update busy state
   refreshBtn.disabled = !!busy;
   refreshBtn.textContent = busy === 'refreshing' ? t("popupRefreshing") : t("popupRefresh");
+
+  // Update status display
   if (busy === 'refreshing') {
     statusTextEl.textContent = t("popupRefreshing");
     statusErrorEl.style.display = 'none';
+    return;
   }
-}
 
-async function loadStatus() {
-  const sources = await config.loadSources();
   const remote = config.getRemoteSources(sources);
 
   if (remote.length === 0) {
@@ -55,43 +59,18 @@ async function loadStatus() {
     return;
   }
 
-  // Find oldest timestamp
   const oldestTimestamp = Math.min(...timestamps);
   const date = new Date(oldestTimestamp);
-
-  // Check for errors
   const hasErrors = remote.some(s => s.error);
 
-  // Update status content
   statusEl.style.display = '';
   statusTextEl.textContent = t("popupLastUpdated", date.toLocaleString());
   statusErrorEl.textContent = hasErrors ? t("popupHasErrors") : '';
   statusErrorEl.style.display = hasErrors ? '' : 'none';
 }
 
-// Listen for storage changes
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes[config.STORAGE_KEY]) {
-    loadStatus();
-  }
-  if (areaName === 'local' && changes[config.BUSY_KEY]) {
-    updateBusyUI(changes[config.BUSY_KEY].newValue);
-    // When operation completes, reload status
-    if (!changes[config.BUSY_KEY].newValue) {
-      loadStatus();
-    }
-  }
-  if (areaName === 'local' && changes[config.SHORTCUTS_KEY]) {
-    loadShortcuts();
-  }
+chrome.storage.onChanged.addListener((_, areaName) => {
+  if (areaName === 'local') load();
 });
 
-// Initialize
-async function init() {
-  const { [config.BUSY_KEY]: busy } = await chrome.storage.local.get(config.BUSY_KEY);
-  updateBusyUI(busy);
-  loadStatus();
-  loadShortcuts();
-}
-
-init();
+load();

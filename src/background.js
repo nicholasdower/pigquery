@@ -36,9 +36,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function updateErrorBadge() {
-  const sources = await config.loadSources();
-  const remote = config.getRemoteSources(sources);
-  const hasErrors = remote.some(s => s.error);
+  const { hasErrors } = await config.loadConfiguration();
 
   if (hasErrors) {
     chrome.action.setBadgeText({ text: '!' });

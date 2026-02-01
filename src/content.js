@@ -59,29 +59,25 @@ function sortSites(items, prioritySite) {
   });
 }
 
-async function loadConfiguration() {
-  const loaded = await config.loadConfiguration();
+async function load() {
+  const [loaded, loadedShortcuts] = await Promise.all([
+    config.loadConfiguration(),
+    config.loadShortcuts(),
+  ]);
   configuration = {
     snippets: sortSnippets(loaded.snippets),
     sites: sortSites(loaded.sites, null),
     hasErrors: loaded.hasErrors,
   };
+  shortcuts = loadedShortcuts;
   onConfigurationChange?.();
 }
 
-loadConfiguration();
-
-async function loadShortcuts() {
-  shortcuts = await config.loadShortcuts();
-}
-loadShortcuts();
+load();
 
 chrome.storage.onChanged.addListener((changes) => {
-  if (config.STORAGE_KEY in changes) {
-    loadConfiguration();
-  }
-  if (config.SHORTCUTS_KEY in changes) {
-    loadShortcuts();
+  if (config.STORAGE_KEY in changes || config.SHORTCUTS_KEY in changes) {
+    load();
   }
 });
 chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
