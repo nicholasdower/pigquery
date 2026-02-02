@@ -297,9 +297,6 @@ function tryNumber(text) {
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
-  // Skip very short numbers (not interesting)
-  if (text.replace('-', '').replace('.', '').length < 4) return null;
-
   const num = parseFloat(text);
   if (!isFinite(num)) return null;
 
@@ -331,7 +328,7 @@ function tryNumber(text) {
     lines.push(`Octal:       0o${num.toString(8)}`);
   }
 
-  // File size interpretation (for large numbers)
+  // File size interpretation
   if (isInteger && num > 0) {
     const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
     let size = num;
@@ -340,41 +337,47 @@ function tryNumber(text) {
       size /= 1024;
       unitIndex++;
     }
+    lines.push('', '── As File Size ──');
     if (unitIndex > 0) {
-      lines.push('', '── As File Size ──');
       lines.push(`Binary:      ${size.toFixed(2)} ${units[unitIndex]}`);
-      // Also show SI units (1000-based)
-      const siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
-      let siSize = num;
-      let siIndex = 0;
-      while (siSize >= 1000 && siIndex < siUnits.length - 1) {
-        siSize /= 1000;
-        siIndex++;
-      }
+    } else {
+      lines.push(`Binary:      ${num} B`);
+    }
+    // Also show SI units (1000-based)
+    const siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
+    let siSize = num;
+    let siIndex = 0;
+    while (siSize >= 1000 && siIndex < siUnits.length - 1) {
+      siSize /= 1000;
+      siIndex++;
+    }
+    if (siIndex > 0) {
       lines.push(`SI:          ${siSize.toFixed(2)} ${siUnits[siIndex]}`);
+    } else {
+      lines.push(`SI:          ${num} B`);
     }
   }
 
   // Timestamp interpretation for positive integers
   if (isInteger && num > 0) {
-    // Try as seconds (10-digit range) or milliseconds (13-digit range)
+    // Try as seconds or milliseconds based on magnitude
     let date = null;
     let unit = null;
 
-    // Try as milliseconds first (13 digits, or smaller numbers that make sense as ms)
-    if (num >= 1e12 && num < 1e14) {
+    // 13+ digits: treat as milliseconds
+    if (num >= 1e12) {
       date = new Date(num);
       unit = 'milliseconds';
     }
-    // Try as seconds (10 digits, or reasonable range)
-    else if (num >= 1e8 && num < 1e12) {
+    // Otherwise treat as seconds
+    else {
       date = new Date(num * 1000);
       unit = 'seconds';
     }
 
     if (date && !isNaN(date.getTime())) {
       const year = date.getFullYear();
-      if (year >= 1990 && year <= 2100) {
+      if (year >= 1970 && year <= 2200) {
         // Format times consistently
         const formatInTimezone = (d, timeZone) => {
           const parts = new Intl.DateTimeFormat('en-CA', {
