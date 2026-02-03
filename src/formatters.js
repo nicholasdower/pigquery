@@ -303,29 +303,23 @@ function tryNumber(text) {
   const isInteger = Number.isInteger(num);
   const absNum = Math.abs(num);
 
-  const lines = [`Original:    ${text}`];
+  const lines = [`Number - Original:    ${text}`];
 
   // Formatted with thousands separators
   if (isInteger) {
-    lines.push(`Formatted:   ${num.toLocaleString('en-US')}`);
+    lines.push(`Number - Formatted:   ${num.toLocaleString('en-US')}`);
   } else {
     // For decimals, preserve reasonable precision
-    lines.push(`Formatted:   ${num.toLocaleString('en-US', { maximumFractionDigits: 10 })}`);
-  }
-
-  // Percentage (if between -100 and 100, show as percentage)
-  if (absNum <= 100) {
-    lines.push(`Percentage:  ${(num * 100).toLocaleString('en-US', { maximumFractionDigits: 4 })}%`);
+    lines.push(`Number - Formatted:   ${num.toLocaleString('en-US', { maximumFractionDigits: 10 })}`);
   }
 
   // Hex and binary for positive integers
   if (isInteger && num >= 0 && num <= Number.MAX_SAFE_INTEGER) {
-    lines.push('', '── Integer Representations ──');
-    lines.push(`Hex:         0x${num.toString(16).toUpperCase()}`);
+    lines.push(`Number - Hex:         0x${num.toString(16).toUpperCase()}`);
     if (num <= 0xFFFFFFFF) {
-      lines.push(`Binary:      0b${num.toString(2)}`);
+      lines.push(`Number - Binary:      0b${num.toString(2)}`);
     }
-    lines.push(`Octal:       0o${num.toString(8)}`);
+    lines.push(`Number - Octal:       0o${num.toString(8)}`);
   }
 
   // File size interpretation
@@ -337,11 +331,11 @@ function tryNumber(text) {
       size /= 1024;
       unitIndex++;
     }
-    lines.push('', '── As File Size ──');
+
     if (unitIndex > 0) {
-      lines.push(`Binary:      ${size.toFixed(2)} ${units[unitIndex]}`);
+      lines.push(`File Size - Binary:      ${size.toFixed(2)} ${units[unitIndex]}`);
     } else {
-      lines.push(`Binary:      ${num} B`);
+      lines.push(`File Size - Binary:      ${num} B`);
     }
     // Also show SI units (1000-based)
     const siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
@@ -401,39 +395,10 @@ function tryNumber(text) {
         const mins = Math.abs(localOffsetMin) % 60;
         const localOffset = mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
 
-        lines.push('', `── As Timestamp (${unit}) ──`);
-        lines.push('', '── Times ──');
-        lines.push(`UTC:         ${formatInTimezone(date, 'UTC')}`);
-        lines.push(`Local:       ${formatInTimezone(date, localTz)} (${localOffset})`);
-
-        lines.push('', '── Time Formats ──');
-        lines.push(`ISO 8601:    ${date.toISOString()}`);
-        lines.push(`RFC 2822:    ${date.toUTCString()}`);
-
-        // Relative time
-        const now = Date.now();
-        const diff = date.getTime() - now;
-        const absDiff = Math.abs(diff);
-        let relative;
-        if (absDiff < 60000) {
-          relative = diff >= 0 ? 'in a few seconds' : 'a few seconds ago';
-        } else if (absDiff < 3600000) {
-          const m = Math.round(absDiff / 60000);
-          relative = diff >= 0 ? `in ${m} minute${m > 1 ? 's' : ''}` : `${m} minute${m > 1 ? 's' : ''} ago`;
-        } else if (absDiff < 86400000) {
-          const h = Math.round(absDiff / 3600000);
-          relative = diff >= 0 ? `in ${h} hour${h > 1 ? 's' : ''}` : `${h} hour${h > 1 ? 's' : ''} ago`;
-        } else if (absDiff < 2592000000) {
-          const d = Math.round(absDiff / 86400000);
-          relative = diff >= 0 ? `in ${d} day${d > 1 ? 's' : ''}` : `${d} day${d > 1 ? 's' : ''} ago`;
-        } else if (absDiff < 31536000000) {
-          const mo = Math.round(absDiff / 2592000000);
-          relative = diff >= 0 ? `in ${mo} month${mo > 1 ? 's' : ''}` : `${mo} month${mo > 1 ? 's' : ''} ago`;
-        } else {
-          const y = Math.round(absDiff / 31536000000);
-          relative = diff >= 0 ? `in ${y} year${y > 1 ? 's' : ''}` : `${y} year${y > 1 ? 's' : ''} ago`;
-        }
-        lines.push('', `(${relative})`);
+        lines.push(`Time - UTC:         ${formatInTimezone(date, 'UTC')}`);
+        lines.push(`Time - Local:       ${formatInTimezone(date, localTz)} (${localOffset})`);
+        lines.push(`Time - ISO 8601:    ${date.toISOString()}`);
+        lines.push(`Time - RFC 2822:    ${date.toUTCString()}`);
       }
     }
   }
