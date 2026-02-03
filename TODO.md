@@ -143,6 +143,7 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Disable groups feature** - Allow users to disable entire groups
 - [ ] **Precreate search index** - Performance optimization for large configs
 - [ ] **Windows testing** - Verify production build on Windows
+- [ ] **Table keyboard navigation** - Alt-Enter while focused on cell should open sites
 when extension context is invalidated
 
 ---
