@@ -1000,14 +1000,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
           selection.removeAllRanges();
           selection.addRange(range);
         });
-        
-        // Intercept copy to always copy full value
-        itemEl.addEventListener("copy", (e) => {
-          e.preventDefault();
-          e.clipboardData.setData("text/plain", item.value);
-          copyValue();
-        });
-        
+
         contentPanel.appendChild(itemEl);
       });
 
