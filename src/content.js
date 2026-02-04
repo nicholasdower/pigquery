@@ -456,17 +456,72 @@ const styles = `
     min-width: 0;
     max-height: min(50vh, 480px);
     overflow: auto;
-    padding: 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
   }
-  .pig-modal-content-header {
+  .pig-format-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .pig-format-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .pig-format-item-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+  }
+  .pig-format-item-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: rgba(255,255,255,0.5);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pig-format-item-value {
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.9);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .pig-format-item-copy {
     flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.25);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pig-format-item:hover .pig-format-item-copy {
+    opacity: 1;
+  }
+  .pig-format-item-copy:hover {
+    color: rgba(255,255,255,0.7);
+  }
+  .pig-format-item-copy:active {
+    color: rgba(255,255,255,0.9);
   }
   .pig-modal-content-type {
     font-size: 11px;
@@ -478,85 +533,9 @@ const styles = `
     background: rgba(255,255,255,0.08);
     color: rgba(255,255,255,0.7);
   }
-  .pig-modal-content-type.json {
-    background: rgba(250, 204, 21, 0.15);
-    color: rgb(250, 204, 21);
-  }
-  .pig-modal-content-type.yaml {
-    background: rgba(139, 92, 246, 0.15);
-    color: rgb(196, 181, 253);
-  }
-  .pig-modal-content-type.jwt {
-    background: rgba(236, 72, 153, 0.15);
-    color: rgb(249, 168, 212);
-  }
-  .pig-modal-content-type.base64 {
-    background: rgba(34, 197, 94, 0.15);
-    color: rgb(134, 239, 172);
-  }
-  .pig-modal-content-type.date {
-    background: rgba(20, 184, 166, 0.15);
-    color: rgb(94, 234, 212);
-  }
-  .pig-modal-content-type.datetime {
-    background: rgba(14, 165, 233, 0.15);
-    color: rgb(125, 211, 252);
-  }
-  .pig-modal-content-type.number {
-    background: rgba(251, 146, 60, 0.15);
-    color: rgb(253, 186, 116);
-  }
-  .pig-modal-content-type.url {
-    background: rgba(6, 182, 212, 0.15);
-    color: rgb(103, 232, 249);
-  }
-  .pig-modal-content-type.xml {
-    background: rgba(245, 158, 11, 0.15);
-    color: rgb(251, 191, 36);
-  }
-  .pig-modal-content-type.hex {
-    background: rgba(168, 85, 247, 0.15);
-    color: rgb(216, 180, 254);
-  }
-  .pig-modal-content-type.uuid {
-    background: rgba(239, 68, 68, 0.15);
-    color: rgb(252, 165, 165);
-  }
   .pig-modal-content-type.sql {
     background: rgba(99, 102, 241, 0.15);
     color: rgb(165, 180, 252);
-  }
-  .pig-modal-content-copy-buttons {
-    display: flex;
-    gap: 6px;
-  }
-  .pig-modal-content-copy {
-    padding: 4px 10px;
-    border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.8);
-    font-size: 12px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  .pig-modal-content-copy:hover {
-    background: rgba(255,255,255,0.12);
-  }
-  .pig-modal-content-pre {
-    flex: 1;
-    margin: 0;
-    padding: 12px;
-    border-radius: 8px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.08);
-    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    color: rgba(255,255,255,0.85);
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow: auto;
   }
   @media (max-width: 900px) {
     .pig-modal-body.pig-modal-two-panel {
@@ -946,66 +925,46 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   bodyEl.appendChild(listEl);
 
   // Content panel elements (will be populated by updateContentPanel)
-  let currentFormattedContent = null;
-  let currentOriginalContent = null;
-
   const contentPanel = makeEl("div", { className: "pig-modal-content-panel" });
-
-  const contentHeader = makeEl("div", { className: "pig-modal-content-header" });
-  const typeLabel = makeEl("span", { className: "pig-modal-content-type" });
-  contentHeader.appendChild(typeLabel);
-
-  const copyBtnContainer = makeEl("div", { className: "pig-modal-content-copy-buttons" });
-
-  const copyOriginalBtn = makeEl("button", { className: "pig-modal-content-copy", text: i18n.getMessage("copyOriginal", LOCALE) });
-  copyOriginalBtn.addEventListener("click", () => {
-    if (currentOriginalContent) {
-      navigator.clipboard.writeText(currentOriginalContent);
-      showToast(i18n.getMessage("contentCopied", LOCALE));
-    }
-  });
-  copyBtnContainer.appendChild(copyOriginalBtn);
-
-  const copyBtn = makeEl("button", { className: "pig-modal-content-copy", text: i18n.getMessage("copy", LOCALE) });
-  copyBtn.addEventListener("click", () => {
-    if (currentFormattedContent) {
-      navigator.clipboard.writeText(currentFormattedContent);
-      showToast(i18n.getMessage("contentCopied", LOCALE));
-    }
-  });
-  copyBtnContainer.appendChild(copyBtn);
-
-  contentHeader.appendChild(copyBtnContainer);
-  contentPanel.appendChild(contentHeader);
-
-  const pre = makeEl("pre", { className: "pig-modal-content-pre" });
-  contentPanel.appendChild(pre);
-
   bodyEl.appendChild(contentPanel);
 
   function updateContentPanel() {
     const selectedItem = filtered[activeIndex] || null;
     const contentInfo = getContent(selectedItem);
 
-    if (contentInfo && contentInfo.formatted) {
-      currentFormattedContent = contentInfo.formatted;
-      currentOriginalContent = contentInfo.original;
+    // Clear existing content
+    while (contentPanel.firstChild) contentPanel.removeChild(contentPanel.firstChild);
 
-      // Update type label
-      typeLabel.className = `pig-modal-content-type ${contentInfo.type || 'text'}`;
-      typeLabel.textContent = (contentInfo.type || 'text').toUpperCase();
-
-      // Update content
-      pre.textContent = contentInfo.formatted;
-
-      // Show/hide copy original button based on whether original differs from formatted
-      const showCopyOriginal = currentOriginalContent && currentOriginalContent !== currentFormattedContent;
-      copyOriginalBtn.style.display = showCopyOriginal ? '' : 'none';
+    if (contentInfo && contentInfo.items && contentInfo.items.length > 0) {
+      contentInfo.items.forEach(item => {
+        const itemEl = makeEl("div", { className: "pig-format-item" });
+        
+        const headerEl = makeEl("div", { className: "pig-format-item-header" });
+        
+        const labelEl = makeEl("div", { className: "pig-format-item-label", text: item.label });
+        headerEl.appendChild(labelEl);
+        
+        const copyBtn = makeEl("button", { className: "pig-format-item-copy" });
+        copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
+        copyBtn.title = "Copy";
+        copyBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(item.value);
+          showToast(i18n.getMessage("contentCopied", LOCALE));
+        });
+        headerEl.appendChild(copyBtn);
+        
+        itemEl.appendChild(headerEl);
+        
+        const valueEl = makeEl("div", { className: "pig-format-item-value" });
+        valueEl.textContent = item.value;
+        itemEl.appendChild(valueEl);
+        
+        contentPanel.appendChild(itemEl);
+      });
 
       contentPanel.style.display = '';
     } else {
-      currentFormattedContent = null;
-      currentOriginalContent = null;
       contentPanel.style.display = 'none';
     }
   }
@@ -1017,8 +976,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   renderList();
   updateContentPanel();
 
-  // Set up focus trap order: input → refresh → copy original → copy → logo
-  focusableElements = [inputEl, refreshBtn, copyOriginalBtn, copyBtn, iconContainer];
+  // Set up focus trap order: input → refresh → logo
+  focusableElements = [inputEl, refreshBtn, iconContainer];
 
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
   focusRedirectHandler = (e) => {
@@ -1087,7 +1046,7 @@ document.addEventListener(
         addRecentSnippetGroup(option.group);
         configuration.snippets = sortSnippets(configuration.snippets);
         insertIntoEditor(editor, option.value);
-      }, () => configuration.hasErrors, (item) => item ? { type: 'sql', formatted: item.value, original: item.value } : null);
+      }, () => configuration.hasErrors, (item) => item ? { type: 'sql', items: [{ label: 'SQL', value: item.value }] } : null);
       return;
     }
 

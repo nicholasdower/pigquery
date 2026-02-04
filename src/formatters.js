@@ -9,7 +9,15 @@ function tryJson(text) {
     const parsed = JSON.parse(text);
     const formatted = JSON.stringify(parsed, null, 2);
     const showPanel = formatted !== text || text.length >= MIN_CONTENT_LENGTH_FOR_DISPLAY;
-    return { type: 'json', formatted, showPanel };
+    
+    const items = [
+      { label: 'Original', value: text },
+    ];
+    if (formatted !== text) {
+      items.push({ label: 'Formatted', value: formatted });
+    }
+    
+    return { type: 'json', items, showPanel };
   } catch (_) {
     return null;
   }
@@ -26,7 +34,11 @@ function tryYaml(text) {
     const parsed = jsyaml.load(text);
     if (parsed && typeof parsed === 'object') {
       const formatted = jsyaml.dump(parsed, { indent: 2, lineWidth: -1 });
-      return { type: 'yaml', formatted, showPanel: true };
+      const items = [
+        { label: 'Original', value: text },
+        { label: 'Formatted', value: formatted },
+      ];
+      return { type: 'yaml', items, showPanel: true };
     }
   } catch (_) {
     // Not valid YAML
@@ -60,28 +72,19 @@ function tryJwt(text) {
     // Check for common JWT header fields
     if (!header.alg && !header.typ) return null;
 
-    const lines = [
-      '── Header ──',
-      JSON.stringify(header, null, 2),
-      '',
-      '── Payload ──',
-      JSON.stringify(payload, null, 2),
-      '',
-      '── Signature ──',
-      parts[2]
+    const items = [
+      { label: 'Original', value: text },
+      { label: 'Header', value: JSON.stringify(header, null, 2) },
+      { label: 'Payload', value: JSON.stringify(payload, null, 2) },
+      { label: 'Signature', value: parts[2] },
     ];
 
     // Add human-readable timestamps if present
-    const timestamps = [];
-    if (payload.iat) timestamps.push(`Issued: ${new Date(payload.iat * 1000).toISOString()}`);
-    if (payload.exp) timestamps.push(`Expires: ${new Date(payload.exp * 1000).toISOString()}`);
-    if (payload.nbf) timestamps.push(`Not Before: ${new Date(payload.nbf * 1000).toISOString()}`);
+    if (payload.iat) items.push({ label: 'Issued', value: new Date(payload.iat * 1000).toISOString() });
+    if (payload.exp) items.push({ label: 'Expires', value: new Date(payload.exp * 1000).toISOString() });
+    if (payload.nbf) items.push({ label: 'Not Before', value: new Date(payload.nbf * 1000).toISOString() });
 
-    if (timestamps.length > 0) {
-      lines.push('', '── Timestamps ──', ...timestamps);
-    }
-
-    return { type: 'jwt', formatted: lines.join('\n'), showPanel: true };
+    return { type: 'jwt', items, showPanel: true };
   } catch (_) {
     return null;
   }
@@ -115,18 +118,23 @@ function tryBase64(text) {
     // Must be mostly printable
     if (printableRatio < 0.9) return null;
 
+    const items = [
+      { label: 'Original', value: text },
+    ];
+
     // Check if decoded content is JSON
     if (decoded.trim().startsWith('{') || decoded.trim().startsWith('[')) {
       try {
         const parsed = JSON.parse(decoded);
-        const formatted = `── Decoded Base64 (JSON) ──\n${JSON.stringify(parsed, null, 2)}`;
-        return { type: 'base64', formatted, showPanel: true };
+        items.push({ label: 'Decoded (JSON)', value: JSON.stringify(parsed, null, 2) });
+        return { type: 'base64', items, showPanel: true };
       } catch (_) {
         // Not JSON, continue with plain text
       }
     }
 
-    return { type: 'base64', formatted: `── Decoded Base64 ──\n${decoded}`, showPanel: true };
+    items.push({ label: 'Decoded', value: decoded });
+    return { type: 'base64', items, showPanel: true };
   } catch (_) {
     return null;
   }
@@ -135,7 +143,7 @@ function tryBase64(text) {
 // ============================================================================
 // Shared Date/Time Formatting
 // ============================================================================
-function formatDateTimeOutput(date, type, originalValue, originalTzOffset = null) {
+function formatDateTimeItems(date, type, originalValue, originalTzOffset = null) {
   // Consistent format for displaying times: YYYY-MM-DD HH:MM:SS
   const formatInTimezone = (d, timeZone) => {
     const parts = new Intl.DateTimeFormat('en-CA', {
@@ -165,33 +173,23 @@ function formatDateTimeOutput(date, type, originalValue, originalTzOffset = null
   const localOffsetMin = -date.getTimezoneOffset();
   const localOffset = formatOffset(localOffsetMin);
 
-  // Original value
-  const lines = []
-  lines.push(`Original:     ${originalValue}`);
-
-  // Times section
-  lines.push('', '── Times ──');
+  const items = [
+    { label: 'Original', value: originalValue },
+  ];
 
   // Show original timezone if known and different from UTC
   if (originalTzOffset !== null && originalTzOffset !== 0) {
-    // Calculate time in original timezone by adjusting from UTC
     const originalDate = new Date(date.getTime() + originalTzOffset * 60000);
-    const originalFormatted = formatInTimezone(originalDate, 'UTC'); // Use UTC formatting on adjusted time
-    lines.push(`Original: ${originalFormatted} (${formatOffset(originalTzOffset)})`);
+    const originalFormatted = formatInTimezone(originalDate, 'UTC');
+    items.push({ label: `Original TZ (${formatOffset(originalTzOffset)})`, value: originalFormatted });
   }
 
-  lines.push(`UTC:          ${formatInTimezone(date, 'UTC')}`);
-  lines.push(`Local:        ${formatInTimezone(date, localTz)} (${localOffset})`);
-
-  // Formats section
-  lines.push('', '── Formats ──');
-  lines.push(`ISO 8601:     ${date.toISOString()}`);
-  lines.push(`RFC 2822:     ${date.toUTCString()}`);
-
-  // Unix timestamps
-  lines.push('', '── Unix Timestamp ──');
-  lines.push(`Seconds:      ${Math.floor(date.getTime() / 1000)}`);
-  lines.push(`Milliseconds: ${date.getTime()}`);
+  items.push({ label: 'UTC', value: formatInTimezone(date, 'UTC') });
+  items.push({ label: `Local (${localOffset})`, value: formatInTimezone(date, localTz) });
+  items.push({ label: 'ISO 8601', value: date.toISOString() });
+  items.push({ label: 'RFC 2822', value: date.toUTCString() });
+  items.push({ label: 'Unix (seconds)', value: String(Math.floor(date.getTime() / 1000)) });
+  items.push({ label: 'Unix (milliseconds)', value: String(date.getTime()) });
 
   // Add relative time
   const now = Date.now();
@@ -218,9 +216,9 @@ function formatDateTimeOutput(date, type, originalValue, originalTzOffset = null
     relative = diff >= 0 ? `in ${years} year${years > 1 ? 's' : ''}` : `${years} year${years > 1 ? 's' : ''} ago`;
   }
 
-  lines.push('', `(${relative})`);
+  items.push({ label: 'Relative', value: relative });
 
-  return { type, formatted: lines.join('\n'), showPanel: true };
+  return { type, items, showPanel: true };
 }
 
 // ============================================================================
@@ -287,7 +285,7 @@ function tryDate(text) {
   }
 
   const type = isDateOnly ? 'date' : 'datetime';
-  return formatDateTimeOutput(date, type, text, originalTzOffset);
+  return formatDateTimeItems(date, type, text, originalTzOffset);
 }
 
 // ============================================================================
@@ -303,23 +301,30 @@ function tryNumber(text) {
   const isInteger = Number.isInteger(num);
   const absNum = Math.abs(num);
 
-  const lines = [`Number - Original:    ${text}`];
+  const items = [
+    { label: 'Original', value: text },
+  ];
 
   // Formatted with thousands separators
   if (isInteger) {
-    lines.push(`Number - Formatted:   ${num.toLocaleString('en-US')}`);
+    const formatted = num.toLocaleString('en-US');
+    if (formatted !== text) {
+      items.push({ label: 'Formatted', value: formatted });
+    }
   } else {
-    // For decimals, preserve reasonable precision
-    lines.push(`Number - Formatted:   ${num.toLocaleString('en-US', { maximumFractionDigits: 10 })}`);
+    const formatted = num.toLocaleString('en-US', { maximumFractionDigits: 10 });
+    if (formatted !== text) {
+      items.push({ label: 'Formatted', value: formatted });
+    }
   }
 
   // Hex and binary for positive integers
   if (isInteger && num >= 0 && num <= Number.MAX_SAFE_INTEGER) {
-    lines.push(`Number - Hex:         0x${num.toString(16).toUpperCase()}`);
+    items.push({ label: 'Hex', value: `0x${num.toString(16).toUpperCase()}` });
     if (num <= 0xFFFFFFFF) {
-      lines.push(`Number - Binary:      0b${num.toString(2)}`);
+      items.push({ label: 'Binary', value: `0b${num.toString(2)}` });
     }
-    lines.push(`Number - Octal:       0o${num.toString(8)}`);
+    items.push({ label: 'Octal', value: `0o${num.toString(8)}` });
   }
 
   // File size interpretation
@@ -333,10 +338,9 @@ function tryNumber(text) {
     }
 
     if (unitIndex > 0) {
-      lines.push(`File Size - Binary:      ${size.toFixed(2)} ${units[unitIndex]}`);
-    } else {
-      lines.push(`File Size - Binary:      ${num} B`);
+      items.push({ label: 'File Size (binary)', value: `${size.toFixed(2)} ${units[unitIndex]}` });
     }
+    
     // Also show SI units (1000-based)
     const siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
     let siSize = num;
@@ -346,9 +350,7 @@ function tryNumber(text) {
       siIndex++;
     }
     if (siIndex > 0) {
-      lines.push(`SI:          ${siSize.toFixed(2)} ${siUnits[siIndex]}`);
-    } else {
-      lines.push(`SI:          ${num} B`);
+      items.push({ label: 'File Size (SI)', value: `${siSize.toFixed(2)} ${siUnits[siIndex]}` });
     }
   }
 
@@ -395,15 +397,14 @@ function tryNumber(text) {
         const mins = Math.abs(localOffsetMin) % 60;
         const localOffset = mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
 
-        lines.push(`Time - UTC:         ${formatInTimezone(date, 'UTC')}`);
-        lines.push(`Time - Local:       ${formatInTimezone(date, localTz)} (${localOffset})`);
-        lines.push(`Time - ISO 8601:    ${date.toISOString()}`);
-        lines.push(`Time - RFC 2822:    ${date.toUTCString()}`);
+        items.push({ label: 'As Time (UTC)', value: formatInTimezone(date, 'UTC') });
+        items.push({ label: `As Time (${localOffset})`, value: formatInTimezone(date, localTz) });
+        items.push({ label: 'As Time (ISO)', value: date.toISOString() });
       }
     }
   }
 
-  return { type: 'number', formatted: lines.join('\n'), showPanel: true };
+  return { type: 'number', items, showPanel: true };
 }
 
 // ============================================================================
@@ -418,17 +419,17 @@ function tryUrl(text) {
 
     const hasParams = url.searchParams.toString().length > 0;
 
-    const lines = []
-    lines.push(`Original: ${text}`, '');
-    lines.push('── URL Components ──');
-    lines.push(`Protocol: ${url.protocol.replace(':', '')}`);
-    lines.push(`Host:     ${url.host}`);
-    if (url.port) lines.push(`Port:     ${url.port}`);
-    if (url.pathname !== '/') lines.push(`Path:     ${url.pathname}`);
-    if (url.hash) lines.push(`Fragment: ${url.hash.slice(1)}`);
+    const items = [
+      { label: 'Original', value: text },
+      { label: 'Protocol', value: url.protocol.replace(':', '') },
+      { label: 'Host', value: url.host },
+    ];
+    
+    if (url.port) items.push({ label: 'Port', value: url.port });
+    if (url.pathname !== '/') items.push({ label: 'Path', value: url.pathname });
+    if (url.hash) items.push({ label: 'Fragment', value: url.hash.slice(1) });
 
     if (hasParams) {
-      lines.push('', '── Query Parameters ──');
       for (const [key, value] of url.searchParams) {
         // Try to decode the value if it looks encoded
         let displayValue = value;
@@ -436,11 +437,11 @@ function tryUrl(text) {
           const decoded = decodeURIComponent(value);
           if (decoded !== value) displayValue = decoded;
         } catch (_) {}
-        lines.push(`${key}: ${displayValue}`);
+        items.push({ label: `Param: ${key}`, value: displayValue });
       }
     }
 
-    return { type: 'url', formatted: lines.join('\n'), showPanel: true };
+    return { type: 'url', items, showPanel: true };
   } catch (_) {
     return null;
   }
@@ -498,7 +499,12 @@ function tryXml(text) {
       return null;
     }
 
-    return { type: 'xml', formatted, showPanel: true };
+    const items = [
+      { label: 'Original', value: text },
+      { label: 'Formatted', value: formatted },
+    ];
+
+    return { type: 'xml', items, showPanel: true };
   } catch (_) {
     return null;
   }
@@ -521,24 +527,27 @@ function tryHex(text) {
   // Check if it's printable ASCII
   const printable = bytes.every(b => (b >= 32 && b < 127) || b === 9 || b === 10 || b === 13);
 
-  const lines = ['── Hex String ──'];
-  lines.push(`Bytes: ${bytes.length}`);
+  const items = [
+    { label: 'Original', value: text },
+    { label: 'Byte Count', value: String(bytes.length) },
+  ];
 
   if (printable) {
     const decoded = bytes.map(b => String.fromCharCode(b)).join('');
-    lines.push('', '── Decoded ASCII ──', decoded);
+    items.push({ label: 'Decoded ASCII', value: decoded });
   } else {
     // Show hex dump
-    lines.push('', '── Hex Dump ──');
+    let hexDump = '';
     for (let i = 0; i < bytes.length; i += 16) {
       const chunk = bytes.slice(i, i + 16);
       const hex = chunk.map(b => b.toString(16).padStart(2, '0')).join(' ');
       const ascii = chunk.map(b => (b >= 32 && b < 127) ? String.fromCharCode(b) : '.').join('');
-      lines.push(`${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48)}  ${ascii}`);
+      hexDump += `${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48)}  ${ascii}\n`;
     }
+    items.push({ label: 'Hex Dump', value: hexDump.trim() });
   }
 
-  return { type: 'hex', formatted: lines.join('\n'), showPanel: true };
+  return { type: 'hex', items, showPanel: true };
 }
 
 // ============================================================================
@@ -559,10 +568,10 @@ function tryUuid(text) {
     '5': 'Name-based (SHA-1)'
   };
 
-  const lines = [
-    '── UUID ──',
-    `Version: ${version} - ${versionNames[version] || 'Unknown'}`,
-    `Value:   ${text.toLowerCase()}`
+  const items = [
+    { label: 'Original', value: text },
+    { label: 'Version', value: `${version} - ${versionNames[version] || 'Unknown'}` },
+    { label: 'Lowercase', value: text.toLowerCase() },
   ];
 
   // For v1 UUIDs, extract timestamp
@@ -579,12 +588,12 @@ function tryUuid(text) {
       const date = new Date(unixMs);
 
       if (date.getFullYear() >= 1990 && date.getFullYear() <= 2100) {
-        lines.push(`Created: ${date.toISOString()}`);
+        items.push({ label: 'Created', value: date.toISOString() });
       }
     } catch (_) {}
   }
 
-  return { type: 'uuid', formatted: lines.join('\n'), showPanel: true };
+  return { type: 'uuid', items, showPanel: true };
 }
 
 // ============================================================================
@@ -592,7 +601,7 @@ function tryUuid(text) {
 // ============================================================================
 function detectContentType(text) {
   if (!text || typeof text !== 'string') {
-    return { type: 'text', formatted: null, original: null, showPanel: false };
+    return { type: 'text', items: [], showPanel: false };
   }
 
   const trimmed = text.trim();
@@ -610,11 +619,11 @@ function detectContentType(text) {
     tryBase64(trimmed) ||
     tryHex(trimmed);
 
-  if (result) return { ...result, original: trimmed };
+  if (result) return result;
 
   // Plain text - only show if very long (truncated in cell)
   const showPanel = trimmed.length >= MIN_CONTENT_LENGTH_FOR_DISPLAY;
-  return { type: 'text', formatted: trimmed, original: trimmed, showPanel };
+  return { type: 'text', items: [{ label: 'Original', value: trimmed }], showPanel };
 }
 
 self.pigquery ||= {};
