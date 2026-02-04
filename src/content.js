@@ -288,9 +288,15 @@ const styles = `
     color: #6cb6ff;
     text-decoration: none;
     cursor: pointer;
+    border-radius: 2px;
+    outline: none;
   }
   .pig-modal-link:hover {
     text-decoration: underline;
+  }
+  .pig-modal-link:focus {
+    text-decoration: underline;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
   }
   .pig-modal-item {
     padding: 12px;
@@ -308,12 +314,12 @@ const styles = `
   .pig-modal-item:hover {
     background: rgba(255,255,255,0.08);
   }
-  .pig-modal-item.active {
+  .pig-modal.input-focused .pig-modal-item.active {
     background: rgba(96, 165, 250, 0.2);
     border-color: rgba(96, 165, 250, 0.5);
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
   }
-  .pig-modal-item.active:hover {
+  .pig-modal.input-focused .pig-modal-item.active:hover {
     background: rgba(96, 165, 250, 0.25);
   }
   .pig-modal-item[type="button"] {
@@ -384,18 +390,24 @@ const styles = `
     height: 32px;
     flex-shrink: 0;
     cursor: pointer;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
-    padding: 4px;
-    border-radius: 4px;
+    padding: 3px;
+    border-radius: 6px;
     box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .pig-modal-logo-container:focus {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
   }
   .pig-modal-refresh {
     position: relative;
     width: 24px;
     height: 24px;
     flex-shrink: 0;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
     color: rgba(255,255,255,0.6);
     cursor: pointer;
@@ -403,12 +415,17 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: color 0.15s ease, background 0.15s ease;
+    border-radius: 6px;
+    outline: none;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .pig-modal-refresh:hover {
     color: rgba(255,255,255,0.9);
     background: rgba(255,255,255,0.08);
+  }
+  .pig-modal-refresh:focus {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
   }
   .pig-modal-refresh.busy {
     pointer-events: none;
@@ -469,11 +486,6 @@ const styles = `
     border-radius: 6px;
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.06);
-    transition: background 0.15s ease, border-color 0.15s ease;
-  }
-  .pig-format-item:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.12);
   }
   .pig-format-item-header {
     display: flex;
@@ -504,21 +516,24 @@ const styles = `
     width: 18px;
     height: 18px;
     padding: 0;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
     background: transparent;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.35);
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.15s ease, color 0.15s ease;
+    transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .pig-format-item:hover .pig-format-item-copy {
-    opacity: 1;
+    outline: none;
   }
   .pig-format-item-copy:hover {
     color: rgba(255,255,255,0.7);
+  }
+  .pig-format-item-copy:focus {
+    color: rgba(255,255,255,0.7);
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
   }
   .pig-format-item-copy:active {
     color: rgba(255,255,255,0.9);
@@ -630,6 +645,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   const listEl = makeEl("div", { className: "pig-modal-list" });
 
   let focusRedirectHandler = null;
+  let escapeHandler = null;
 
   function closePopup() {
     if (!overlayEl) return;
@@ -639,6 +655,9 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     }
     if (focusRedirectHandler) {
       document.removeEventListener('focusin', focusRedirectHandler);
+    }
+    if (escapeHandler) {
+      document.removeEventListener('keydown', escapeHandler);
     }
     overlayEl.remove();
     lastFocusedEl.focus();
@@ -651,6 +670,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       closePopup();
     }
   });
+
+  // Document-level Escape handler (keydown on modal only works when focus is inside)
+  escapeHandler = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closePopup();
+    }
+  };
+  document.addEventListener("keydown", escapeHandler);
 
   function scrollActiveIntoView() {
     const items = listEl.querySelectorAll(".pig-modal-item");
@@ -685,33 +714,32 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   let focusableElements = [];
 
   modalEl.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      closePopup();
-      return;
-    }
-
     // Trap focus within modal
     if (e.key === "Tab") {
-      // Filter to only visible elements
-      const visibleElements = focusableElements.filter(el => el.style.display !== 'none');
-      const currentIndex = visibleElements.indexOf(document.activeElement);
-      if (currentIndex !== -1) {
-        e.preventDefault();
-        e.stopPropagation();
-        let nextIndex;
-        if (e.shiftKey) {
-          nextIndex = (currentIndex - 1 + visibleElements.length) % visibleElements.length;
-        } else {
-          nextIndex = (currentIndex + 1) % visibleElements.length;
-        }
-        visibleElements[nextIndex].focus();
+      // Get all focusable elements in the modal dynamically
+      const allFocusable = Array.from(modalEl.querySelectorAll(
+        'input, button:not([tabindex="-1"]), .pig-modal-link, [tabindex="0"]'
+      )).filter(el => el.offsetParent !== null); // Filter out hidden elements
+      
+      if (allFocusable.length === 0) return;
+      
+      const currentIndex = allFocusable.indexOf(document.activeElement);
+      e.preventDefault();
+      e.stopPropagation();
+      
+      let nextIndex;
+      if (currentIndex === -1) {
+        nextIndex = 0;
+      } else if (e.shiftKey) {
+        nextIndex = (currentIndex - 1 + allFocusable.length) % allFocusable.length;
+      } else {
+        nextIndex = (currentIndex + 1) % allFocusable.length;
       }
+      allFocusable[nextIndex].focus();
       return;
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" && document.activeElement === inputEl) {
       e.preventDefault();
       e.stopPropagation();
       if (filtered.length) {
@@ -722,7 +750,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       return;
     }
 
-    if (e.key === "ArrowUp") {
+    if (e.key === "ArrowUp" && document.activeElement === inputEl) {
       e.preventDefault();
       e.stopPropagation();
       if (filtered.length) {
@@ -835,7 +863,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     e.preventDefault();
     e.stopPropagation();
     chrome.runtime.sendMessage({ action: "openOptionsPage" });
-    inputEl.focus();
   });
 
   inputEl.addEventListener("input", () => {
@@ -844,6 +871,14 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     activeIndex = 0;
     renderList();
     updateContentPanel();
+  });
+
+  inputEl.addEventListener("focus", () => {
+    modalEl.classList.add("input-focused");
+  });
+
+  inputEl.addEventListener("blur", () => {
+    modalEl.classList.remove("input-focused");
   });
 
   onConfigurationChange = () => {
@@ -913,7 +948,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     if (!isBusy) {
       chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
     }
-    inputEl.focus();
   });
 
   header.appendChild(refreshBtn);
@@ -936,8 +970,13 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     while (contentPanel.firstChild) contentPanel.removeChild(contentPanel.firstChild);
 
     if (contentInfo && contentInfo.items && contentInfo.items.length > 0) {
-      contentInfo.items.forEach(item => {
+      contentInfo.items.forEach((item, index) => {
         const itemEl = makeEl("div", { className: "pig-format-item" });
+        
+        const copyValue = () => {
+          navigator.clipboard.writeText(item.value);
+          showToast(i18n.getMessage("contentCopied", LOCALE));
+        };
         
         const headerEl = makeEl("div", { className: "pig-format-item-header" });
         
@@ -949,8 +988,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         copyBtn.title = "Copy";
         copyBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          navigator.clipboard.writeText(item.value);
-          showToast(i18n.getMessage("contentCopied", LOCALE));
+          copyValue();
+        });
+        copyBtn.addEventListener("focus", () => {
+          // Only scroll on keyboard focus, not mouse click
+          if (!copyBtn.matches(':focus-visible')) return;
+          if (index === 0) {
+            contentPanel.scrollTop = 0;
+          } else {
+            itemEl.scrollIntoView({ block: "nearest" });
+          }
         });
         headerEl.appendChild(copyBtn);
         
@@ -959,6 +1006,22 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         const valueEl = makeEl("div", { className: "pig-format-item-value" });
         valueEl.textContent = item.value;
         itemEl.appendChild(valueEl);
+        
+        // Select text on right-click so browser shows "Copy" in context menu
+        valueEl.addEventListener("contextmenu", () => {
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(valueEl);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        });
+        
+        // Intercept copy to always copy full value
+        itemEl.addEventListener("copy", (e) => {
+          e.preventDefault();
+          e.clipboardData.setData("text/plain", item.value);
+          copyValue();
+        });
         
         contentPanel.appendChild(itemEl);
       });
