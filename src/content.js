@@ -954,8 +954,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     // Clear existing content
     while (contentPanel.firstChild) contentPanel.removeChild(contentPanel.firstChild);
 
-    if (contentInfo && contentInfo.items && contentInfo.items.length > 0) {
-      contentInfo.items.forEach((item, index) => {
+    if (contentInfo && contentInfo.length > 0) {
+      contentInfo.forEach((item, index) => {
         const itemEl = makeEl("div", { className: "pig-format-item" });
         
         const copyValue = () => {
@@ -1094,7 +1094,7 @@ document.addEventListener(
         addRecentSnippetGroup(option.group);
         configuration.snippets = sortSnippets(configuration.snippets);
         insertIntoEditor(editor, option.value);
-      }, () => configuration.hasErrors, (item) => item ? { type: 'sql', items: [{ label: 'SQL', value: item.value }] } : null);
+      }, () => configuration.hasErrors, (item) => item ? [{ label: 'SQL', value: item.value }] : null);
       return;
     }
 

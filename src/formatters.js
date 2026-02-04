@@ -1,54 +1,22 @@
-const MIN_CONTENT_LENGTH_FOR_DISPLAY = 200;
-
-// ============================================================================
-// JSON
-// ============================================================================
 function tryJson(text) {
   if (!text.startsWith('{') && !text.startsWith('[')) return null;
   try {
     const parsed = JSON.parse(text);
     const formatted = JSON.stringify(parsed, null, 2);
-    const showPanel = formatted !== text || text.length >= MIN_CONTENT_LENGTH_FOR_DISPLAY;
-    
+
     const items = [
       { label: 'Original', value: text },
     ];
     if (formatted !== text) {
       items.push({ label: 'Formatted', value: formatted });
     }
-    
-    return { type: 'json', items, showPanel };
+
+    return items;
   } catch (_) {
     return null;
   }
 }
 
-// ============================================================================
-// YAML
-// ============================================================================
-function tryYaml(text) {
-  // YAML is a superset of JSON, so check for YAML-specific syntax
-  const looksLikeYaml = text.includes(':') && (text.includes('\n') || /^[\w-]+:\s/.test(text));
-  if (!looksLikeYaml) return null;
-  try {
-    const parsed = jsyaml.load(text);
-    if (parsed && typeof parsed === 'object') {
-      const formatted = jsyaml.dump(parsed, { indent: 2, lineWidth: -1 });
-      const items = [
-        { label: 'Original', value: text },
-        { label: 'Formatted', value: formatted },
-      ];
-      return { type: 'yaml', items, showPanel: true };
-    }
-  } catch (_) {
-    // Not valid YAML
-  }
-  return null;
-}
-
-// ============================================================================
-// JWT Token
-// ============================================================================
 function tryJwt(text) {
   // JWT format: header.payload.signature (3 base64url parts separated by dots)
   const parts = text.split('.');
@@ -80,19 +48,16 @@ function tryJwt(text) {
     ];
 
     // Add human-readable timestamps if present
-    if (payload.iat) items.push({ label: 'Issued', value: new Date(payload.iat * 1000).toISOString() });
-    if (payload.exp) items.push({ label: 'Expires', value: new Date(payload.exp * 1000).toISOString() });
-    if (payload.nbf) items.push({ label: 'Not Before', value: new Date(payload.nbf * 1000).toISOString() });
+    if (payload.iat) items.push({ label: 'Issued', value: new Date(payload.iat * 1000).toUTCString() });
+    if (payload.exp) items.push({ label: 'Expires', value: new Date(payload.exp * 1000).toUTCString() });
+    if (payload.nbf) items.push({ label: 'Not Before', value: new Date(payload.nbf * 1000).toUTCString() });
 
-    return { type: 'jwt', items, showPanel: true };
+    return items;
   } catch (_) {
     return null;
   }
 }
 
-// ============================================================================
-// Base64
-// ============================================================================
 function tryBase64(text) {
   // Must be at least 20 chars and look like base64
   if (text.length < 20) return null;
@@ -127,103 +92,53 @@ function tryBase64(text) {
       try {
         const parsed = JSON.parse(decoded);
         items.push({ label: 'Decoded (JSON)', value: JSON.stringify(parsed, null, 2) });
-        return { type: 'base64', items, showPanel: true };
+        return items;
       } catch (_) {
         // Not JSON, continue with plain text
       }
     }
 
     items.push({ label: 'Decoded', value: decoded });
-    return { type: 'base64', items, showPanel: true };
+    return items;
   } catch (_) {
     return null;
   }
 }
 
-// ============================================================================
-// Shared Date/Time Formatting
-// ============================================================================
-function formatDateTimeItems(date, type, originalValue, originalTzOffset = null) {
-  // Consistent format for displaying times: YYYY-MM-DD HH:MM:SS
-  const formatInTimezone = (d, timeZone) => {
-    const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    }).formatToParts(d);
+function formatInTimezone(d, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
 
-    const get = (type) => parts.find(p => p.type === type)?.value || '';
-    return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`;
-  };
+  const get = (type) => parts.find(p => p.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`;
+}
 
-  // Format offset minutes as "UTC+1" or "UTC-5:30"
-  const formatOffset = (offsetMin) => {
-    const sign = offsetMin >= 0 ? '+' : '-';
-    const hours = Math.floor(Math.abs(offsetMin) / 60);
-    const mins = Math.abs(offsetMin) % 60;
-    return mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
-  };
+function formatOffset(offsetMin) {
+  const sign = offsetMin >= 0 ? '+' : '-';
+  const hours = Math.floor(Math.abs(offsetMin) / 60);
+  const mins = Math.abs(offsetMin) % 60;
+  return mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
+}
 
-  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const localOffsetMin = -date.getTimezoneOffset();
-  const localOffset = formatOffset(localOffsetMin);
-
+function formatDateTimeItems(date, originalValue, originalTzOffset = null) {
   const items = [
     { label: 'Original', value: originalValue },
   ];
 
-  // Show original timezone if known and different from UTC
-  if (originalTzOffset !== null && originalTzOffset !== 0) {
-    const originalDate = new Date(date.getTime() + originalTzOffset * 60000);
-    const originalFormatted = formatInTimezone(originalDate, 'UTC');
-    items.push({ label: `Original TZ (${formatOffset(originalTzOffset)})`, value: originalFormatted });
-  }
+  items.push({ label: 'Date', value: date.toUTCString() });
+  items.push({ label: 'Milliseconds', value: String(date.getTime()) });
 
-  items.push({ label: 'UTC', value: formatInTimezone(date, 'UTC') });
-  items.push({ label: `Local (${localOffset})`, value: formatInTimezone(date, localTz) });
-  items.push({ label: 'ISO 8601', value: date.toISOString() });
-  items.push({ label: 'RFC 2822', value: date.toUTCString() });
-  items.push({ label: 'Unix (seconds)', value: String(Math.floor(date.getTime() / 1000)) });
-  items.push({ label: 'Unix (milliseconds)', value: String(date.getTime()) });
-
-  // Add relative time
-  const now = Date.now();
-  const diff = date.getTime() - now;
-  const absDiff = Math.abs(diff);
-
-  let relative;
-  if (absDiff < 60000) {
-    relative = diff >= 0 ? 'in a few seconds' : 'a few seconds ago';
-  } else if (absDiff < 3600000) {
-    const mins = Math.round(absDiff / 60000);
-    relative = diff >= 0 ? `in ${mins} minute${mins > 1 ? 's' : ''}` : `${mins} minute${mins > 1 ? 's' : ''} ago`;
-  } else if (absDiff < 86400000) {
-    const hours = Math.round(absDiff / 3600000);
-    relative = diff >= 0 ? `in ${hours} hour${hours > 1 ? 's' : ''}` : `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  } else if (absDiff < 2592000000) {
-    const days = Math.round(absDiff / 86400000);
-    relative = diff >= 0 ? `in ${days} day${days > 1 ? 's' : ''}` : `${days} day${days > 1 ? 's' : ''} ago`;
-  } else if (absDiff < 31536000000) {
-    const months = Math.round(absDiff / 2592000000);
-    relative = diff >= 0 ? `in ${months} month${months > 1 ? 's' : ''}` : `${months} month${months > 1 ? 's' : ''} ago`;
-  } else {
-    const years = Math.round(absDiff / 31536000000);
-    relative = diff >= 0 ? `in ${years} year${years > 1 ? 's' : ''}` : `${years} year${years > 1 ? 's' : ''} ago`;
-  }
-
-  items.push({ label: 'Relative', value: relative });
-
-  return { type, items, showPanel: true };
+  return items;
 }
 
-// ============================================================================
-// Date / DateTime String
-// ============================================================================
 function tryDate(text) {
   // Date only format: 2023-10-15
   const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -284,13 +199,9 @@ function tryDate(text) {
     originalTzOffset = sign * (hours * 60 + mins);
   }
 
-  const type = isDateOnly ? 'date' : 'datetime';
-  return formatDateTimeItems(date, type, text, originalTzOffset);
+  return formatDateTimeItems(date, text, originalTzOffset);
 }
 
-// ============================================================================
-// Number
-// ============================================================================
 function tryNumber(text) {
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
@@ -318,98 +229,14 @@ function tryNumber(text) {
     }
   }
 
-  // Hex and binary for positive integers
-  if (isInteger && num >= 0 && num <= Number.MAX_SAFE_INTEGER) {
-    items.push({ label: 'Hex', value: `0x${num.toString(16).toUpperCase()}` });
-    if (num <= 0xFFFFFFFF) {
-      items.push({ label: 'Binary', value: `0b${num.toString(2)}` });
-    }
-    items.push({ label: 'Octal', value: `0o${num.toString(8)}` });
+  if (isInteger && num >= 0) {
+    items.push({ label: 'Date (Milliseconds)', value: new Date(num).toUTCString() });
+    items.push({ label: 'Date (Seconds)', value: new Date(num * 1000).toUTCString() });
   }
 
-  // File size interpretation
-  if (isInteger && num > 0) {
-    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-    let size = num;
-    let unitIndex = 0;
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
-
-    if (unitIndex > 0) {
-      items.push({ label: 'File Size (binary)', value: `${size.toFixed(2)} ${units[unitIndex]}` });
-    }
-    
-    // Also show SI units (1000-based)
-    const siUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
-    let siSize = num;
-    let siIndex = 0;
-    while (siSize >= 1000 && siIndex < siUnits.length - 1) {
-      siSize /= 1000;
-      siIndex++;
-    }
-    if (siIndex > 0) {
-      items.push({ label: 'File Size (SI)', value: `${siSize.toFixed(2)} ${siUnits[siIndex]}` });
-    }
-  }
-
-  // Timestamp interpretation for positive integers
-  if (isInteger && num > 0) {
-    // Try as seconds or milliseconds based on magnitude
-    let date = null;
-    let unit = null;
-
-    // 13+ digits: treat as milliseconds
-    if (num >= 1e12) {
-      date = new Date(num);
-      unit = 'milliseconds';
-    }
-    // Otherwise treat as seconds
-    else {
-      date = new Date(num * 1000);
-      unit = 'seconds';
-    }
-
-    if (date && !isNaN(date.getTime())) {
-      const year = date.getFullYear();
-      if (year >= 1970 && year <= 2200) {
-        // Format times consistently
-        const formatInTimezone = (d, timeZone) => {
-          const parts = new Intl.DateTimeFormat('en-CA', {
-            timeZone,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-          }).formatToParts(d);
-          const get = (type) => parts.find(p => p.type === type)?.value || '';
-          return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`;
-        };
-
-        const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const localOffsetMin = -date.getTimezoneOffset();
-        const sign = localOffsetMin >= 0 ? '+' : '-';
-        const hours = Math.floor(Math.abs(localOffsetMin) / 60);
-        const mins = Math.abs(localOffsetMin) % 60;
-        const localOffset = mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
-
-        items.push({ label: 'As Time (UTC)', value: formatInTimezone(date, 'UTC') });
-        items.push({ label: `As Time (${localOffset})`, value: formatInTimezone(date, localTz) });
-        items.push({ label: 'As Time (ISO)', value: date.toISOString() });
-      }
-    }
-  }
-
-  return { type: 'number', items, showPanel: true };
+  return items;
 }
 
-// ============================================================================
-// URL with Query Parameters
-// ============================================================================
 function tryUrl(text) {
   // Must start with http:// or https://
   if (!text.startsWith('http://') && !text.startsWith('https://')) return null;
@@ -441,15 +268,12 @@ function tryUrl(text) {
       }
     }
 
-    return { type: 'url', items, showPanel: true };
+    return items;
   } catch (_) {
     return null;
   }
 }
 
-// ============================================================================
-// XML / HTML
-// ============================================================================
 function tryXml(text) {
   // Must start with < and contain at least one tag
   if (!text.startsWith('<')) return null;
@@ -504,15 +328,12 @@ function tryXml(text) {
       { label: 'Formatted', value: formatted },
     ];
 
-    return { type: 'xml', items, showPanel: true };
+    return items;
   } catch (_) {
     return null;
   }
 }
 
-// ============================================================================
-// Hex String
-// ============================================================================
 function tryHex(text) {
   // Must be hex characters only, even length, at least 20 chars
   if (text.length < 20 || text.length % 2 !== 0) return null;
@@ -547,12 +368,9 @@ function tryHex(text) {
     items.push({ label: 'Hex Dump', value: hexDump.trim() });
   }
 
-  return { type: 'hex', items, showPanel: true };
+  return items;
 }
 
-// ============================================================================
-// UUID
-// ============================================================================
 function tryUuid(text) {
   // Standard UUID format: 8-4-4-4-12
   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-([1-5])[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
@@ -588,20 +406,17 @@ function tryUuid(text) {
       const date = new Date(unixMs);
 
       if (date.getFullYear() >= 1990 && date.getFullYear() <= 2100) {
-        items.push({ label: 'Created', value: date.toISOString() });
+        items.push({ label: 'Created', value: date.toUTCString() });
       }
     } catch (_) {}
   }
 
-  return { type: 'uuid', items, showPanel: true };
+  return items;
 }
 
-// ============================================================================
-// Main Detection Function
-// ============================================================================
 function detectContentType(text) {
   if (!text || typeof text !== 'string') {
-    return { type: 'text', items: [], showPanel: false };
+    return [];
   }
 
   const trimmed = text.trim();
@@ -610,7 +425,6 @@ function detectContentType(text) {
   const result =
     tryJwt(trimmed) ||
     tryJson(trimmed) ||
-    tryYaml(trimmed) ||
     tryUuid(trimmed) ||
     tryDate(trimmed) ||
     tryNumber(trimmed) ||
@@ -621,9 +435,8 @@ function detectContentType(text) {
 
   if (result) return result;
 
-  // Plain text - only show if very long (truncated in cell)
-  const showPanel = trimmed.length >= MIN_CONTENT_LENGTH_FOR_DISPLAY;
-  return { type: 'text', items: [{ label: 'Original', value: trimmed }], showPanel };
+  // Plain text
+  return [{ label: 'Original', value: trimmed }];
 }
 
 self.pigquery ||= {};
