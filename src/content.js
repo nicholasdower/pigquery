@@ -253,13 +253,13 @@ const styles = `
     border-bottom: 1px solid rgba(255,255,255,0.10);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
   }
   .pig-modal-input {
     width: 100%;
     flex: 1;
     box-sizing: border-box;
-    padding: 10px 12px;
+    padding: 10px 12px 10px 0;
     border-radius: 10px;
     border: 1px solid rgba(255,255,255,0.14);
     background: rgba(255,255,255,0.06);
@@ -283,20 +283,6 @@ const styles = `
     opacity: 0.65;
     font-size: 13px;
     user-select: none;
-  }
-  .pig-modal-link {
-    color: #6cb6ff;
-    text-decoration: none;
-    cursor: pointer;
-    border-radius: 2px;
-    outline: none;
-  }
-  .pig-modal-link:hover {
-    text-decoration: underline;
-  }
-  .pig-modal-link:focus {
-    text-decoration: underline;
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
   }
   .pig-modal-item {
     padding: 12px;
@@ -385,22 +371,11 @@ const styles = `
     text-align: center;
   }
   .pig-modal-logo-container {
-    position: relative;
     width: 32px;
     height: 32px;
     flex-shrink: 0;
-    cursor: pointer;
-    border: 1px solid transparent;
-    background: transparent;
-    padding: 3px;
-    border-radius: 6px;
+    padding: 4px;
     box-sizing: border-box;
-    outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .pig-modal-logo-container:focus {
-    border-color: rgba(96, 165, 250, 0.5);
-    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
   }
   .pig-modal-refresh {
     position: relative;
@@ -419,22 +394,37 @@ const styles = `
     outline: none;
     transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .pig-modal-refresh:hover {
+  .pig-modal-refresh:hover,
+  .pig-modal-settings:hover {
     color: rgba(255,255,255,0.9);
     background: rgba(255,255,255,0.08);
   }
-  .pig-modal-refresh:focus {
+  .pig-modal-refresh:focus,
+  .pig-modal-settings:focus {
     border-color: rgba(96, 165, 250, 0.5);
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+  }
+  .pig-modal-settings {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    outline: none;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .pig-modal-refresh.busy {
     pointer-events: none;
   }
   .pig-modal-refresh.busy svg {
     animation: pig-spin 1s linear infinite;
-  }
-  .pig-modal-refresh.error {
-    color: rgb(248, 113, 113);
   }
   .pig-modal-refresh-badge {
     position: absolute;
@@ -718,7 +708,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     if (e.key === "Tab") {
       // Get all focusable elements in the modal dynamically
       const allFocusable = Array.from(modalEl.querySelectorAll(
-        'input, button:not([tabindex="-1"]), .pig-modal-link, [tabindex="0"]'
+        'input, button:not([tabindex="-1"]), [tabindex="0"]'
       )).filter(el => el.offsetParent !== null); // Filter out hidden elements
       
       if (allFocusable.length === 0) return;
@@ -780,14 +770,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
     if (filtered.length === 0) {
       const empty = makeEl("div", { className: "pig-modal-empty" });
-      empty.textContent = i18n.getMessage("noOptionsFound", LOCALE) + " ";
-      const link = makeEl("a", { className: "pig-modal-link", text: i18n.getMessage("extensionOptions", LOCALE) });
-      link.href = "#";
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        chrome.runtime.sendMessage({ action: "openOptionsPage" });
-      });
-      empty.appendChild(link);
+      empty.textContent = i18n.getMessage("noOptionsFound", LOCALE);
       listEl.appendChild(empty);
       return;
     }
@@ -843,9 +826,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   }
 
   const header = makeEl("div", { className: "pig-modal-header" });
-  const iconContainer = makeEl("button", { className: "pig-modal-logo-container" });
-  iconContainer.type = "button";
-  iconContainer.title = "Options";
+  const iconContainer = makeEl("div", { className: "pig-modal-logo-container" });
   const iconEl = document.createElement("img");
   iconEl.className = "pig-modal-logo";
   iconEl.alt = "PigQuery";
@@ -858,12 +839,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   inputEl.placeholder = i18n.getMessage("searchPlaceholder", LOCALE);
   inputEl.autocomplete = "off";
   inputEl.spellcheck = false;
-
-  iconContainer.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    chrome.runtime.sendMessage({ action: "openOptionsPage" });
-  });
 
   inputEl.addEventListener("input", () => {
     const query = (inputEl.value || "").trim().toLowerCase();
@@ -920,10 +895,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       badgeEl.alt = "Error";
       badgeEl.src = ICON_ERROR_URL;
       refreshBtn.appendChild(badgeEl);
-      refreshBtn.classList.add('error');
     } else if (!hasErrors && existingBadge) {
       existingBadge.remove();
-      refreshBtn.classList.remove('error');
     }
   }
 
@@ -951,6 +924,18 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   });
 
   header.appendChild(refreshBtn);
+
+  // Settings button
+  const settingsBtn = makeEl("button", { className: "pig-modal-settings" });
+  settingsBtn.type = "button";
+  settingsBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
+  settingsBtn.title = "Settings";
+  settingsBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    chrome.runtime.sendMessage({ action: "openOptionsPage" });
+  });
+  header.appendChild(settingsBtn);
 
   modalEl.appendChild(header);
 
@@ -1039,8 +1024,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   renderList();
   updateContentPanel();
 
-  // Set up focus trap order: input → refresh → logo
-  focusableElements = [inputEl, refreshBtn, iconContainer];
+  // Set up focus trap order: input → refresh → settings
+  focusableElements = [inputEl, refreshBtn, settingsBtn];
 
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
   focusRedirectHandler = (e) => {
