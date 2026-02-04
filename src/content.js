@@ -647,7 +647,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       document.removeEventListener('focusin', focusRedirectHandler);
     }
     if (escapeHandler) {
-      document.removeEventListener('keydown', escapeHandler);
+      document.removeEventListener('keydown', escapeHandler, true);
     }
     overlayEl.remove();
     lastFocusedEl.focus();
@@ -669,7 +669,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       closePopup();
     }
   };
-  document.addEventListener("keydown", escapeHandler);
+  document.addEventListener("keydown", escapeHandler, true);
 
   function scrollActiveIntoView() {
     const items = listEl.querySelectorAll(".pig-modal-item");
