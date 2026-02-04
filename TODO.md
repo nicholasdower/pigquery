@@ -144,9 +144,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Precreate search index** - Performance optimization for large configs
 - [ ] **Windows testing** - Verify production build on Windows
 - [ ] **Table keyboard navigation** - Alt-Enter while focused on cell should open sites
-- [ ] Config link in empty modal should be in tab order.
-- [ ] Up and down arrows should only work in the modal when the search box is highlighted. Otherwise nothing in the list should be selected.
-- [ ] Tab key on formatted content.
 - [ ] Translated format names.
 
 ---
