@@ -1030,8 +1030,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         itemEl.appendChild(headerEl);
 
         const valueEl = makeEl("div", { className: "pig-format-item-value" });
-        // Apply syntax highlighting based on content type
-        if (item.type) {
+
+        if (['json', 'xml', 'yaml', 'sql'].includes(item.type)) {
           const highlighted = hljs.highlight(item.value, {language: item.type});
           valueEl.innerHTML = highlighted.value;
           valueEl.classList.add('hljs');
@@ -1183,7 +1183,7 @@ document.addEventListener(
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    const content = cell.innerText.trim();
+    const content = cell.innerText;
 
     if (isMac ? e.metaKey : e.ctrlKey) {
       navigator.clipboard.writeText(content);

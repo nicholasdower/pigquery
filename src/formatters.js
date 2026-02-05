@@ -4,14 +4,10 @@ function tryJson(text) {
     const parsed = JSON.parse(text);
     const formatted = JSON.stringify(parsed, null, 2);
 
-    const items = [
-      { label: 'Original', value: text, type: 'json' },
-    ];
     if (formatted !== text) {
-      items.push({ label: 'Formatted', value: formatted, type: 'json' });
+      return [{ label: 'Formatted', value: formatted, type: 'json' }];
     }
-
-    return items;
+    return [];
   } catch (_) {
     return null;
   }
@@ -41,7 +37,6 @@ function tryJwt(text) {
     if (!header.alg && !header.typ) return null;
 
     const items = [
-      { label: 'Original', value: text },
       { label: 'Header', value: JSON.stringify(header, null, 2), type: 'json' },
       { label: 'Payload', value: JSON.stringify(payload, null, 2), type: 'json' },
       { label: 'Signature', value: parts[2] },
@@ -84,7 +79,6 @@ function tryBase64(text) {
     if (printableRatio < 0.9) return null;
 
     const items = [
-      { label: 'Original', value: text },
       { label: 'Decoded', value: decoded }
     ];
 
@@ -130,11 +124,9 @@ function formatOffset(offsetMin) {
 
 function formatDateTimeItems(date, originalValue, originalTzOffset = null) {
   const items = [
-    { label: 'Original', value: originalValue },
+    { label: 'Date', value: date.toUTCString() },
+    { label: 'Milliseconds', value: String(date.getTime()) },
   ];
-
-  items.push({ label: 'Date', value: date.toUTCString() });
-  items.push({ label: 'Milliseconds', value: String(date.getTime()) });
 
   return items;
 }
@@ -211,7 +203,7 @@ function tryNumber(text) {
 
   const isInteger = Number.isInteger(num);
 
-  const items = [{ label: 'Original', value: text }];
+  const items = [];
 
   // Formatted with thousands separators
   if (isInteger) {
@@ -244,11 +236,10 @@ function tryUrl(text) {
     const hasParams = url.searchParams.toString().length > 0;
 
     const items = [
-      { label: 'Original', value: text },
       { label: 'Protocol', value: url.protocol.replace(':', '') },
       { label: 'Host', value: url.host },
     ];
-    
+
     if (url.port) items.push({ label: 'Port', value: url.port });
     if (url.pathname !== '/') items.push({ label: 'Path', value: url.pathname });
     if (url.hash) items.push({ label: 'Fragment', value: url.hash.slice(1) });
@@ -320,12 +311,9 @@ function tryXml(text) {
       return null;
     }
 
-    const items = [
-      { label: 'Original', value: text, type: 'xml' },
+    return [
       { label: 'Formatted', value: formatted, type: 'xml' },
     ];
-
-    return items;
   } catch (_) {
     return null;
   }
@@ -354,9 +342,7 @@ function tryYaml(text) {
     // Must parse to an object or array (not just a string or number)
     if (typeof parsed !== 'object' || parsed === null) return null;
 
-    return [
-      { label: 'Original', value: text, type: 'yaml' },
-    ];
+    return [];
   } catch (_) {
     return null;
   }
@@ -376,7 +362,7 @@ function tryHex(text) {
   // Check if it's printable ASCII
   const printable = bytes.every(b => (b >= 32 && b < 127) || b === 9 || b === 10 || b === 13);
 
-  const items = [{ label: 'Original', value: text }];
+  const items = [];
 
   if (printable) {
     const decoded = bytes.map(b => String.fromCharCode(b)).join('');
@@ -411,38 +397,40 @@ function tryUuid(text) {
     '5': 'Name-based (SHA-1)'
   };
 
-  const items = [
-    { label: 'Original', value: text },
+  return [
     { label: 'Version', value: `${version} - ${versionNames[version] || 'Unknown'}` },
   ];
+}
 
-  return items;
+// Define formatters in priority order with their types
+const FORMATTERS = [
+  { func: tryJwt, type: 'jwt' },
+  { func: tryJson, type: 'json' },
+  { func: tryUuid, type: 'uuid' },
+  { func: tryDate, type: 'date' },
+  { func: tryNumber, type: 'number' },
+  { func: tryUrl, type: 'url' },
+  { func: tryXml, type: 'xml' },
+  { func: tryYaml, type: 'yaml' },
+  { func: tryBase64, type: 'base64' },
+  { func: tryHex, type: 'hex' },
+];
+
+function tryFormatters(original) {
+  for (const formatter of FORMATTERS) {
+    const result = formatter.func(original.value);
+    if (result) {
+      original.type = formatter.type;
+      return result;
+    }
+  }
+  return [];
 }
 
 function detectContentType(text) {
-  if (!text || typeof text !== 'string') {
-    return [];
-  }
-
-  const trimmed = text.trim();
-
-  // Try each formatter in order of specificity
-  const result =
-    tryJwt(trimmed) ||
-    tryJson(trimmed) ||
-    tryUuid(trimmed) ||
-    tryDate(trimmed) ||
-    tryNumber(trimmed) ||
-    tryUrl(trimmed) ||
-    tryXml(trimmed) ||
-    tryYaml(trimmed) ||
-    tryBase64(trimmed) ||
-    tryHex(trimmed);
-
-  if (result) return result;
-
-  // Plain text
-  return [{ label: 'Original', value: trimmed }];
+  const original = { label: 'Original', value: text, type: 'text' };
+  const formatted = tryFormatters(original);
+  return [original, ...formatted];
 }
 
 self.pigquery ||= {};
