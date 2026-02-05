@@ -19,14 +19,15 @@ const exampleEl = el("example");
 
 // Shortcuts elements
 const shortcutInsertBtn = el("shortcut-insertSnippet");
-const resetShortcutsBtn = el("resetShortcuts");
-const shortcutsStatusEl = el("shortcutsStatus");
+const shortcutFocusTableBtn = el("shortcut-focusTable");
+const resetInsertBtn = el("reset-insertSnippet");
+const resetFocusTableBtn = el("reset-focusTable");
 
 let sources = [];
 let busy = null; // Current operation: 'refreshing', 'adding', or null
 let lastLoadedLocal = ""; // Track the last loaded local config to detect unsaved edits
 let shortcuts = {}; // Current shortcut configuration
-let recordingShortcut = null; // Which shortcut is being recorded ('insertSnippet' or null)
+let recordingShortcut = null; // Which shortcut is being recorded ('insertSnippet', 'focusTable', or null)
 
 function updateButtonStates() {
   const unchanged = textarea.value === lastLoadedLocal;
@@ -42,7 +43,13 @@ function updateButtonStates() {
   });
   // Shortcut buttons - disabled when busy (unless currently recording that shortcut)
   shortcutInsertBtn.disabled = !!busy && recordingShortcut !== 'insertSnippet';
-  resetShortcutsBtn.disabled = !!busy;
+  shortcutFocusTableBtn.disabled = !!busy && recordingShortcut !== 'focusTable';
+  
+  // Reset buttons - disabled when busy or when shortcut matches default
+  const insertIsDefault = shortcuts.insertSnippet && shortcutsMatch(shortcuts.insertSnippet, config.DEFAULT_SHORTCUTS.insertSnippet);
+  const focusTableIsDefault = shortcuts.focusTable && shortcutsMatch(shortcuts.focusTable, config.DEFAULT_SHORTCUTS.focusTable);
+  resetInsertBtn.disabled = !!busy || insertIsDefault;
+  resetFocusTableBtn.disabled = !!busy || focusTableIsDefault;
 }
 
 function setLocalStatus(message, kind = "muted") {
@@ -55,11 +62,6 @@ function setAddUrlStatus(message, kind = "muted") {
   addUrlStatusEl.textContent = message;
 }
 
-function setShortcutsStatus(message, kind = "muted") {
-  shortcutsStatusEl.className = "status " + kind;
-  shortcutsStatusEl.textContent = message;
-}
-
 /**
  * Updates the shortcut button displays with current shortcuts.
  */
@@ -68,6 +70,12 @@ function updateShortcutButtons() {
     shortcutInsertBtn.textContent = t("shortcutRecording") || "Press keys...";
   } else {
     shortcutInsertBtn.textContent = config.formatShortcut(shortcuts.insertSnippet);
+  }
+  
+  if (recordingShortcut === 'focusTable') {
+    shortcutFocusTableBtn.textContent = t("shortcutRecording") || "Press keys...";
+  } else {
+    shortcutFocusTableBtn.textContent = config.formatShortcut(shortcuts.focusTable);
   }
 }
 
@@ -116,6 +124,14 @@ function codeToKey(code) {
   return specialKeys[code] || code;
 }
 
+function shortcutsMatch(s1, s2) {
+  return s1.code === s2.code &&
+         s1.ctrl === s2.ctrl &&
+         s1.alt === s2.alt &&
+         s1.shift === s2.shift &&
+         s1.meta === s2.meta;
+}
+
 /**
  * Handles a keydown event during shortcut recording.
  */
@@ -149,6 +165,13 @@ function handleShortcutKeydown(e) {
   const shortcutKey = recordingShortcut;
   recordingShortcut = null;
 
+  for (const [key, existingShortcut] of Object.entries(shortcuts)) {
+    if (key !== shortcutKey && shortcutsMatch(newShortcut, existingShortcut)) {
+      updateShortcutButtons();
+      return;
+    }
+  }
+
   // Update local state immediately
   shortcuts[shortcutKey] = newShortcut;
   updateShortcutButtons();
@@ -166,21 +189,19 @@ async function saveShortcuts() {
   const result = await chrome.runtime.sendMessage({ action: "saveShortcuts", shortcuts });
 
   if (!result.ok) {
-    setShortcutsStatus(t(result.errorKey, result.errorSubs), "error");
     return;
   }
 
-  setShortcutsStatus("", "muted");
   updateButtonStates();
 }
 
 /**
- * Resets shortcuts to defaults.
+ * Resets a single shortcut to default.
  */
-async function resetShortcuts() {
+async function resetShortcut(shortcutKey) {
   if (busy) return;
 
-  shortcuts = { ...config.DEFAULT_SHORTCUTS };
+  shortcuts[shortcutKey] = config.DEFAULT_SHORTCUTS[shortcutKey];
   updateShortcutButtons();
   await saveShortcuts();
 }
@@ -393,7 +414,15 @@ shortcutInsertBtn.addEventListener("click", () => {
     startRecording("insertSnippet");
   }
 });
-resetShortcutsBtn.addEventListener("click", () => void resetShortcuts());
+shortcutFocusTableBtn.addEventListener("click", () => {
+  if (recordingShortcut === "focusTable") {
+    cancelRecording();
+  } else {
+    startRecording("focusTable");
+  }
+});
+resetInsertBtn.addEventListener("click", () => void resetShortcut("insertSnippet"));
+resetFocusTableBtn.addEventListener("click", () => void resetShortcut("focusTable"));
 
 document.addEventListener("keydown", (e) => {
   // Handle shortcut recording

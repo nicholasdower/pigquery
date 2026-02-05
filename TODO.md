@@ -145,8 +145,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Windows testing** - Verify production build on Windows
 - [ ] Translated format names.
 - [ ] Allow specifying cursor position for snippets. Think function with params.
-- [ ] Keyboard shortcut for focusing table.
-- [ ] Keyboard shortcut for focusing editor.
 
 ---
 

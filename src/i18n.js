@@ -24,6 +24,16 @@ const TRANSLATIONS = {
     en: "Copy cell",
     de: "Zelle kopieren",
   },
+  // popup.html: Shortcut label for focus table
+  shortcutFocusTable: {
+    en: "Toggle editor/table",
+    de: "Editor/Tabelle umschalten",
+  },
+  // content.js: Toast when no table is found when trying to focus
+  tableNotFound: {
+    en: "No table found.",
+    de: "Keine Tabelle gefunden.",
+  },
   // popup.html: Footer link to extension options page
   extensionOptions: {
     en: "Configuration",
@@ -258,11 +268,6 @@ const TRANSLATIONS = {
   shortcutRecording: {
     en: "Press keys…",
     de: "Tasten drücken…",
-  },
-  // options.html: Reset shortcut button
-  optionsResetShortcut: {
-    en: "Reset",
-    de: "Zurücksetzen",
   },
   // options.html: Footer link to BigQuery
   footerBigQuery: {

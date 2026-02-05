@@ -1152,6 +1152,51 @@ document.addEventListener(
       return;
     }
 
+    if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.focusTable)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      // Check if currently in editor
+      const isInEditor = e.target instanceof Element && e.target.closest('cfc-code-editor');
+
+      if (isInEditor) {
+        // Focus table
+        const table = document.querySelector('bq-results-table-optimized');
+        if (!table) {
+          showToast(i18n.getMessage("tableNotFound", LOCALE));
+          return;
+        }
+
+        const cell = table.querySelector('[role="cell"]');
+        if (cell) {
+          cell.focus();
+          cell.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        } else {
+          table.focus();
+          table.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      } else {
+        // Focus editor
+        const editor = getVisibleOrActiveEditor();
+        if (!editor) {
+          showToast(i18n.getMessage("editorNotFocused", LOCALE));
+          return;
+        }
+
+        const ta = findEditorTextArea(editor);
+        if (ta) {
+          ta.focus();
+          editor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        } else {
+          editor.focus();
+          editor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+      return;
+    }
+
+    //
     if (e.key === 'Alt') {
       document.documentElement.classList.add('alt-down');
     }
@@ -1168,24 +1213,8 @@ document.addEventListener(
   }
 );
 
-function handleTableCellAction(e) {
-  if (!(e.target instanceof Element)) return false;
-  const table = e.target.closest('bq-results-table-optimized');
-  if (!table) return false;
-  const cell = table.querySelector('[role="cell"]');
-  if (!cell) return false;
-
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-
+function handleTableCellOpenPopup(cell) {
   const content = cell.innerText;
-
-  if (isMac ? e.metaKey : e.ctrlKey) {
-    navigator.clipboard.writeText(content);
-    showToast(i18n.getMessage("cellCopied", LOCALE));
-    return true;
-  }
 
   const getMatchingOptions = () => configuration.sites
     .filter(option => option.regex.test(content))
@@ -1218,7 +1247,26 @@ document.addEventListener(
   (e) => {
     if (!e.altKey) return;
     if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
-    handleTableCellAction(e);
+
+    if (!(e.target instanceof Element)) return false;
+    const table = e.target.closest('bq-results-table-optimized');
+    if (!table) return false;
+    const cell = table.querySelector('[role="cell"]');
+    if (!cell) return false;
+  
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  
+    const content = cell.innerText;
+  
+    if (isMac ? e.metaKey : e.ctrlKey) {
+      navigator.clipboard.writeText(content);
+      showToast(i18n.getMessage("cellCopied", LOCALE));
+      return true;
+    }
+
+    handleTableCellOpenPopup(cell);
   },
   true
 );
@@ -1226,10 +1274,19 @@ document.addEventListener(
 document.addEventListener(
   'keydown',
   (e) => {
-    if (!e.altKey) return;
     if (e.key !== 'Enter') return;
-    if (e.shiftKey) return; // BigQuery ignores shift clicks so we ignore shift-enter.
-    handleTableCellAction(e);
+
+    if (!(e.target instanceof Element)) return false;
+    const table = e.target.closest('bq-results-table-optimized');
+    if (!table) return false;
+    const cell = table.querySelector('[role="cell"]');
+    if (!cell) return false;
+  
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    handleTableCellOpenPopup(cell);
   },
   true
 );

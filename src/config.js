@@ -5,6 +5,7 @@ let operationPromise = null;
 
 const DEFAULT_SHORTCUTS = {
   insertSnippet: { code: 'KeyY', key: 'y', ctrl: true, shift: true, alt: false, meta: false },
+  focusTable: { code: 'KeyU', key: 'u', ctrl: true, shift: true, alt: false, meta: false },
 };
 
 /**
