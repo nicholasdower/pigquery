@@ -210,11 +210,8 @@ function tryNumber(text) {
   if (!isFinite(num)) return null;
 
   const isInteger = Number.isInteger(num);
-  const absNum = Math.abs(num);
 
-  const items = [
-    { label: 'Original', value: text },
-  ];
+  const items = [{ label: 'Original', value: text }];
 
   // Formatted with thousands separators
   if (isInteger) {
@@ -348,14 +345,11 @@ function tryHex(text) {
   // Check if it's printable ASCII
   const printable = bytes.every(b => (b >= 32 && b < 127) || b === 9 || b === 10 || b === 13);
 
-  const items = [
-    { label: 'Original', value: text },
-    { label: 'Byte Count', value: String(bytes.length) },
-  ];
+  const items = [{ label: 'Original', value: text }];
 
   if (printable) {
     const decoded = bytes.map(b => String.fromCharCode(b)).join('');
-    items.push({ label: 'Decoded ASCII', value: decoded });
+    items.push({ label: 'Decoded', value: decoded });
   } else {
     // Show hex dump
     let hexDump = '';
@@ -389,27 +383,7 @@ function tryUuid(text) {
   const items = [
     { label: 'Original', value: text },
     { label: 'Version', value: `${version} - ${versionNames[version] || 'Unknown'}` },
-    { label: 'Lowercase', value: text.toLowerCase() },
   ];
-
-  // For v1 UUIDs, extract timestamp
-  if (version === '1') {
-    try {
-      const timeLow = parseInt(text.slice(0, 8), 16);
-      const timeMid = parseInt(text.slice(9, 13), 16);
-      const timeHigh = parseInt(text.slice(14, 18), 16) & 0x0fff;
-
-      // UUID timestamp is 100-nanosecond intervals since Oct 15, 1582
-      const timestamp = BigInt(timeHigh) << 48n | BigInt(timeMid) << 32n | BigInt(timeLow);
-      const unixNs = timestamp - 122192928000000000n; // Offset to Unix epoch
-      const unixMs = Number(unixNs / 10000n);
-      const date = new Date(unixMs);
-
-      if (date.getFullYear() >= 1990 && date.getFullYear() <= 2100) {
-        items.push({ label: 'Created', value: date.toUTCString() });
-      }
-    } catch (_) {}
-  }
 
   return items;
 }

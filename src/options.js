@@ -327,6 +327,12 @@ async function addUrl() {
     return;
   }
 
+  const granted = await requestUrlPermission(url);
+  if (!granted) {
+    setAddUrlStatus(t("statusPermissionDenied"), "error");
+    return;
+  }
+
   const result = await chrome.runtime.sendMessage({ action: "addSource", url });
   if (!result.ok) {
     setAddUrlStatus(t(result.errorKey, result.errorSubs), "error");
@@ -335,6 +341,28 @@ async function addUrl() {
 
   urlInput.value = "";
   setAddUrlStatus("", "muted");
+}
+
+/**
+ * Requests permission for a URL's origin.
+ * Must be called in response to a user gesture.
+ * Returns true if granted, false otherwise.
+ */
+async function requestUrlPermission(url) {
+  try {
+    const urlObj = new URL(url);
+    const origin = `${urlObj.origin}/*`;
+
+    const hasPermission = await chrome.permissions.contains({ origins: [origin] });
+    if (hasPermission) {
+      return true;
+    }
+
+    return await chrome.permissions.request({ origins: [origin] });
+  } catch (e) {
+    console.error('Permission request error:', e);
+    return false;
+  }
 }
 
 async function removeSource(url) {

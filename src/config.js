@@ -112,26 +112,6 @@ async function fetchYamlFromUrl(url) {
 }
 
 /**
- * Requests permission for a URL's origin.
- * Returns true if granted, false otherwise.
- */
-async function requestUrlPermission(url) {
-  try {
-    const urlObj = new URL(url);
-    const origin = `${urlObj.origin}/*`;
-
-    const hasPermission = await chrome.permissions.contains({ origins: [origin] });
-    if (hasPermission) {
-      return true;
-    }
-
-    return await chrome.permissions.request({ origins: [origin] });
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
  * Loads sources from chrome.storage.local.
  * Returns array of source objects.
  */
@@ -325,7 +305,7 @@ async function doRefreshRemoteSources() {
 
 /**
  * Adds a new remote source by URL.
- * Requests permission for the URL's origin if needed.
+ * Note: Caller must request permission for the URL's origin before calling this.
  * Queues behind any in-progress operations.
  * Returns { ok: true } or { ok: false, errorKey, errorSubs }
  */
@@ -344,11 +324,6 @@ async function addSource(url) {
 }
 
 async function doAddSource(url) {
-  const granted = await requestUrlPermission(url);
-  if (!granted) {
-    return { ok: false, errorKey: "statusPermissionDenied" };
-  }
-
   await setBusyState('adding');
 
   const sources = await loadSources();
