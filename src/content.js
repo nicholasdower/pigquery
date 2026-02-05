@@ -501,6 +501,47 @@ const styles = `
     white-space: pre-wrap;
     word-break: break-word;
   }
+  .pig-format-item-value.hljs {
+    background: transparent;
+    padding: 0;
+    color: rgb(255, 255, 255);
+  }
+  /* BigQuery-inspired syntax highlighting colors */
+  .pig-format-item-value .hljs-keyword {
+    color: rgb(138, 180, 248);
+  }
+  .pig-format-item-value .hljs-string {
+    color: rgb(168, 218, 181);
+  }
+  .pig-format-item-value .hljs-number {
+    color: rgb(250, 144, 62);
+  }
+  .pig-format-item-value .hljs-built_in,
+  .pig-format-item-value .hljs-title.function_ {
+    color: rgb(138, 180, 248);
+  }
+  .pig-format-item-value .hljs-literal {
+    color: rgb(250, 144, 62);
+  }
+  .pig-format-item-value .hljs-type {
+    color: rgb(138, 180, 248);
+  }
+  .pig-format-item-value .hljs-comment {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+  }
+  /* JSON-specific: property names */
+  .pig-format-item-value .hljs-attr {
+    color: rgb(138, 180, 248);
+  }
+  /* XML-specific: tag names */
+  .pig-format-item-value .hljs-name,
+  .pig-format-item-value .hljs-tag {
+    color: rgb(138, 180, 248);
+  }
+  .pig-format-item-value .hljs-attribute {
+    color: rgb(168, 218, 181);
+  }
   .pig-format-item-copy {
     flex-shrink: 0;
     width: 18px;
@@ -987,9 +1028,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         headerEl.appendChild(copyBtn);
         
         itemEl.appendChild(headerEl);
-        
+
         const valueEl = makeEl("div", { className: "pig-format-item-value" });
-        valueEl.textContent = item.value;
+        // Apply syntax highlighting based on content type
+        if (item.type) {
+          const highlighted = hljs.highlight(item.value, {language: item.type});
+          valueEl.innerHTML = highlighted.value;
+          valueEl.classList.add('hljs');
+        } else {
+          valueEl.textContent = item.value;
+        }
         itemEl.appendChild(valueEl);
         
         // Select text on right-click so browser shows "Copy" in context menu
@@ -1087,7 +1135,7 @@ document.addEventListener(
         addRecentSnippetGroup(option.group);
         configuration.snippets = sortSnippets(configuration.snippets);
         insertIntoEditor(editor, option.value);
-      }, () => configuration.hasErrors, (item) => item ? [{ label: 'SQL', value: item.value }] : null);
+      }, () => configuration.hasErrors, (item) => item ? [{ label: 'SQL', value: item.value, type: 'sql' }] : null);
       return;
     }
 

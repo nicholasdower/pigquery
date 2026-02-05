@@ -5,10 +5,10 @@ function tryJson(text) {
     const formatted = JSON.stringify(parsed, null, 2);
 
     const items = [
-      { label: 'Original', value: text },
+      { label: 'Original', value: text, type: 'json' },
     ];
     if (formatted !== text) {
-      items.push({ label: 'Formatted', value: formatted });
+      items.push({ label: 'Formatted', value: formatted, type: 'json' });
     }
 
     return items;
@@ -42,8 +42,8 @@ function tryJwt(text) {
 
     const items = [
       { label: 'Original', value: text },
-      { label: 'Header', value: JSON.stringify(header, null, 2) },
-      { label: 'Payload', value: JSON.stringify(payload, null, 2) },
+      { label: 'Header', value: JSON.stringify(header, null, 2), type: 'json' },
+      { label: 'Payload', value: JSON.stringify(payload, null, 2), type: 'json' },
       { label: 'Signature', value: parts[2] },
     ];
 
@@ -85,20 +85,20 @@ function tryBase64(text) {
 
     const items = [
       { label: 'Original', value: text },
+      { label: 'Decoded', value: decoded }
     ];
 
     // Check if decoded content is JSON
     if (decoded.trim().startsWith('{') || decoded.trim().startsWith('[')) {
       try {
         const parsed = JSON.parse(decoded);
-        items.push({ label: 'Decoded (JSON)', value: JSON.stringify(parsed, null, 2) });
+        items.push({ label: 'Decoded (JSON)', value: JSON.stringify(parsed, null, 2), type: 'json' });
         return items;
       } catch (_) {
         // Not JSON, continue with plain text
       }
     }
 
-    items.push({ label: 'Decoded', value: decoded });
     return items;
   } catch (_) {
     return null;
@@ -321,8 +321,8 @@ function tryXml(text) {
     }
 
     const items = [
-      { label: 'Original', value: text },
-      { label: 'Formatted', value: formatted },
+      { label: 'Original', value: text, type: 'xml' },
+      { label: 'Formatted', value: formatted, type: 'xml' },
     ];
 
     return items;
