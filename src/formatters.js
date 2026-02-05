@@ -78,20 +78,10 @@ function tryBase64(text) {
     // Must be mostly printable
     if (printableRatio < 0.9) return null;
 
-    const items = [
-      { label: 'Decoded', value: decoded }
-    ];
-
-    // Check if decoded content is JSON
-    if (decoded.trim().startsWith('{') || decoded.trim().startsWith('[')) {
-      try {
-        const parsed = JSON.parse(decoded);
-        items.push({ label: 'Decoded (JSON)', value: JSON.stringify(parsed, null, 2), type: 'json' });
-        return items;
-      } catch (_) {
-        // Not JSON, continue with plain text
-      }
-    }
+    const decodedItem = { label: 'Decoded', value: decoded, type: 'text' };
+    const decodedFormatted = tryFormatters(decodedItem, ['base64', 'hex']);
+    const items = [decodedItem];
+    items.push(...decodedFormatted);
 
     return items;
   } catch (_) {
@@ -198,6 +188,9 @@ function tryNumber(text) {
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
+  // Avoid treating long hex-like strings (even length, 40+ chars, only digits) as numbers
+  if (text.length >= 40 && text.length % 2 === 0 && /^\d+$/.test(text)) return null;
+
   const num = parseFloat(text);
   if (!isFinite(num)) return null;
 
@@ -219,8 +212,15 @@ function tryNumber(text) {
   }
 
   if (isInteger && num >= 0) {
-    items.push({ label: 'Date (Milliseconds)', value: new Date(num).toUTCString() });
-    items.push({ label: 'Date (Seconds)', value: new Date(num * 1000).toUTCString() });
+    // Only interpret as dates if within reasonable timestamp range
+    // Max milliseconds: 10000000000000 (year ~2286)
+    // Max seconds: 10000000000 (year ~2286)
+    if (num <= 10000000000000) {
+      items.push({ label: 'Date (Milliseconds)', value: new Date(num).toUTCString() });
+    }
+    if (num <= 10000000000) {
+      items.push({ label: 'Date (Seconds)', value: new Date(num * 1000).toUTCString() });
+    }
   }
 
   return items;
@@ -366,7 +366,10 @@ function tryHex(text) {
 
   if (printable) {
     const decoded = bytes.map(b => String.fromCharCode(b)).join('');
-    items.push({ label: 'Decoded', value: decoded });
+    const decodedItem = { label: 'Decoded', value: decoded, type: 'text' };
+    const decodedFormatted = tryFormatters(decodedItem, ['base64', 'hex']);
+    items.push(decodedItem);
+    items.push(...decodedFormatted);
   } else {
     // Show hex dump
     let hexDump = '';
@@ -416,8 +419,10 @@ const FORMATTERS = [
   { func: tryHex, type: 'hex' },
 ];
 
-function tryFormatters(original) {
+function tryFormatters(original, excludeTypes = []) {
   for (const formatter of FORMATTERS) {
+    if (excludeTypes.includes(formatter.type)) continue;
+
     const result = formatter.func(original.value);
     if (result) {
       original.type = formatter.type;
