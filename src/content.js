@@ -1168,52 +1168,68 @@ document.addEventListener(
   }
 );
 
+function handleTableCellAction(e) {
+  if (!(e.target instanceof Element)) return false;
+  const table = e.target.closest('bq-results-table-optimized');
+  if (!table) return false;
+  const cell = table.querySelector('[role="cell"]');
+  if (!cell) return false;
+
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+
+  const content = cell.innerText;
+
+  if (isMac ? e.metaKey : e.ctrlKey) {
+    navigator.clipboard.writeText(content);
+    showToast(i18n.getMessage("cellCopied", LOCALE));
+    return true;
+  }
+
+  const getMatchingOptions = () => configuration.sites
+    .filter(option => option.regex.test(content))
+    .map(option => ({
+      ...option,
+      url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content))
+    }));
+  const contentInfo = formatters.detectContentType(content);
+  openPopup(getMatchingOptions, (option) => {
+    configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
+    window.open(option.url, "_blank", "noopener,noreferrer");
+  }, () => configuration.hasErrors, () => contentInfo);
+
+  // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
+  const onFocusIn = () => {
+    const input = document.querySelector(".pig-modal-input");
+    if (input) {
+      input.focus();
+    } else {
+      cell.removeEventListener('focusin', onFocusIn, true);
+    }
+  };
+
+  cell.addEventListener('focusin', onFocusIn, true);
+  return true;
+}
+
 document.addEventListener(
   'click',
   (e) => {
     if (!e.altKey) return;
     if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
-    if (!(e.target instanceof Element)) return;
-    const table = e.target.closest('bq-results-table-optimized');
-    if (!table) return;
-    const cell = table.querySelector('[role="cell"]');
-    if (!cell) return;
+    handleTableCellAction(e);
+  },
+  true
+);
 
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    const content = cell.innerText;
-
-    if (isMac ? e.metaKey : e.ctrlKey) {
-      navigator.clipboard.writeText(content);
-      showToast(i18n.getMessage("cellCopied", LOCALE));
-      return;
-    }
-
-    const getMatchingOptions = () => configuration.sites
-      .filter(option => option.regex.test(content))
-      .map(option => ({
-        ...option,
-        url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content))
-      }));
-    const contentInfo = formatters.detectContentType(content);
-    openPopup(getMatchingOptions, (option) => {
-      configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
-      window.open(option.url, "_blank", "noopener,noreferrer");
-    }, () => configuration.hasErrors, () => contentInfo);
-
-    // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
-    const onFocusIn = () => {
-      const input = document.querySelector(".pig-modal-input");
-      if (input) {
-        input.focus();
-      } else {
-        cell.removeEventListener('focusin', onFocusIn, true);
-      }
-    };
-
-    cell.addEventListener('focusin', onFocusIn, true);
+document.addEventListener(
+  'keydown',
+  (e) => {
+    if (!e.altKey) return;
+    if (e.key !== 'Enter') return;
+    if (e.shiftKey) return; // BigQuery ignores shift clicks so we ignore shift-enter.
+    handleTableCellAction(e);
   },
   true
 );

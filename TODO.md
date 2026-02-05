@@ -143,10 +143,10 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Disable groups feature** - Allow users to disable entire groups
 - [ ] **Precreate search index** - Performance optimization for large configs
 - [ ] **Windows testing** - Verify production build on Windows
-- [ ] **Table keyboard navigation** - Alt-Enter while focused on cell should open sites
 - [ ] Translated format names.
-- [ ] Syntax highlighting for SQL, JSON, etc. in formatted/preview pane.
 - [ ] Allow specifying cursor position for snippets. Think function with params.
+- [ ] Keyboard shortcut for focusing table.
+- [ ] Keyboard shortcut for focusing editor.
 
 ---
 
