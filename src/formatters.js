@@ -331,6 +331,37 @@ function tryXml(text) {
   }
 }
 
+function tryYaml(text) {
+  // YAML typically starts with common patterns
+  // Check for YAML indicators: keys with colons, list items with dashes, or document separators
+  const yamlPatterns = [
+    /^---/,                           // Document separator
+    /^\w+:/m,                         // Key-value pair
+    /^-\s+\w+:/m,                     // List item with object
+    /^-\s+[^-]/m,                     // List item
+  ];
+
+  const hasYamlPattern = yamlPatterns.some(pattern => pattern.test(text));
+  if (!hasYamlPattern) return null;
+
+  // Avoid false positives: must not look like JSON, XML, or other formats
+  if (text.startsWith('{') || text.startsWith('[') || text.startsWith('<')) return null;
+
+  // Try to parse with js-yaml to validate it's valid YAML
+  try {
+    const parsed = jsyaml.load(text);
+
+    // Must parse to an object or array (not just a string or number)
+    if (typeof parsed !== 'object' || parsed === null) return null;
+
+    return [
+      { label: 'Original', value: text, type: 'yaml' },
+    ];
+  } catch (_) {
+    return null;
+  }
+}
+
 function tryHex(text) {
   // Must be hex characters only, even length, at least 20 chars
   if (text.length < 20 || text.length % 2 !== 0) return null;
@@ -404,6 +435,7 @@ function detectContentType(text) {
     tryNumber(trimmed) ||
     tryUrl(trimmed) ||
     tryXml(trimmed) ||
+    tryYaml(trimmed) ||
     tryBase64(trimmed) ||
     tryHex(trimmed);
 
