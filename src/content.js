@@ -676,6 +676,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   let activeIndex = 0;
   let hasErrors = getHasErrors();
   let busyListener = null;
+  let ignoreMouseTimeout = null;
 
   const lastFocusedEl = document.activeElement;
 
@@ -684,6 +685,13 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
   let focusRedirectHandler = null;
   let escapeHandler = null;
+
+  function ignoreMouseTemporarily() {
+    if (ignoreMouseTimeout) clearTimeout(ignoreMouseTimeout);
+    ignoreMouseTimeout = setTimeout(() => {
+      ignoreMouseTimeout = null;
+    }, 150);
+  }
 
   function closePopup() {
     if (!overlayEl) return;
@@ -784,6 +792,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         activeIndex = (activeIndex + 1) % filtered.length;
         updateActiveStyles();
         updateContentPanel();
+        ignoreMouseTemporarily();
       }
       return;
     }
@@ -795,6 +804,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
         updateActiveStyles();
         updateContentPanel();
+        ignoreMouseTemporarily();
       }
       return;
     }
@@ -859,6 +869,18 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         // Prevent input blur before click handler runs
         e.preventDefault();
       });
+
+      const updateSelection = () => {
+        if (ignoreMouseTimeout) return;
+        if (activeIndex !== idx) {
+          activeIndex = idx;
+          updateActiveStyles();
+          updateContentPanel();
+        }
+      };
+
+      item.addEventListener("mouseenter", updateSelection);
+      item.addEventListener("mousemove", updateSelection);
 
       item.addEventListener("click", (e) => {
         e.preventDefault();
