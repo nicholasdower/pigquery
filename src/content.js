@@ -300,6 +300,13 @@ const styles = `
   .pig-modal-item:hover {
     background: rgba(255,255,255,0.08);
   }
+  .pig-modal-item.active {
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.25);
+  }
+  .pig-modal-item.active:hover {
+    background: rgba(255,255,255,0.14);
+  }
   .pig-modal.input-focused .pig-modal-item.active {
     background: rgba(96, 165, 250, 0.2);
     border-color: rgba(96, 165, 250, 0.5);
