@@ -1,3 +1,14 @@
+(function() {
+
+const i18n = self.pigquery.i18n;
+const LOCALE = i18n.getBigQueryLocale();
+
+// Mapping of type to i18n key for type names that need translation
+const TYPE_I18N_KEYS = {
+  date: 'typeDate',
+  number: 'typeNumber',
+};
+
 function tryJson(text) {
   if (!text.startsWith('{') && !text.startsWith('[')) return null;
   try {
@@ -5,7 +16,7 @@ function tryJson(text) {
     const formatted = JSON.stringify(parsed, null, 2);
 
     if (formatted !== text) {
-      return [{ label: 'Formatted', value: formatted, type: 'json' }];
+      return [{ label: i18n.getMessage('formatted', LOCALE), value: formatted, type: 'json' }];
     }
     return [];
   } catch (_) {
@@ -37,15 +48,15 @@ function tryJwt(text) {
     if (!header.alg && !header.typ) return null;
 
     const items = [
-      { label: 'Header', value: JSON.stringify(header, null, 2), type: 'json' },
-      { label: 'Payload', value: JSON.stringify(payload, null, 2), type: 'json' },
-      { label: 'Signature', value: parts[2] },
+      { label: i18n.getMessage('header', LOCALE), value: JSON.stringify(header, null, 2), type: 'json' },
+      { label: i18n.getMessage('payload', LOCALE), value: JSON.stringify(payload, null, 2), type: 'json' },
+      { label: i18n.getMessage('signature', LOCALE), value: parts[2] },
     ];
 
     // Add human-readable timestamps if present
-    if (payload.iat) items.push({ label: 'Issued', value: new Date(payload.iat * 1000).toUTCString() });
-    if (payload.exp) items.push({ label: 'Expires', value: new Date(payload.exp * 1000).toUTCString() });
-    if (payload.nbf) items.push({ label: 'Not Before', value: new Date(payload.nbf * 1000).toUTCString() });
+    if (payload.iat) items.push({ label: i18n.getMessage('issued', LOCALE), value: new Date(payload.iat * 1000).toUTCString() });
+    if (payload.exp) items.push({ label: i18n.getMessage('expires', LOCALE), value: new Date(payload.exp * 1000).toUTCString() });
+    if (payload.nbf) items.push({ label: i18n.getMessage('notBefore', LOCALE), value: new Date(payload.nbf * 1000).toUTCString() });
 
     return items;
   } catch (_) {
@@ -80,6 +91,16 @@ function tryBase64(text) {
 
     const decodedItem = { label: 'Decoded', value: decoded, type: 'text' };
     const decodedFormatted = tryFormatters(decodedItem, ['base64', 'hex']);
+
+    // Update label based on detected type
+    if (decodedItem.type !== 'text') {
+      const typeKey = TYPE_I18N_KEYS[decodedItem.type];
+      const typeName = typeKey ? i18n.getMessage(typeKey, LOCALE) : decodedItem.type.toUpperCase();
+      decodedItem.label = i18n.getMessage('decodedWithType', LOCALE, typeName);
+    } else {
+      decodedItem.label = i18n.getMessage('decoded', LOCALE);
+    }
+
     const items = [decodedItem];
     items.push(...decodedFormatted);
 
@@ -114,8 +135,8 @@ function formatOffset(offsetMin) {
 
 function formatDateTimeItems(date, originalValue, originalTzOffset = null) {
   const items = [
-    { label: 'Date', value: date.toUTCString() },
-    { label: 'Milliseconds', value: String(date.getTime()) },
+    { label: i18n.getMessage('date', LOCALE), value: date.toUTCString() },
+    { label: i18n.getMessage('milliseconds', LOCALE), value: String(date.getTime()) },
   ];
 
   return items;
@@ -202,12 +223,12 @@ function tryNumber(text) {
   if (isInteger) {
     const formatted = num.toLocaleString('en-US');
     if (formatted !== text) {
-      items.push({ label: 'Formatted', value: formatted });
+      items.push({ label: i18n.getMessage('formatted', LOCALE), value: formatted });
     }
   } else {
     const formatted = num.toLocaleString('en-US', { maximumFractionDigits: 10 });
     if (formatted !== text) {
-      items.push({ label: 'Formatted', value: formatted });
+      items.push({ label: i18n.getMessage('formatted', LOCALE), value: formatted });
     }
   }
 
@@ -216,10 +237,10 @@ function tryNumber(text) {
     // Max milliseconds: 10000000000000 (year ~2286)
     // Max seconds: 10000000000 (year ~2286)
     if (num <= 10000000000000) {
-      items.push({ label: 'Date (Milliseconds)', value: new Date(num).toUTCString() });
+      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: new Date(num).toUTCString() });
     }
     if (num <= 10000000000) {
-      items.push({ label: 'Date (Seconds)', value: new Date(num * 1000).toUTCString() });
+      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: new Date(num * 1000).toUTCString() });
     }
   }
 
@@ -236,13 +257,13 @@ function tryUrl(text) {
     const hasParams = url.searchParams.toString().length > 0;
 
     const items = [
-      { label: 'Protocol', value: url.protocol.replace(':', '') },
-      { label: 'Host', value: url.host },
+      { label: i18n.getMessage('protocol', LOCALE), value: url.protocol.replace(':', '') },
+      { label: i18n.getMessage('host', LOCALE), value: url.host },
     ];
 
-    if (url.port) items.push({ label: 'Port', value: url.port });
-    if (url.pathname !== '/') items.push({ label: 'Path', value: url.pathname });
-    if (url.hash) items.push({ label: 'Fragment', value: url.hash.slice(1) });
+    if (url.port) items.push({ label: i18n.getMessage('port', LOCALE), value: url.port });
+    if (url.pathname !== '/') items.push({ label: i18n.getMessage('path', LOCALE), value: url.pathname });
+    if (url.hash) items.push({ label: i18n.getMessage('fragment', LOCALE), value: url.hash.slice(1) });
 
     if (hasParams) {
       for (const [key, value] of url.searchParams) {
@@ -252,7 +273,7 @@ function tryUrl(text) {
           const decoded = decodeURIComponent(value);
           if (decoded !== value) displayValue = decoded;
         } catch (_) {}
-        items.push({ label: `Param: ${key}`, value: displayValue });
+        items.push({ label: i18n.getMessage('param', LOCALE, key), value: displayValue });
       }
     }
 
@@ -312,7 +333,7 @@ function tryXml(text) {
     }
 
     return [
-      { label: 'Formatted', value: formatted, type: 'xml' },
+      { label: i18n.getMessage('formatted', LOCALE), value: formatted, type: 'xml' },
     ];
   } catch (_) {
     return null;
@@ -368,6 +389,16 @@ function tryHex(text) {
     const decoded = bytes.map(b => String.fromCharCode(b)).join('');
     const decodedItem = { label: 'Decoded', value: decoded, type: 'text' };
     const decodedFormatted = tryFormatters(decodedItem, ['base64', 'hex']);
+
+    // Update label based on detected type
+    if (decodedItem.type !== 'text') {
+      const typeKey = TYPE_I18N_KEYS[decodedItem.type];
+      const typeName = typeKey ? i18n.getMessage(typeKey, LOCALE) : decodedItem.type.toUpperCase();
+      decodedItem.label = i18n.getMessage('decodedWithType', LOCALE, typeName);
+    } else {
+      decodedItem.label = i18n.getMessage('decoded', LOCALE);
+    }
+
     items.push(decodedItem);
     items.push(...decodedFormatted);
   } else {
@@ -379,7 +410,7 @@ function tryHex(text) {
       const ascii = chunk.map(b => (b >= 32 && b < 127) ? String.fromCharCode(b) : '.').join('');
       hexDump += `${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48)}  ${ascii}\n`;
     }
-    items.push({ label: 'Hex Dump', value: hexDump.trim() });
+    items.push({ label: i18n.getMessage('hexDump', LOCALE), value: hexDump.trim() });
   }
 
   return items;
@@ -401,7 +432,7 @@ function tryUuid(text) {
   };
 
   return [
-    { label: 'Version', value: `${version} - ${versionNames[version] || 'Unknown'}` },
+    { label: i18n.getMessage('version', LOCALE), value: `${version} - ${versionNames[version] || i18n.getMessage('unknown', LOCALE)}` },
   ];
 }
 
@@ -433,7 +464,7 @@ function tryFormatters(original, excludeTypes = []) {
 }
 
 function detectContentType(text) {
-  const original = { label: 'Original', value: text, type: 'text' };
+  const original = { label: i18n.getMessage('original', LOCALE), value: text, type: 'text' };
   const formatted = tryFormatters(original);
   return [original, ...formatted];
 }
@@ -442,3 +473,5 @@ self.pigquery ||= {};
 self.pigquery.formatters = {
   detectContentType,
 };
+
+})();

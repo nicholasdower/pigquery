@@ -288,6 +288,131 @@ const TRANSLATIONS = {
   footerBug: {
     en: "Bug",
     de: "Fehler",
+  },
+  // formatters.js: Label for decoded content without type detection
+  decoded: {
+    en: "Decoded",
+    de: "Dekodiert",
+  },
+  // formatters.js: Label for decoded content with type detection. $1 = type name
+  decodedWithType: {
+    en: "Decoded - $1",
+    de: "Dekodiert - $1",
+  },
+  // formatters.js: Type name for Date
+  typeDate: {
+    en: "Date",
+    de: "Datum",
+  },
+  // formatters.js: Type name for Number
+  typeNumber: {
+    en: "Number",
+    de: "Zahl",
+  },
+  // formatters.js: Label for original content
+  original: {
+    en: "Original",
+    de: "Original",
+  },
+  // formatters.js: Label for formatted content
+  formatted: {
+    en: "Formatted",
+    de: "Formatiert",
+  },
+  // formatters.js: Label for date
+  date: {
+    en: "Date",
+    de: "Datum",
+  },
+  // formatters.js: Label for milliseconds
+  milliseconds: {
+    en: "Milliseconds",
+    de: "Millisekunden",
+  },
+  // formatters.js: Label for JWT signature
+  signature: {
+    en: "Signature",
+    de: "Signatur",
+  },
+  // formatters.js: Label for JWT issued time
+  issued: {
+    en: "Issued",
+    de: "Ausgestellt",
+  },
+  // formatters.js: Label for JWT expiration time
+  expires: {
+    en: "Expires",
+    de: "Läuft ab",
+  },
+  // formatters.js: Label for JWT not before time
+  notBefore: {
+    en: "Not Before",
+    de: "Nicht vor",
+  },
+  // formatters.js: Label for date interpretation as milliseconds
+  dateMilliseconds: {
+    en: "Date (Milliseconds)",
+    de: "Datum (Millisekunden)",
+  },
+  // formatters.js: Label for date interpretation as seconds
+  dateSeconds: {
+    en: "Date (Seconds)",
+    de: "Datum (Sekunden)",
+  },
+  // formatters.js: Label for URL protocol
+  protocol: {
+    en: "Protocol",
+    de: "Protokoll",
+  },
+  // formatters.js: Label for URL path
+  path: {
+    en: "Path",
+    de: "Pfad",
+  },
+  // formatters.js: Label for JWT header
+  header: {
+    en: "Header",
+    de: "Header",
+  },
+  // formatters.js: Label for JWT payload
+  payload: {
+    en: "Payload",
+    de: "Payload",
+  },
+  // formatters.js: Label for URL host
+  host: {
+    en: "Host",
+    de: "Host",
+  },
+  // formatters.js: Label for URL port
+  port: {
+    en: "Port",
+    de: "Port",
+  },
+  // formatters.js: Label for URL fragment
+  fragment: {
+    en: "Fragment",
+    de: "Fragment",
+  },
+  // formatters.js: Label for UUID version. $1 = version info
+  version: {
+    en: "Version",
+    de: "Version",
+  },
+  // formatters.js: Label for URL parameter. $1 = parameter name
+  param: {
+    en: "Parameter: $1",
+    de: "Parameter: $1",
+  },
+  // formatters.js: Label for hex dump
+  hexDump: {
+    en: "Hex Dump",
+    de: "Hexdump",
+  },
+  // formatters.js: Unknown value for UUID version
+  unknown: {
+    en: "Unknown",
+    de: "Unbekannt",
   }
 };
 

@@ -143,8 +143,9 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Disable groups feature** - Allow users to disable entire groups
 - [ ] **Precreate search index** - Performance optimization for large configs
 - [ ] **Windows testing** - Verify production build on Windows
-- [ ] Translated format names.
 - [ ] Allow specifying cursor position for snippets. Think function with params.
+- [ ] Formatted dates shouldn't use GMT. Also, they should be localized.
+- [ ] When changing selection while focused on a copy button, the focus shouldn't flash.
 
 ---
 
