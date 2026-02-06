@@ -785,7 +785,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       return;
     }
 
-    if (e.key === "ArrowDown" && document.activeElement === inputEl) {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       e.stopPropagation();
       if (filtered.length) {
@@ -797,7 +797,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       return;
     }
 
-    if (e.key === "ArrowUp" && document.activeElement === inputEl) {
+    if (e.key === "ArrowUp") {
       e.preventDefault();
       e.stopPropagation();
       if (filtered.length) {
@@ -810,13 +810,14 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     }
 
     if (e.key === "Enter") {
-      // Only select item if input is focused, let buttons handle their own Enter
-      if (document.activeElement === inputEl) {
-        e.preventDefault();
-        e.stopPropagation();
-        onOptionSelected(filtered[activeIndex]);
-        closePopup();
+      // Let buttons handle their own Enter
+      if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+        return;
       }
+      e.preventDefault();
+      e.stopPropagation();
+      onOptionSelected(filtered[activeIndex]);
+      closePopup();
       return;
     }
 
@@ -1021,6 +1022,9 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     const selectedItem = filtered[activeIndex] || null;
     const contentInfo = getContent(selectedItem);
 
+    // Check if focus is in the content panel before clearing
+    const shouldRefocusContentPanel = document.activeElement && contentPanel.contains(document.activeElement);
+
     // Clear existing content
     while (contentPanel.firstChild) contentPanel.removeChild(contentPanel.firstChild);
 
@@ -1082,6 +1086,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
       });
 
       contentPanel.style.display = '';
+
+      // If focus was in the content panel, focus the first copy button
+      if (shouldRefocusContentPanel) {
+        const firstCopyBtn = contentPanel.querySelector('.pig-format-item-copy');
+        if (firstCopyBtn) {
+          firstCopyBtn.focus();
+        } else {
+          inputEl.focus();
+        }
+      }
     } else {
       contentPanel.style.display = 'none';
     }
