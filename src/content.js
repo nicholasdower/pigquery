@@ -1022,70 +1022,92 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     const selectedItem = filtered[activeIndex] || null;
     const contentInfo = getContent(selectedItem);
 
-    // Check if focus is in the content panel before clearing
+    // Check if focus is in the content panel
     const shouldRefocusContentPanel = document.activeElement && contentPanel.contains(document.activeElement);
 
-    // Clear existing content
-    while (contentPanel.firstChild) contentPanel.removeChild(contentPanel.firstChild);
-
     if (contentInfo && contentInfo.length > 0) {
-      contentInfo.forEach((item, index) => {
-        const itemEl = makeEl("div", { className: "pig-format-item" });
-        
-        const copyValue = () => {
-          navigator.clipboard.writeText(item.value);
-          showToast(i18n.getMessage("contentCopied", LOCALE));
-        };
-        
-        const headerEl = makeEl("div", { className: "pig-format-item-header" });
-        
-        const labelEl = makeEl("div", { className: "pig-format-item-label", text: item.label });
-        headerEl.appendChild(labelEl);
-        
-        const copyBtn = makeEl("button", { className: "pig-format-item-copy" });
-        copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
-        copyBtn.title = "Copy";
-        copyBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          copyValue();
-        });
-        copyBtn.addEventListener("focus", () => {
-          // Only scroll on keyboard focus, not mouse click
-          if (!copyBtn.matches(':focus-visible')) return;
-          if (index === 0) {
-            contentPanel.scrollTop = 0;
-          } else {
-            itemEl.scrollIntoView({ block: "nearest" });
-          }
-        });
-        headerEl.appendChild(copyBtn);
-        
-        itemEl.appendChild(headerEl);
+      // Reuse existing items if possible so that there isn't a flicker in the case that keyboard focus is in the content panel
+      const existingItems = Array.from(contentPanel.querySelectorAll('.pig-format-item'));
 
-        const valueEl = makeEl("div", { className: "pig-format-item-value" });
+      // Reuse or create items as needed
+      contentInfo.forEach((item, index) => {
+        let itemEl = existingItems[index];
+        let headerEl, labelEl, copyBtn, valueEl;
+
+        if (itemEl) {
+          // Reuse existing item - find its children
+          headerEl = itemEl.querySelector('.pig-format-item-header');
+          labelEl = headerEl.querySelector('.pig-format-item-label');
+          copyBtn = headerEl.querySelector('.pig-format-item-copy');
+          valueEl = itemEl.querySelector('.pig-format-item-value');
+        } else {
+          // Create new item
+          itemEl = makeEl("div", { className: "pig-format-item" });
+
+          headerEl = makeEl("div", { className: "pig-format-item-header" });
+          labelEl = makeEl("div", { className: "pig-format-item-label" });
+          headerEl.appendChild(labelEl);
+
+          copyBtn = makeEl("button", { className: "pig-format-item-copy" });
+          copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
+          copyBtn.title = "Copy";
+          copyBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const currentValue = valueEl.textContent;
+            navigator.clipboard.writeText(currentValue);
+            showToast(i18n.getMessage("contentCopied", LOCALE));
+          });
+          copyBtn.addEventListener("focus", () => {
+            // Only scroll on keyboard focus, not mouse click
+            if (!copyBtn.matches(':focus-visible')) return;
+            if (index === 0) {
+              contentPanel.scrollTop = 0;
+            } else {
+              itemEl.scrollIntoView({ block: "nearest" });
+            }
+          });
+          headerEl.appendChild(copyBtn);
+
+          itemEl.appendChild(headerEl);
+
+          valueEl = makeEl("div", { className: "pig-format-item-value" });
+
+          // Select text on right-click so browser shows "Copy" in context menu
+          valueEl.addEventListener("contextmenu", () => {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(valueEl);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          });
+
+          itemEl.appendChild(valueEl);
+          contentPanel.appendChild(itemEl);
+        }
+
+        // Update content
+        labelEl.textContent = item.label;
 
         if (['json', 'xml', 'yaml', 'sql'].includes(item.type)) {
           const highlighted = hljs.highlight(item.value, {language: item.type});
           valueEl.innerHTML = highlighted.value;
-          valueEl.classList.add('hljs');
+          if (!valueEl.classList.contains('hljs')) {
+            valueEl.classList.add('hljs');
+          }
         } else {
           valueEl.textContent = item.value;
+          valueEl.classList.remove('hljs');
         }
-        itemEl.appendChild(valueEl);
-        
-        // Select text on right-click so browser shows "Copy" in context menu
-        valueEl.addEventListener("contextmenu", () => {
-          const selection = window.getSelection();
-          const range = document.createRange();
-          range.selectNodeContents(valueEl);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        });
-
-        contentPanel.appendChild(itemEl);
       });
 
+      // Remove excess items if the new list is shorter
+      while (existingItems.length > contentInfo.length) {
+        const itemToRemove = existingItems.pop();
+        itemToRemove.remove();
+      }
+
       contentPanel.style.display = '';
+      contentPanel.scrollTop = 0;
 
       // If focus was in the content panel, focus the first copy button
       if (shouldRefocusContentPanel) {
