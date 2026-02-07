@@ -289,15 +289,20 @@ const TRANSLATIONS = {
     en: "Bug",
     de: "Fehler",
   },
-  // formatters.js: Label for decoded content without type detection
-  decoded: {
-    en: "Decoded",
-    de: "Dekodiert",
+  // formatters.js: Type name for JSON
+  typeJson: {
+    en: "JSON",
+    de: "JSON",
   },
-  // formatters.js: Label for decoded content with type detection. $1 = type name
-  decodedWithType: {
-    en: "Decoded - $1",
-    de: "Dekodiert - $1",
+  // formatters.js: Type name for JWT
+  typeJwt: {
+    en: "JWT",
+    de: "JWT",
+  },
+  // formatters.js: Type name for UUID
+  typeUuid: {
+    en: "UUID",
+    de: "UUID",
   },
   // formatters.js: Type name for Date
   typeDate: {
@@ -309,6 +314,41 @@ const TRANSLATIONS = {
     en: "Number",
     de: "Zahl",
   },
+  // formatters.js: Type name for Timestamp (Milliseconds)
+  typeTimestampMilliseconds: {
+    en: "Timestamp (Milliseconds)",
+    de: "Zeitstempel (Millisekunden)",
+  },
+  // formatters.js: Type name for Timestamp (Seconds)
+  typeTimestampSeconds: {
+    en: "Timestamp (Seconds)",
+    de: "Zeitstempel (Sekunden)",
+  },
+  // formatters.js: Type name for URL
+  typeUrl: {
+    en: "URL",
+    de: "URL",
+  },
+  // formatters.js: Type name for XML
+  typeXml: {
+    en: "XML",
+    de: "XML",
+  },
+  // formatters.js: Type name for YAML
+  typeYaml: {
+    en: "YAML",
+    de: "YAML",
+  },
+  // formatters.js: Type name for Base64
+  typeBase64: {
+    en: "Base64",
+    de: "Base64",
+  },
+  // formatters.js: Type name for Hex
+  typeHex: {
+    en: "Hex",
+    de: "Hex",
+  },
   // formatters.js: Label for original content
   original: {
     en: "Original",
@@ -319,15 +359,20 @@ const TRANSLATIONS = {
     en: "Formatted",
     de: "Formatiert",
   },
-  // formatters.js: Label for date
+  // formatters.js: Label for decoded content
+  decoded: {
+    en: "Decoded",
+    de: "Dekodiert",
+  },
+  // formatters.js: Label for date in ISO 8601 format
   date: {
-    en: "Date",
-    de: "Datum",
+    en: "ISO 8601",
+    de: "ISO 8601",
   },
   // formatters.js: Label for localized date
   dateLocalized: {
-    en: "Date (Localized)",
-    de: "Datum (Lokalisiert)",
+    en: "Localized",
+    de: "Lokalisiert",
   },
   // formatters.js: Label for milliseconds
   milliseconds: {
@@ -353,26 +398,6 @@ const TRANSLATIONS = {
   notBefore: {
     en: "Not Before",
     de: "Nicht vor",
-  },
-  // formatters.js: Label for date interpretation as milliseconds
-  dateMilliseconds: {
-    en: "Date (Milliseconds)",
-    de: "Datum (Millisekunden)",
-  },
-  // formatters.js: Label for localized date interpretation as milliseconds
-  dateMillisecondsLocalized: {
-    en: "Date (Milliseconds, Localized)",
-    de: "Datum (Millisekunden, Lokalisiert)",
-  },
-  // formatters.js: Label for date interpretation as seconds
-  dateSeconds: {
-    en: "Date (Seconds)",
-    de: "Datum (Sekunden)",
-  },
-  // formatters.js: Label for localized date interpretation as seconds
-  dateSecondsLocalized: {
-    en: "Date (Seconds, Localized)",
-    de: "Datum (Sekunden, Lokalisiert)",
   },
   // formatters.js: Label for URL protocol
   protocol: {

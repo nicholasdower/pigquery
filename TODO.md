@@ -145,7 +145,8 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Windows testing** - Verify production build on Windows
 - [ ] Allow specifying cursor position for snippets. Think function with params.
 - [ ] Custom formatters.
-- [ ] Show local time for date formats.
+- [ ] Format decimals like 1,000.00. Use local separators.
+- [ ] Allow scrolling formatters with arrow keys.
 
 ---
 

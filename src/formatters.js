@@ -3,10 +3,19 @@
 const i18n = self.pigquery.i18n;
 const LOCALE = i18n.getBigQueryLocale();
 
-// Mapping of type to i18n key for type names that need translation
+// Mapping of type to i18n key for type names
 const TYPE_I18N_KEYS = {
+  json: 'typeJson',
+  jwt: 'typeJwt',
+  uuid: 'typeUuid',
   date: 'typeDate',
   number: 'typeNumber',
+  timestamp: 'typeTimestamp',
+  url: 'typeUrl',
+  xml: 'typeXml',
+  yaml: 'typeYaml',
+  base64: 'typeBase64',
+  hex: 'typeHex',
 };
 
 function tryJson(text) {
@@ -16,7 +25,9 @@ function tryJson(text) {
     const formatted = JSON.stringify(parsed, null, 2);
 
     if (formatted !== text) {
-      return [{ label: i18n.getMessage('formatted', LOCALE), value: formatted, type: 'json' }];
+      const typeName = i18n.getMessage('typeJson', LOCALE);
+      const label = i18n.getMessage('formatted', LOCALE);
+      return [{ label: `${typeName} – ${label}`, value: formatted, type: 'json' }];
     }
     return [];
   } catch (_) {
@@ -47,16 +58,17 @@ function tryJwt(text) {
     // Check for common JWT header fields
     if (!header.alg && !header.typ) return null;
 
+    const typeName = i18n.getMessage('typeJwt', LOCALE);
     const items = [
-      { label: i18n.getMessage('header', LOCALE), value: JSON.stringify(header, null, 2), type: 'json' },
-      { label: i18n.getMessage('payload', LOCALE), value: JSON.stringify(payload, null, 2), type: 'json' },
-      { label: i18n.getMessage('signature', LOCALE), value: parts[2] },
+      { label: `${typeName} – ${i18n.getMessage('header', LOCALE)}`, value: JSON.stringify(header, null, 2), type: 'json' },
+      { label: `${typeName} – ${i18n.getMessage('payload', LOCALE)}`, value: JSON.stringify(payload, null, 2), type: 'json' },
+      { label: `${typeName} – ${i18n.getMessage('signature', LOCALE)}`, value: parts[2] },
     ];
 
     // Add human-readable timestamps if present
-    if (payload.iat) items.push({ label: i18n.getMessage('issued', LOCALE), value: formatDate(new Date(payload.iat * 1000)) });
-    if (payload.exp) items.push({ label: i18n.getMessage('expires', LOCALE), value: formatDate(new Date(payload.exp * 1000)) });
-    if (payload.nbf) items.push({ label: i18n.getMessage('notBefore', LOCALE), value: formatDate(new Date(payload.nbf * 1000)) });
+    if (payload.iat) items.push({ label: `${typeName} – ${i18n.getMessage('issued', LOCALE)}`, value: formatDate(new Date(payload.iat * 1000)) });
+    if (payload.exp) items.push({ label: `${typeName} – ${i18n.getMessage('expires', LOCALE)}`, value: formatDate(new Date(payload.exp * 1000)) });
+    if (payload.nbf) items.push({ label: `${typeName} – ${i18n.getMessage('notBefore', LOCALE)}`, value: formatDate(new Date(payload.nbf * 1000)) });
 
     return items;
   } catch (_) {
@@ -65,9 +77,6 @@ function tryJwt(text) {
 }
 
 function tryBase64(text) {
-  // Must be at least 20 chars and look like base64
-  if (text.length < 20) return null;
-
   // Standard base64 or base64url
   const base64Regex = /^[A-Za-z0-9+/_-]+=*$/;
   if (!base64Regex.test(text)) return null;
@@ -92,14 +101,15 @@ function tryBase64(text) {
     const decodedItem = { label: 'Decoded', value: decoded, type: 'text' };
     const decodedFormatted = tryFormatters(decodedItem, ['base64', 'hex']);
 
-    // Update label based on detected type
-    if (decodedItem.type !== 'text') {
-      const typeKey = TYPE_I18N_KEYS[decodedItem.type];
-      const typeName = typeKey ? i18n.getMessage(typeKey, LOCALE) : decodedItem.type.toUpperCase();
-      decodedItem.label = i18n.getMessage('decodedWithType', LOCALE, typeName);
-    } else {
-      decodedItem.label = i18n.getMessage('decoded', LOCALE);
+    // If a nested type was detected, don't show the Base64 decoded item, just show the formatted nested type items
+    if (decodedItem.type !== 'text' && decodedFormatted.length > 0) {
+      return decodedFormatted;
     }
+
+    // Plain text decoding
+    const typeName = i18n.getMessage('typeBase64', LOCALE);
+    const label = i18n.getMessage('decoded', LOCALE);
+    decodedItem.label = `${typeName} – ${label}`;
 
     const items = [decodedItem];
     items.push(...decodedFormatted);
@@ -182,14 +192,15 @@ function tryDate(text) {
   const year = date.getFullYear();
   if (year < 1900 || year > 2200) return null;
 
+  const typeName = i18n.getMessage('typeDate', LOCALE);
   return [
-    { label: i18n.getMessage('date', LOCALE), value: formatDate(date) },
-    { label: i18n.getMessage('dateLocalized', LOCALE), value: formatDateLocalized(date) },
-    { label: i18n.getMessage('milliseconds', LOCALE), value: String(date.getTime()) },
+    { label: `${typeName} – ${i18n.getMessage('date', LOCALE)}`, value: formatDate(date) },
+    { label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`, value: formatDateLocalized(date) },
+    { label: `${typeName} – ${i18n.getMessage('milliseconds', LOCALE)}`, value: String(date.getTime()) },
   ];
 }
 
-function tryNumber(text) {
+function tryNumberFormat(text) {
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
@@ -204,35 +215,76 @@ function tryNumber(text) {
   const items = [];
 
   // Formatted with thousands separators
+  const typeName = i18n.getMessage('typeNumber', LOCALE);
+  const label = i18n.getMessage('formatted', LOCALE);
+
   if (isInteger) {
     const formatted = num.toLocaleString('en-US');
     if (formatted !== text) {
-      items.push({ label: i18n.getMessage('formatted', LOCALE), value: formatted });
+      items.push({ label: `${typeName} – ${label}`, value: formatted });
     }
   } else {
     const formatted = num.toLocaleString('en-US', { maximumFractionDigits: 10 });
     if (formatted !== text) {
-      items.push({ label: i18n.getMessage('formatted', LOCALE), value: formatted });
+      items.push({ label: `${typeName} – ${label}`, value: formatted });
     }
   }
 
-  if (isInteger && num >= 0) {
-    // Only interpret as dates if within reasonable timestamp range
-    // Max milliseconds: 10000000000000 (year ~2286)
-    // Max seconds: 10000000000 (year ~2286)
-    if (num <= 10000000000000) {
-      const date = new Date(num);
-      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: formatDate(date) });
-      items.push({ label: i18n.getMessage('dateMillisecondsLocalized', LOCALE), value: formatDateLocalized(date) });
-    }
-    if (num <= 10000000000) {
-      const date = new Date(num * 1000);
-      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: formatDate(date) });
-      items.push({ label: i18n.getMessage('dateSecondsLocalized', LOCALE), value: formatDateLocalized(date) });
-    }
-  }
+  return items.length > 0 ? items : null;
+}
 
-  return items;
+function tryTimestampMilliseconds(text) {
+  // Match integers and decimals, with optional negative sign
+  if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
+
+  // Avoid treating long hex-like strings (even length, 40+ chars, only digits) as numbers
+  if (text.length >= 40 && text.length % 2 === 0 && /^\d+$/.test(text)) return null;
+
+  const num = parseFloat(text);
+  if (!isFinite(num)) return null;
+
+  const isInteger = Number.isInteger(num);
+
+  // Only process integers >= 0 within reasonable timestamp range
+  if (!isInteger || num < 0) return null;
+
+  // Max milliseconds: 10000000000000 (year ~2286)
+  if (num > 10000000000000) return null;
+
+  const typeName = i18n.getMessage('typeTimestampMilliseconds', LOCALE);
+  const date = new Date(num);
+
+  return [
+    { label: `${typeName} – ${i18n.getMessage('date', LOCALE)}`, value: formatDate(date) },
+    { label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`, value: formatDateLocalized(date) },
+  ];
+}
+
+function tryTimestampSeconds(text) {
+  // Match integers and decimals, with optional negative sign
+  if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
+
+  // Avoid treating long hex-like strings (even length, 40+ chars, only digits) as numbers
+  if (text.length >= 40 && text.length % 2 === 0 && /^\d+$/.test(text)) return null;
+
+  const num = parseFloat(text);
+  if (!isFinite(num)) return null;
+
+  const isInteger = Number.isInteger(num);
+
+  // Only process integers >= 0 within reasonable timestamp range
+  if (!isInteger || num < 0) return null;
+
+  // Max seconds: 10000000000 (year ~2286)
+  if (num > 10000000000) return null;
+
+  const typeName = i18n.getMessage('typeTimestampSeconds', LOCALE);
+  const date = new Date(num * 1000);
+
+  return [
+    { label: `${typeName} – ${i18n.getMessage('date', LOCALE)}`, value: formatDate(date) },
+    { label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`, value: formatDateLocalized(date) },
+  ];
 }
 
 function tryUrl(text) {
@@ -243,15 +295,16 @@ function tryUrl(text) {
     const url = new URL(text);
 
     const hasParams = url.searchParams.toString().length > 0;
+    const typeName = i18n.getMessage('typeUrl', LOCALE);
 
     const items = [
-      { label: i18n.getMessage('protocol', LOCALE), value: url.protocol.replace(':', '') },
-      { label: i18n.getMessage('host', LOCALE), value: url.host },
+      { label: `${typeName} – ${i18n.getMessage('protocol', LOCALE)}`, value: url.protocol.replace(':', '') },
+      { label: `${typeName} – ${i18n.getMessage('host', LOCALE)}`, value: url.host },
     ];
 
-    if (url.port) items.push({ label: i18n.getMessage('port', LOCALE), value: url.port });
-    if (url.pathname !== '/') items.push({ label: i18n.getMessage('path', LOCALE), value: url.pathname });
-    if (url.hash) items.push({ label: i18n.getMessage('fragment', LOCALE), value: url.hash.slice(1) });
+    if (url.port) items.push({ label: `${typeName} – ${i18n.getMessage('port', LOCALE)}`, value: url.port });
+    if (url.pathname !== '/') items.push({ label: `${typeName} – ${i18n.getMessage('path', LOCALE)}`, value: url.pathname });
+    if (url.hash) items.push({ label: `${typeName} – ${i18n.getMessage('fragment', LOCALE)}`, value: url.hash.slice(1) });
 
     if (hasParams) {
       for (const [key, value] of url.searchParams) {
@@ -261,7 +314,7 @@ function tryUrl(text) {
           const decoded = decodeURIComponent(value);
           if (decoded !== value) displayValue = decoded;
         } catch (_) {}
-        items.push({ label: i18n.getMessage('param', LOCALE, key), value: displayValue });
+        items.push({ label: `${typeName} – ${i18n.getMessage('param', LOCALE, key)}`, value: displayValue });
       }
     }
 
@@ -320,8 +373,10 @@ function tryXml(text) {
       return null;
     }
 
+    const typeName = i18n.getMessage('typeXml', LOCALE);
+    const label = i18n.getMessage('formatted', LOCALE);
     return [
-      { label: i18n.getMessage('formatted', LOCALE), value: formatted, type: 'xml' },
+      { label: `${typeName} – ${label}`, value: formatted, type: 'xml' },
     ];
   } catch (_) {
     return null;
@@ -378,14 +433,15 @@ function tryHex(text) {
     const decodedItem = { label: 'Decoded', value: decoded, type: 'text' };
     const decodedFormatted = tryFormatters(decodedItem, ['base64', 'hex']);
 
-    // Update label based on detected type
-    if (decodedItem.type !== 'text') {
-      const typeKey = TYPE_I18N_KEYS[decodedItem.type];
-      const typeName = typeKey ? i18n.getMessage(typeKey, LOCALE) : decodedItem.type.toUpperCase();
-      decodedItem.label = i18n.getMessage('decodedWithType', LOCALE, typeName);
-    } else {
-      decodedItem.label = i18n.getMessage('decoded', LOCALE);
+    // If a nested type was detected, don't show the Hex decoded item, just show the formatted nested type items
+    if (decodedItem.type !== 'text' && decodedFormatted.length > 0) {
+      return decodedFormatted;
     }
+
+    // Plain text decoding
+    const typeName = i18n.getMessage('typeHex', LOCALE);
+    const label = i18n.getMessage('decoded', LOCALE);
+    decodedItem.label = `${typeName} – ${label}`;
 
     items.push(decodedItem);
     items.push(...decodedFormatted);
@@ -398,7 +454,8 @@ function tryHex(text) {
       const ascii = chunk.map(b => (b >= 32 && b < 127) ? String.fromCharCode(b) : '.').join('');
       hexDump += `${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48)}  ${ascii}\n`;
     }
-    items.push({ label: i18n.getMessage('hexDump', LOCALE), value: hexDump.trim() });
+    const typeName = i18n.getMessage('typeHex', LOCALE);
+    items.push({ label: `${typeName} – ${i18n.getMessage('hexDump', LOCALE)}`, value: hexDump.trim() });
   }
 
   return items;
@@ -419,8 +476,9 @@ function tryUuid(text) {
     '5': 'Name-based (SHA-1)'
   };
 
+  const typeName = i18n.getMessage('typeUuid', LOCALE);
   return [
-    { label: i18n.getMessage('version', LOCALE), value: `${version} - ${versionNames[version] || i18n.getMessage('unknown', LOCALE)}` },
+    { label: `${typeName} – ${i18n.getMessage('version', LOCALE)}`, value: `${version} – ${versionNames[version] || i18n.getMessage('unknown', LOCALE)}` },
   ];
 }
 
@@ -430,7 +488,9 @@ const FORMATTERS = [
   { func: tryJson, type: 'json' },
   { func: tryUuid, type: 'uuid' },
   { func: tryDate, type: 'date' },
-  { func: tryNumber, type: 'number' },
+  { func: tryNumberFormat, type: 'number' },
+  { func: tryTimestampMilliseconds, type: 'timestamp_ms' },
+  { func: tryTimestampSeconds, type: 'timestamp_s' },
   { func: tryUrl, type: 'url' },
   { func: tryXml, type: 'xml' },
   { func: tryYaml, type: 'yaml' },
@@ -439,16 +499,18 @@ const FORMATTERS = [
 ];
 
 function tryFormatters(original, excludeTypes = []) {
+  const allResults = [];
+
   for (const formatter of FORMATTERS) {
     if (excludeTypes.includes(formatter.type)) continue;
 
     const result = formatter.func(original.value);
-    if (result) {
-      original.type = formatter.type;
-      return result;
+    if (result && result.length > 0) {
+      allResults.push(...result);
     }
   }
-  return [];
+
+  return allResults;
 }
 
 function detectContentType(text) {
