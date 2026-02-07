@@ -595,12 +595,14 @@ const styles = `
       flex-direction: column;
     }
     .pig-modal-two-panel .pig-modal-list {
+      flex: 0 0 auto;
       border-right: none;
       border-bottom: 1px solid rgba(255,255,255,0.10);
-      max-height: min(30vh, 300px);
+      height: min(30vh, 300px);
     }
     .pig-modal-content-panel {
-      max-height: min(30vh, 300px);
+      flex: 0 0 auto;
+      height: min(30vh, 300px);
     }
   }
 `;
@@ -928,10 +930,25 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   });
 
   onConfigurationChange = () => {
+    // Save currently selected item to preserve selection if it still exists
+    const currentItem = filtered[activeIndex];
+
     options = getOptions();
     const query = (inputEl.value || "").trim().toLowerCase();
     filtered = search.filter(options, query);
-    activeIndex = 0;
+
+    // Try to find the previously selected item in the new filtered list
+    if (currentItem) {
+      const newIndex = filtered.findIndex(item =>
+        item.group === currentItem.group &&
+        item.name === currentItem.name &&
+        item.tag === currentItem.tag
+      );
+      activeIndex = newIndex !== -1 ? newIndex : 0;
+    } else {
+      activeIndex = 0;
+    }
+
     renderList();
     updateContentPanel();
 
