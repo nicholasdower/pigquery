@@ -668,7 +668,7 @@ function makeEl(tag, { id, className, text } = {}) {
   return el;
 }
 
-function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
+function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
   let options = getOptions();
@@ -1020,12 +1020,12 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
 
   function updateContentPanel() {
     const selectedItem = filtered[activeIndex] || null;
-    const contentInfo = getContent(selectedItem);
+    const contentInfo = typeof contentOrGetter === 'function' ? contentOrGetter(selectedItem) : contentOrGetter;
 
     // Check if focus is in the content panel
     const shouldRefocusContentPanel = document.activeElement && contentPanel.contains(document.activeElement);
 
-    if (contentInfo && contentInfo.length > 0) {
+    if (contentInfo.length > 0) {
       // Reuse existing items if possible so that there isn't a flicker in the case that keyboard focus is in the content panel
       const existingItems = Array.from(contentPanel.querySelectorAll('.pig-format-item'));
 
@@ -1196,11 +1196,15 @@ document.addEventListener(
         showToast(i18n.getMessage("editorNotFocused", LOCALE));
         return;
       }
-      openPopup(() => configuration.snippets, (option) => {
-        addRecentSnippetGroup(option.group);
-        configuration.snippets = sortSnippets(configuration.snippets);
-        insertIntoEditor(editor, option.value);
-      }, () => configuration.hasErrors, (item) => item ? [{ label: 'SQL', value: item.value, type: 'sql' }] : null);
+      openPopup(
+        () => configuration.snippets, (option) => {
+          addRecentSnippetGroup(option.group);
+          configuration.snippets = sortSnippets(configuration.snippets);
+          insertIntoEditor(editor, option.value);
+        },
+        () => configuration.hasErrors,
+        (item) => item ? [{ label: 'SQL', value: item.value, type: 'sql' }] : []
+      );
       return;
     }
 
@@ -1288,10 +1292,14 @@ function handleTableCellOpenPopup(cell) {
       url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content))
     }));
   const contentInfo = formatters.detectContentType(content);
-  openPopup(getMatchingOptions, (option) => {
-    configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
-    window.open(option.url, "_blank", "noopener,noreferrer");
-  }, () => configuration.hasErrors, () => contentInfo);
+  openPopup(
+    getMatchingOptions,
+    (option) => {
+      configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
+      window.open(option.url, "_blank", "noopener,noreferrer");
+    },
+    () => configuration.hasErrors,
+    contentInfo);
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
   const onFocusIn = () => {
