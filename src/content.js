@@ -1361,6 +1361,8 @@ document.addEventListener(
       return true;
     }
 
+    // Focus the cell so it's properly focused when the modal closes
+    cell.focus();
     handleTableCellOpenPopup(cell);
   },
   true
