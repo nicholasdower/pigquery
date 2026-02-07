@@ -144,7 +144,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Precreate search index** - Performance optimization for large configs
 - [ ] **Windows testing** - Verify production build on Windows
 - [ ] Allow specifying cursor position for snippets. Think function with params.
-- [ ] Formatted dates shouldn't use GMT. Also, they should be localized.
 
 ---
 

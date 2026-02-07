@@ -54,9 +54,9 @@ function tryJwt(text) {
     ];
 
     // Add human-readable timestamps if present
-    if (payload.iat) items.push({ label: i18n.getMessage('issued', LOCALE), value: new Date(payload.iat * 1000).toUTCString() });
-    if (payload.exp) items.push({ label: i18n.getMessage('expires', LOCALE), value: new Date(payload.exp * 1000).toUTCString() });
-    if (payload.nbf) items.push({ label: i18n.getMessage('notBefore', LOCALE), value: new Date(payload.nbf * 1000).toUTCString() });
+    if (payload.iat) items.push({ label: i18n.getMessage('issued', LOCALE), value: formatDateLocalized(new Date(payload.iat * 1000)) });
+    if (payload.exp) items.push({ label: i18n.getMessage('expires', LOCALE), value: formatDateLocalized(new Date(payload.exp * 1000)) });
+    if (payload.nbf) items.push({ label: i18n.getMessage('notBefore', LOCALE), value: formatDateLocalized(new Date(payload.nbf * 1000)) });
 
     return items;
   } catch (_) {
@@ -133,9 +133,30 @@ function formatOffset(offsetMin) {
   return mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
 }
 
-function formatDateTimeItems(date, originalValue, originalTzOffset = null) {
+function formatDateLocalized(date) {
+  const hasMillis = date.getUTCMilliseconds() !== 0;
+  const options = {
+    timeZone: 'UTC',
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  };
+
+  if (hasMillis) {
+    options.fractionalSecondDigits = 3;
+  }
+
+  return date.toLocaleString(LOCALE, options);
+}
+
+function formatDateTimeItems(date) {
   const items = [
-    { label: i18n.getMessage('date', LOCALE), value: date.toUTCString() },
+    { label: i18n.getMessage('date', LOCALE), value: formatDateLocalized(date) },
     { label: i18n.getMessage('milliseconds', LOCALE), value: String(date.getTime()) },
   ];
 
@@ -178,31 +199,7 @@ function tryDate(text) {
   const year = date.getFullYear();
   if (year < 1900 || year > 2200) return null;
 
-  // Extract original timezone offset in minutes
-  let originalTzOffset = null;
-
-  // Check for Z or UTC (offset = 0)
-  if (/Z$/.test(text) || / UTC$/.test(text) || /GMT$/.test(text)) {
-    originalTzOffset = 0;
-  }
-  // Check for explicit offset like +05:30 or -08:00
-  const offsetMatch = text.match(/([+-])(\d{2}):(\d{2})$/);
-  if (offsetMatch) {
-    const sign = offsetMatch[1] === '+' ? 1 : -1;
-    const hours = parseInt(offsetMatch[2], 10);
-    const mins = parseInt(offsetMatch[3], 10);
-    originalTzOffset = sign * (hours * 60 + mins);
-  }
-  // Check for RFC offset like +0530 or -0800
-  const rfcOffsetMatch = text.match(/([+-])(\d{2})(\d{2})$/);
-  if (rfcOffsetMatch) {
-    const sign = rfcOffsetMatch[1] === '+' ? 1 : -1;
-    const hours = parseInt(rfcOffsetMatch[2], 10);
-    const mins = parseInt(rfcOffsetMatch[3], 10);
-    originalTzOffset = sign * (hours * 60 + mins);
-  }
-
-  return formatDateTimeItems(date, text, originalTzOffset);
+  return formatDateTimeItems(date);
 }
 
 function tryNumber(text) {
@@ -237,10 +234,10 @@ function tryNumber(text) {
     // Max milliseconds: 10000000000000 (year ~2286)
     // Max seconds: 10000000000 (year ~2286)
     if (num <= 10000000000000) {
-      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: new Date(num).toUTCString() });
+      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: formatDateLocalized(new Date(num)) });
     }
     if (num <= 10000000000) {
-      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: new Date(num * 1000).toUTCString() });
+      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: formatDateLocalized(new Date(num * 1000)) });
     }
   }
 
