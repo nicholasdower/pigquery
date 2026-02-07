@@ -787,6 +787,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       return;
     }
 
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && e.altKey) {
+      // Alt+Arrow scrolls content panel
+      const scrollAmount = 40; // pixels to scroll
+      const direction = e.key === "ArrowDown" ? 1 : -1;
+      contentPanel.scrollTop += scrollAmount * direction;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     if (e.key === "ArrowDown") {
       e.preventDefault();
       e.stopPropagation();

@@ -145,7 +145,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Windows testing** - Verify production build on Windows
 - [ ] Allow specifying cursor position for snippets. Think function with params.
 - [ ] Custom formatters.
-- [ ] Allow scrolling formatters with arrow keys.
 
 ---
 
