@@ -324,6 +324,11 @@ const TRANSLATIONS = {
     en: "Date",
     de: "Datum",
   },
+  // formatters.js: Label for localized date
+  dateLocalized: {
+    en: "Date (Localized)",
+    de: "Datum (Lokalisiert)",
+  },
   // formatters.js: Label for milliseconds
   milliseconds: {
     en: "Milliseconds",
@@ -354,10 +359,20 @@ const TRANSLATIONS = {
     en: "Date (Milliseconds)",
     de: "Datum (Millisekunden)",
   },
+  // formatters.js: Label for localized date interpretation as milliseconds
+  dateMillisecondsLocalized: {
+    en: "Date (Milliseconds, Localized)",
+    de: "Datum (Millisekunden, Lokalisiert)",
+  },
   // formatters.js: Label for date interpretation as seconds
   dateSeconds: {
     en: "Date (Seconds)",
     de: "Datum (Sekunden)",
+  },
+  // formatters.js: Label for localized date interpretation as seconds
+  dateSecondsLocalized: {
+    en: "Date (Seconds, Localized)",
+    de: "Datum (Sekunden, Lokalisiert)",
   },
   // formatters.js: Label for URL protocol
   protocol: {

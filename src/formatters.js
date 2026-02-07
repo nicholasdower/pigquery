@@ -130,13 +130,20 @@ function formatDate(date) {
   return date.toISOString();
 }
 
-function formatDateTimeItems(date) {
-  const items = [
-    { label: i18n.getMessage('date', LOCALE), value: formatDate(date) },
-    { label: i18n.getMessage('milliseconds', LOCALE), value: String(date.getTime()) },
-  ];
+function formatDateLocalized(date) {
+  const options = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3,
+    timeZoneName: 'short'
+  };
 
-  return items;
+  return date.toLocaleString(LOCALE, options);
 }
 
 function tryDate(text) {
@@ -175,7 +182,11 @@ function tryDate(text) {
   const year = date.getFullYear();
   if (year < 1900 || year > 2200) return null;
 
-  return formatDateTimeItems(date);
+  return [
+    { label: i18n.getMessage('date', LOCALE), value: formatDate(date) },
+    { label: i18n.getMessage('dateLocalized', LOCALE), value: formatDateLocalized(date) },
+    { label: i18n.getMessage('milliseconds', LOCALE), value: String(date.getTime()) },
+  ];
 }
 
 function tryNumber(text) {
@@ -210,10 +221,14 @@ function tryNumber(text) {
     // Max milliseconds: 10000000000000 (year ~2286)
     // Max seconds: 10000000000 (year ~2286)
     if (num <= 10000000000000) {
-      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: formatDate(new Date(num)) });
+      const date = new Date(num);
+      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: formatDate(date) });
+      items.push({ label: i18n.getMessage('dateMillisecondsLocalized', LOCALE), value: formatDateLocalized(date) });
     }
     if (num <= 10000000000) {
-      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: formatDate(new Date(num * 1000)) });
+      const date = new Date(num * 1000);
+      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: formatDate(date) });
+      items.push({ label: i18n.getMessage('dateSecondsLocalized', LOCALE), value: formatDateLocalized(date) });
     }
   }
 
