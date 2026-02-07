@@ -4,3 +4,6 @@
 /privatekey.pem
 /dist
 /.cursor
+/node_modules
+/profile
+/videos
