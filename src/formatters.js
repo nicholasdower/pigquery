@@ -54,9 +54,9 @@ function tryJwt(text) {
     ];
 
     // Add human-readable timestamps if present
-    if (payload.iat) items.push({ label: i18n.getMessage('issued', LOCALE), value: formatDateLocalized(new Date(payload.iat * 1000)) });
-    if (payload.exp) items.push({ label: i18n.getMessage('expires', LOCALE), value: formatDateLocalized(new Date(payload.exp * 1000)) });
-    if (payload.nbf) items.push({ label: i18n.getMessage('notBefore', LOCALE), value: formatDateLocalized(new Date(payload.nbf * 1000)) });
+    if (payload.iat) items.push({ label: i18n.getMessage('issued', LOCALE), value: formatDate(new Date(payload.iat * 1000)) });
+    if (payload.exp) items.push({ label: i18n.getMessage('expires', LOCALE), value: formatDate(new Date(payload.exp * 1000)) });
+    if (payload.nbf) items.push({ label: i18n.getMessage('notBefore', LOCALE), value: formatDate(new Date(payload.nbf * 1000)) });
 
     return items;
   } catch (_) {
@@ -126,37 +126,13 @@ function formatInTimezone(d, timeZone) {
   return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`;
 }
 
-function formatOffset(offsetMin) {
-  const sign = offsetMin >= 0 ? '+' : '-';
-  const hours = Math.floor(Math.abs(offsetMin) / 60);
-  const mins = Math.abs(offsetMin) % 60;
-  return mins > 0 ? `UTC${sign}${hours}:${mins.toString().padStart(2, '0')}` : `UTC${sign}${hours}`;
-}
-
-function formatDateLocalized(date) {
-  const hasMillis = date.getUTCMilliseconds() !== 0;
-  const options = {
-    timeZone: 'UTC',
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short'
-  };
-
-  if (hasMillis) {
-    options.fractionalSecondDigits = 3;
-  }
-
-  return date.toLocaleString(LOCALE, options);
+function formatDate(date) {
+  return date.toISOString();
 }
 
 function formatDateTimeItems(date) {
   const items = [
-    { label: i18n.getMessage('date', LOCALE), value: formatDateLocalized(date) },
+    { label: i18n.getMessage('date', LOCALE), value: formatDate(date) },
     { label: i18n.getMessage('milliseconds', LOCALE), value: String(date.getTime()) },
   ];
 
@@ -234,10 +210,10 @@ function tryNumber(text) {
     // Max milliseconds: 10000000000000 (year ~2286)
     // Max seconds: 10000000000 (year ~2286)
     if (num <= 10000000000000) {
-      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: formatDateLocalized(new Date(num)) });
+      items.push({ label: i18n.getMessage('dateMilliseconds', LOCALE), value: formatDate(new Date(num)) });
     }
     if (num <= 10000000000) {
-      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: formatDateLocalized(new Date(num * 1000)) });
+      items.push({ label: i18n.getMessage('dateSeconds', LOCALE), value: formatDate(new Date(num * 1000)) });
     }
   }
 
