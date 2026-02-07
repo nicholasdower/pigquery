@@ -453,6 +453,31 @@ const TRANSLATIONS = {
   unknown: {
     en: "Unknown",
     de: "Unbekannt",
+  },
+  // formatters.js: UUID version 1 name
+  uuidVersion1: {
+    en: "Time-based (MAC address)",
+    de: "Zeitbasiert (MAC-Adresse)",
+  },
+  // formatters.js: UUID version 2 name
+  uuidVersion2: {
+    en: "DCE Security",
+    de: "DCE-Sicherheit",
+  },
+  // formatters.js: UUID version 3 name
+  uuidVersion3: {
+    en: "Name-based (MD5)",
+    de: "Namensbasiert (MD5)",
+  },
+  // formatters.js: UUID version 4 name
+  uuidVersion4: {
+    en: "Random",
+    de: "Zufällig",
+  },
+  // formatters.js: UUID version 5 name
+  uuidVersion5: {
+    en: "Name-based (SHA-1)",
+    de: "Namensbasiert (SHA-1)",
   }
 };
 

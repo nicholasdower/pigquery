@@ -469,11 +469,11 @@ function tryUuid(text) {
 
   const version = match[1];
   const versionNames = {
-    '1': 'Time-based (MAC address)',
-    '2': 'DCE Security',
-    '3': 'Name-based (MD5)',
-    '4': 'Random',
-    '5': 'Name-based (SHA-1)'
+    '1': i18n.getMessage('uuidVersion1', LOCALE),
+    '2': i18n.getMessage('uuidVersion2', LOCALE),
+    '3': i18n.getMessage('uuidVersion3', LOCALE),
+    '4': i18n.getMessage('uuidVersion4', LOCALE),
+    '5': i18n.getMessage('uuidVersion5', LOCALE)
   };
 
   const typeName = i18n.getMessage('typeUuid', LOCALE);
