@@ -59,6 +59,8 @@ async function screenshot(filename) {
   const { stdout } = await execPromise(`osascript -e 'tell application "Google Chrome" to get bounds of window 1'`);
   const [x1, y1, x2, y2] = stdout.trim().split(', ').map(Number);
   await execPromise(`screencapture -x -R${x1},${y1},${x2 - x1},${y2 - y1} ${filename}`);
+  // Resize to logical pixels (half of Retina resolution)
+  await execPromise(`sips -Z ${x2 - x1} ${filename}`);
 }
 
 async function getChromeBounds() {

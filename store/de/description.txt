@@ -1,0 +1,13 @@
+PigQuery ist eine Produktivitäts-Erweiterung für Google BigQuery, die das Schreiben, Wiederverwenden, Teilen und Erkunden von SQL-Abfragen effizienter macht.
+
+Mit PigQuery können Sie:
+
+• Gespeicherte Abfragen und wiederverwendbare SQL-Snippets per Tastenkombination direkt in den BigQuery-Editor einfügen, wodurch lange Tabellennamen, häufige Joins und komplexe Abfragebestandteile schnell wiederverwendet werden können
+
+• Mit intelligenten Klick-Aktionen mit Abfrageergebnissen interagieren, um Zellwerte in externen Webseiten oder internen Tools zu öffnen oder Werte schnell in die Zwischenablage zu kopieren
+
+• Abfragen im Arbeitsstand per URL teilen, indem ein Link erzeugt wird, der den vollständigen Inhalt des aktuellen Editors enthält – ohne Abfragen speichern oder SQL manuell kopieren zu müssen
+
+• Snippets und Webseiten-Definitionen mit YAML konfigurieren, entweder lokal oder aus externen URLs mit automatischen Updates für die gemeinsame Nutzung im Team
+
+PigQuery integriert sich direkt in die BigQuery-Oberfläche, unterstützt Deutsch und Englisch und richtet sich an Nutzerinnen und Nutzer, die regelmäßig mit BigQuery arbeiten und ihre Workflows schneller und reibungsloser gestalten möchten.
