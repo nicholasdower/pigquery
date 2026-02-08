@@ -4,7 +4,7 @@ With PigQuery you can:
 
 • Insert saved queries and reusable SQL snippets into the BigQuery editor using keyboard shortcuts, making long table names, common joins, and complex query fragments easy to reuse
 
-• Interact with query results using smart clicks to open cell values in external sites or internal tools, or to quickly copy values to the clipboard
+• Interact with query results by opening cell values in external sites and formatting cell data (for example JSON payloads or timestamps)
 
 • Share in-progress queries via URL by generating a link that contains the full contents of the current editor, without saving or manually copying SQL
 

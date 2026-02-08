@@ -4,7 +4,7 @@ Mit PigQuery können Sie:
 
 • Gespeicherte Abfragen und wiederverwendbare SQL-Snippets per Tastenkombination direkt in den BigQuery-Editor einfügen, wodurch lange Tabellennamen, häufige Joins und komplexe Abfragebestandteile schnell wiederverwendet werden können
 
-• Mit intelligenten Klick-Aktionen mit Abfrageergebnissen interagieren, um Zellwerte in externen Webseiten oder internen Tools zu öffnen oder Werte schnell in die Zwischenablage zu kopieren
+• Mit Abfrageergebnissen interagieren, indem Zellwerte in externen Seiten geöffnet und Zellinhalte formatiert werden (zum Beispiel JSON-Payloads oder Zeitstempel)
 
 • Abfragen im Arbeitsstand per URL teilen, indem ein Link erzeugt wird, der den vollständigen Inhalt des aktuellen Editors enthält – ohne Abfragen speichern oder SQL manuell kopieren zu müssen
 
