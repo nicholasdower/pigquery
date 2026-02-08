@@ -486,7 +486,7 @@ function getSystemLocale() {
 }
 
 function getBigQueryLocale() {
-  return document.documentElement.lang?.trim()?.toLowerCase()?.split(/[-_]/)[0] || "en";
+  return document.documentElement.lang?.trim()?.toLowerCase()?.split(/[-_]/)[0] || getSystemLocale();
 }
 
 function formatMessage(template, substitutions) {
