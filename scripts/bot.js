@@ -91,12 +91,46 @@ async function recordAction() {
   // Verify pig-modal-item exists
   await page.waitForSelector('.pig-modal-item', { timeout: 5000 });
 
-  // Focus the input and type "query", wait for list to update
+  // Press down until we find "shakespeare words in wikipedia"
   await page.click('.pig-modal-input');
-  await page.keyboard.type('query');
-  await page.waitForTimeout(1000);
+  while (true) {
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(100);
+    const activeText = await page.$eval('.pig-modal-item.active .pig-modal-item-name', el => el.textContent);
+    if (activeText === 'shakespeare words in wikipedia') break;
+  }
 
   await screenshot('screenshots/pigquery-2.png');
+
+  // Clear and type "formatter demo"
+  await page.fill('.pig-modal-input', 'formatter demo');
+  await page.waitForTimeout(500);
+
+  // Click the item with name "formatter demo"
+  await page.click('.pig-modal-item-name:has-text("formatter demo")');
+  await page.waitForTimeout(500);
+
+  // Run the query with command+enter
+  await page.keyboard.press('Meta+Enter');
+
+  // Wait for results table to appear
+  await page.waitForSelector('bq-results-table-optimized', { timeout: 30000 });
+  await page.waitForTimeout(1000);
+
+  // Focus the table with ctrl+shift+u
+  await page.keyboard.press('Control+Shift+KeyU');
+  await page.waitForTimeout(500);
+
+  // Hit right arrow twice to change focused cell
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(300);
+
+  // Hit enter to open the snippets modal
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(1000);
+
+  await screenshot('screenshots/pigquery-3.png');
 
   chromeProcess.kill('SIGTERM');
 }
