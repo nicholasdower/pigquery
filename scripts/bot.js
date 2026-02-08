@@ -5,11 +5,13 @@ const util = require('util');
 
 const execPromise = util.promisify(exec);
 
-async function startChrome(profileDir, url = 'https://console.cloud.google.com/bigquery') {
+async function startChrome(url) {
+  const profileDir = path.join(__dirname, '..', 'profile');
   console.log('Starting Chrome with remote debugging...');
   const chromeProcess = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--remote-debugging-port=9222',
     `--user-data-dir=${profileDir}`,
+    '--window-size=1280,800',
     url
   ], {
     detached: false,
@@ -18,64 +20,45 @@ async function startChrome(profileDir, url = 'https://console.cloud.google.com/b
 
   console.log('Waiting for Chrome to start...');
   await new Promise(resolve => setTimeout(resolve, 3000));
+  chromeProcess.on('exit', () => process.exit(0));
 
   return chromeProcess;
 }
 
-async function openAction() {
-  const profileDir = path.join(__dirname, '..', 'profile');
-  await startChrome(profileDir);
-  console.log('Chrome is running. Press Ctrl+C to close.');
-}
-
-async function recordAction() {
-  const profileDir = path.join(__dirname, '..', 'profile');
-  const chromeProcess = await startChrome(profileDir);
-
+async function connectToChrome() {
   console.log('Connecting to Chrome...');
   const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
   const defaultContext = browser.contexts()[0];
-  
-  // Use the existing BigQuery page
   const page = defaultContext.pages()[0];
+  return page;
+}
 
-  // Set viewport size
-  await page.setViewportSize({ width: 1920, height: 1080 });
+async function screenshot(filename) {
+  await execPromise(`osascript -e 'tell application "Google Chrome" to activate'`);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const { stdout } = await execPromise(`osascript -e 'tell application "Google Chrome" to get bounds of window 1'`);
+  const [x1, y1, x2, y2] = stdout.trim().split(', ').map(Number);
+  await execPromise(`screencapture -x -R${x1},${y1},${x2 - x1},${y2 - y1} ${filename}`);
+}
 
-  console.log('Waiting for editor to load...');
-  // Wait for the SQL editor textarea/contenteditable to be visible
+async function openAction() {
+  await startChrome('https://console.cloud.google.com/bigquery');
+  await connectToChrome();
+}
+
+async function recordAction() {
+  const chromeProcess = await startChrome('https://console.cloud.google.com/bigquery');
+  const page = await connectToChrome();
+
   await page.waitForSelector('.view-lines', { timeout: 30000 });
-
-  // Give it a moment to fully render
-  await page.waitForTimeout(2000);
-
-  console.log('Clicking into editor...');
+  await page.waitForTimeout(1000);
   await page.click('.view-lines');
-
-  console.log('Pressing Ctrl+Shift+Y...');
   await page.keyboard.press('Control+Shift+KeyY');
+  await page.waitForSelector('.pig-modal', { timeout: 5000 });
+  await page.waitForTimeout(1000);
+  await screenshot('screenshots/bigquery-demo.png');
 
-  // Wait a bit to capture the result
-  await page.waitForTimeout(3000);
-
-  console.log('Taking screenshot...');
-  await page.screenshot({ path: 'screenshots/bigquery-demo.png', fullPage: true });
-
-  console.log('Closing Chrome...');
-  await browser.close();
-  
-  // Kill the Chrome process
   chromeProcess.kill('SIGTERM');
-  
-  // Wait a moment and force kill if still running
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  try {
-    chromeProcess.kill('SIGKILL');
-  } catch (e) {
-    // Process already dead, that's fine
-  }
-
-  console.log('Done! Screenshot saved to screenshots/bigquery-demo.png');
 }
 
 async function main() {
