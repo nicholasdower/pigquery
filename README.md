@@ -16,13 +16,11 @@ A Chrome Extension offering some BigQuery enhancements.
 
 ## Screenshots
 
-<img src="screenshots/pigquery-1.jpg" width="300"> <img src="screenshots/pigquery-2.jpg" width="300"> <img src="screenshots/pigquery-3.jpg" width="300"> <img src="screenshots/pigquery-4.jpg" width="300"> <img src="screenshots/pigquery-5.jpg" width="300"> <img src="screenshots/pigquery-6.jpg" width="300">
+<img src="screenshots/pigquery-1.jpg" width="300"> <img src="screenshots/pigquery-2.jpg" width="300"> <img src="screenshots/pigquery-3.jpg" width="300">
 
-## Development
+## Demo video & screenshots
 
-### Recording Demo Videos
-
-To record demo videos of the extension in action:
+### Setup
 
 1. Install Playwright:
    ```bash
@@ -30,20 +28,22 @@ To record demo videos of the extension in action:
    npx playwright install ffmpeg
    ```
 
-2. Set up a local Chrome profile for testing (first time only):
-   ```bash
-   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir="`pwd`/profile"
-   ```
-   - Log in to BigQuery
-   - Load the extension (chrome://extensions → Load unpacked → select this project directory)
-   - Keep Chrome running but close all tabs
+2. Set up a local Chrome profile:
+   - Run the script once:
+     ```bash
+     node scripts/bot.js open
+     ```
+   - In the Chrome window that opens:
+     - Log in to BigQuery
+     - Go to chrome://extensions
+     - Enable "Developer mode"
+     - Click "Load unpacked" and select this project directory
+   - Close Chrome
 
-3. Run the demo script:
-   ```bash
-   node scripts/record-demo.js
-   ```
+**Note:** The profile is saved locally in the `profile/` directory.
 
-The script will connect to your running Chrome instance, navigate to BigQuery, perform automated actions, and save a video to the `videos/` directory and a screenshot to `screenshots/`.
+### Recording a demo video
 
-**Note:** For subsequent runs, repeat steps 2 and 3. The profile will be saved locally in the `profile/` directory.
-
+```bash
+node scripts/bot.js record
+```
