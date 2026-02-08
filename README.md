@@ -4,7 +4,7 @@
 
 A Chrome Extension offering some BigQuery enhancements.
 
-[<img src="screenshots/embed.jpg" width="800"/>](https://www.youtube.com/watch?v=wgEkK5jHHaM)
+[<img src="embed.jpg" width="800"/>](https://www.youtube.com/watch?v=wgEkK5jHHaM)
 
 ## Features
 
@@ -16,7 +16,7 @@ A Chrome Extension offering some BigQuery enhancements.
 
 ## Screenshots
 
-<img src="screenshots/pigquery-1.jpg" width="300"> <img src="screenshots/pigquery-2.jpg" width="300"> <img src="screenshots/pigquery-3.jpg" width="300">
+<img src="store/en/pigquery-1.jpg" width="300"> <img src="store/en/pigquery-2.jpg" width="300"> <img src="store/en/pigquery-3.jpg" width="300">
 
 ## Demo video & screenshots
 

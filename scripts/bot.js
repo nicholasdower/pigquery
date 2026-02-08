@@ -61,6 +61,45 @@ async function screenshot(filename) {
   await execPromise(`screencapture -x -R${x1},${y1},${x2 - x1},${y2 - y1} ${filename}`);
 }
 
+async function getChromeBounds() {
+  const { stdout } = await execPromise(`osascript -e 'tell application "Google Chrome" to get bounds of window 1'`);
+  const [x1, y1, x2, y2] = stdout.trim().split(', ').map(Number);
+  return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+}
+
+async function startVideoRecording(filename) {
+  await execPromise(`osascript -e 'tell application "Google Chrome" to activate'`);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const { x, y, width, height } = await getChromeBounds();
+
+  // Ensure dimensions are even (required by ffmpeg)
+  const w = width % 2 === 0 ? width : width - 1;
+  const h = height % 2 === 0 ? height : height - 1;
+
+  const ffmpeg = spawn('ffmpeg', [
+    '-f', 'avfoundation',
+    '-capture_cursor', '1',
+    '-framerate', '30',
+    '-i', '1:none',  // Screen capture, no audio
+    '-vf', `crop=${w}:${h}:${x}:${y}`,
+    '-c:v', 'libx264',
+    '-preset', 'ultrafast',
+    '-pix_fmt', 'yuv420p',
+    '-y',
+    filename
+  ], {
+    stdio: ['pipe', 'ignore', 'ignore']
+  });
+
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return ffmpeg;
+}
+
+async function stopVideoRecording(ffmpegProcess) {
+  ffmpegProcess.stdin.write('q');
+  await new Promise(resolve => ffmpegProcess.on('close', resolve));
+}
+
 async function openAction(lang) {
   await startChrome(getBigQueryUrl(lang));
   await connectToChrome();
@@ -69,6 +108,9 @@ async function openAction(lang) {
 async function recordAction(lang) {
   const chromeProcess = await startChrome(getBigQueryUrl(lang));
   const [browser, page] = await connectToChrome();
+
+  console.log('Starting video recording...');
+  const ffmpegProcess = await startVideoRecording(`store/${lang}/demo.mp4`);
 
   await page.waitForSelector('.view-lines', { timeout: 30000 });
   await page.waitForTimeout(1000);
@@ -94,7 +136,7 @@ async function recordAction(lang) {
   }
 
   // Take a screenshot of empty options
-  await screenshot(`screenshots/${lang}/pigquery-1.png`);
+  await screenshot(`store/${lang}/pigquery-1.png`);
 
   // Enter URL in the input and press Enter
   await optionsPage.fill('#urlInput', 'https://raw.githubusercontent.com/nicholasdower/pigquery/refs/heads/master/samples/samples.yaml');
@@ -120,7 +162,7 @@ async function recordAction(lang) {
     if (activeText === 'shakespeare words in wikipedia') break;
   }
 
-  await screenshot(`screenshots/${lang}/pigquery-2.png`);
+  await screenshot(`store/${lang}/pigquery-2.png`);
 
   // Clear and type "formatter demo"
   await page.fill('.pig-modal-input', 'formatter demo');
@@ -152,6 +194,9 @@ async function recordAction(lang) {
 
   await screenshot(`screenshots/${lang}/pigquery-3.png`);
 
+  console.log('Stopping video recording...');
+  await stopVideoRecording(ffmpegProcess);
+
   chromeProcess.kill('SIGTERM');
 }
 
@@ -169,7 +214,7 @@ async function main() {
       console.error('Unknown action:', action);
       console.log('Usage: node bot.js [open|record] [--lang <code>]');
       console.log('  open   - Open Chrome with BigQuery');
-      console.log('  record - Record a demo');
+      console.log('  record - Record a demo video and take screenshots');
       console.log('  --lang - Set the language (e.g., de, en)');
       process.exit(1);
   }
