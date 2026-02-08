@@ -207,7 +207,7 @@ function tryDate(text) {
   ];
 }
 
-function tryNumberFormat(text) {
+function tryNumber(text) {
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
@@ -226,12 +226,12 @@ function tryNumberFormat(text) {
   const label = i18n.getMessage('formatted', LOCALE);
 
   if (isInteger) {
-    const formatted = num.toLocaleString('en-US');
+    const formatted = num.toLocaleString(LOCALE);
     if (formatted !== text) {
       items.push({ label: `${typeName} – ${label}`, value: formatted });
     }
   } else {
-    const formatted = num.toLocaleString('en-US', { maximumFractionDigits: 10 });
+    const formatted = num.toLocaleString(LOCALE, { maximumFractionDigits: 10 });
     if (formatted !== text) {
       items.push({ label: `${typeName} – ${label}`, value: formatted });
     }
@@ -495,7 +495,7 @@ const FORMATTERS = [
   { func: tryJson, type: 'json' },
   { func: tryUuid, type: 'uuid' },
   { func: tryDate, type: 'date' },
-  { func: tryNumberFormat, type: 'number' },
+  { func: tryNumber, type: 'number' },
   { func: tryTimestampMilliseconds, type: 'timestamp_ms' },
   { func: tryTimestampSeconds, type: 'timestamp_s' },
   { func: tryUrl, type: 'url' },
