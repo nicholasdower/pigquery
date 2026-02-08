@@ -79,7 +79,7 @@
 - group: gsod
   name: date from year/month/day
   tag: column
-  value: "date(g.year, g.mo, g.da) as weather_date"
+  value: "date(g.year, g.month, g.day) as weather_date"
 
 - group: natality
   name: weight kg
@@ -98,7 +98,7 @@
 - group: gsod
   name: has precipitation
   tag: where
-  value: "g.prcp > 0 and g.prcp < 99"
+  value: "g.total_precipitation > 0 and g.total_precipitation < 99"
 
 - group: gsod
   name: extreme heat
@@ -243,12 +243,12 @@
     select
       station_number,
       year,
-      mo as month,
-      da as day,
+      month,
+      day,
       mean_temp,
-      min_temp,
-      max_temp,
-      prcp as precipitation
+      min_temperature,
+      max_temperature,
+      total_precipitation
     from `bigquery-public-data.samples.gsod` g
     limit 100;
 
@@ -258,12 +258,12 @@
   value: |-
     select
       station_number,
-      date(year, mo, da) as date,
-      max_temp as temperature_f,
-      round((max_temp - 32) * 5/9, 1) as temperature_c
+      date(year, month, day) as date,
+      max_temperature as temperature_f,
+      round((max_temperature - 32) * 5/9, 1) as temperature_c
     from `bigquery-public-data.samples.gsod` g
-    where max_temp < 200
-    order by max_temp desc
+    where max_temperature < 200
+    order by max_temperature desc
     limit 50;
 
 - group: gsod
@@ -272,12 +272,12 @@
   value: |-
     select
       station_number,
-      date(year, mo, da) as date,
-      min_temp as temperature_f,
-      round((min_temp - 32) * 5/9, 1) as temperature_c
+      date(year, month, day) as date,
+      min_temperature as temperature_f,
+      round((min_temperature - 32) * 5/9, 1) as temperature_c
     from `bigquery-public-data.samples.gsod` g
-    where min_temp > -200
-    order by min_temp asc
+    where min_temperature > -100
+    order by min_temperature asc
     limit 50;
 
 - group: gsod
@@ -300,11 +300,11 @@
   value: |-
     select
       station_number,
-      date(year, mo, da) as date,
-      prcp as precipitation_inches
+      date(year, month, day) as date,
+      total_precipitation as precipitation_inches
     from `bigquery-public-data.samples.gsod` g
-    where prcp > 0 and prcp < 99
-    order by prcp desc
+    where total_precipitation > 0 and total_precipitation < 99
+    order by total_precipitation desc
     limit 50;
 
 - group: gsod
@@ -312,14 +312,14 @@
   tag: query
   value: |-
     select
-      mo as month,
+      month,
       round(avg(mean_temp), 1) as avg_temp,
-      round(min(min_temp), 1) as record_low,
-      round(max(max_temp), 1) as record_high
+      round(min(min_temperature), 1) as record_low,
+      round(max(max_temperature), 1) as record_high
     from `bigquery-public-data.samples.gsod` g
     where mean_temp between -100 and 150
-      and min_temp > -100
-      and max_temp < 200
+      and min_temperature > -100
+      and max_temperature < 200
     group by month
     order by month;
 
@@ -565,22 +565,41 @@
     order by shakespeare_count desc
     limit 50;
 
+# =============================================================================
+# QUERIES - Formatter Demos
+# =============================================================================
+
 - group: common
-  name: weather on birth dates
+  name: formatter demo
   tag: query
   value: |-
-    select
-      n.year,
-      n.state,
-      count(*) as births,
-      round(avg(g.mean_temp), 1) as avg_temp
-    from `bigquery-public-data.samples.natality` n
-    join `bigquery-public-data.samples.gsod` g
-      on n.year = g.year
-    where n.year between 1980 and 2000
-    group by n.year, n.state
-    order by n.year, births desc
-    limit 100;
+    select * from (
+      select 'json' as type, '{"name": "Alice", "age": 30, "active": true}' as value
+      union all
+      select 'json_array', '[1, 2, 3, {"nested": "object"}]'
+      union all
+      select 'timestamp', cast(current_timestamp() as string)
+      union all
+      select 'jwt', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+      union all
+      select 'xml', '<?xml version="1.0"?><root><item id="1">Hello</item></root>'
+      union all
+      select 'yaml', 'name: test\nitems:\n  - one\n  - two'
+      union all
+      select 'url', 'https://example.com/path?query=value&foo=bar'
+      union all
+      select 'base64', to_base64(b'Hello, World!')
+      union all
+      select 'uuid', generate_uuid()
+      union all
+      select 'email', 'user@example.com'
+      union all
+      select 'ipv4', '192.168.1.1'
+      union all
+      select 'duration', '3600'
+      union all
+      select 'bytes', '1048576'
+    );
 
 # =============================================================================
 # URLS - External lookups for cell data
