@@ -72,32 +72,21 @@ async function startVideoRecording(filename) {
   await new Promise(resolve => setTimeout(resolve, 300));
   const { x, y, width, height } = await getChromeBounds();
 
-  // Ensure dimensions are even (required by ffmpeg)
-  const w = width % 2 === 0 ? width : width - 1;
-  const h = height % 2 === 0 ? height : height - 1;
-
-  const ffmpeg = spawn('ffmpeg', [
-    '-f', 'avfoundation',
-    '-capture_cursor', '1',
-    '-framerate', '30',
-    '-i', '1:none',  // Screen capture, no audio
-    '-vf', `crop=${w}:${h}:${x}:${y}`,
-    '-c:v', 'libx264',
-    '-preset', 'ultrafast',
-    '-pix_fmt', 'yuv420p',
-    '-y',
+  const screencapture = spawn('screencapture', [
+    '-v',
+    '-R', `${x},${y},${width},${height}`,
     filename
   ], {
     stdio: ['pipe', 'ignore', 'ignore']
   });
 
   await new Promise(resolve => setTimeout(resolve, 500));
-  return ffmpeg;
+  return screencapture;
 }
 
-async function stopVideoRecording(ffmpegProcess) {
-  ffmpegProcess.stdin.write('q');
-  await new Promise(resolve => ffmpegProcess.on('close', resolve));
+async function stopVideoRecording(screencaptureProcess) {
+  screencaptureProcess.kill('SIGINT');
+  await new Promise(resolve => screencaptureProcess.on('close', resolve));
 }
 
 async function openAction(lang) {
@@ -108,9 +97,6 @@ async function openAction(lang) {
 async function recordAction(lang) {
   const chromeProcess = await startChrome(getBigQueryUrl(lang));
   const [browser, page] = await connectToChrome();
-
-  console.log('Starting video recording...');
-  const ffmpegProcess = await startVideoRecording(`store/${lang}/demo.mp4`);
 
   await page.waitForSelector('.view-lines', { timeout: 30000 });
   await page.waitForTimeout(1000);
@@ -125,8 +111,8 @@ async function recordAction(lang) {
 
   // Get the new options tab
   const context = browser.contexts()[0];
-  const pages = context.pages();
-  const optionsPage = pages[pages.length - 1];
+  let pages = context.pages();
+  let optionsPage = pages[pages.length - 1];
 
   // Remove all existing sources
   await optionsPage.waitForSelector('#urlInput', { timeout: 5000 });
@@ -135,41 +121,107 @@ async function recordAction(lang) {
     await optionsPage.waitForTimeout(300);
   }
 
+  // Close options and dismiss modal before recording
+  await optionsPage.close();
+  await page.waitForTimeout(500);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+
+  // Start video recording
+  console.log('Starting video recording...');
+  const videoPath = `store/${lang}/demo.mp4`;
+  await execPromise(`rm -f ${videoPath}`);
+  const ffmpegProcess = await startVideoRecording(videoPath);
+  await page.waitForTimeout(2000);
+
+  // Enter query into the editor
+  await page.keyboard.type('select', { delay: 100 });
+  await page.waitForTimeout(100);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+  await page.keyboard.type('s.word, sum(s.word_count) as count, max(w.timestamp) as timestamp', { delay: 100 });
+  await page.waitForTimeout(100);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+  await page.keyboard.type('from ', { delay: 100 });
+  await page.waitForTimeout(500);
+
+  // Open the modal again
+  await page.keyboard.press('Control+Shift+KeyY');
+  await page.waitForSelector('.pig-modal', { timeout: 5000 });
+  await page.waitForTimeout(2000);
+
+  // Click settings icon to open options page
+  await page.click('.pig-modal-settings');
+  await page.waitForTimeout(2000);
+
+  // Get the new options tab
+  pages = context.pages();
+  optionsPage = pages[pages.length - 1];
+
   // Take a screenshot of empty options
+  await optionsPage.waitForSelector('#urlInput', { timeout: 5000 });
   await screenshot(`store/${lang}/pigquery-1.png`);
 
   // Enter URL in the input and press Enter
   await optionsPage.fill('#urlInput', 'https://raw.githubusercontent.com/nicholasdower/pigquery/refs/heads/master/samples/samples.yaml');
+  await page.waitForTimeout(2000);
   await optionsPage.press('#urlInput', 'Enter');
 
   // Wait for source card to appear
   await optionsPage.waitForSelector('.source-card', { timeout: 10000 });
-  await optionsPage.waitForTimeout(500);
+  await optionsPage.waitForTimeout(2000);
 
   // Close the options tab to return to BigQuery
   await optionsPage.close();
+  await page.waitForTimeout(2000);
+
+  // Type "shake" to filter results, then press down until we find "shakespeare"
+  await page.click('.pig-modal-input');
+  await page.type('.pig-modal-input', 'shake', { delay: 100 });
+  await page.waitForTimeout(500);
+  while (true) {
+    const activeText = await page.$eval('.pig-modal-item.active .pig-modal-item-name', el => el.textContent);
+    if (activeText === 'shakespeare') break;
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(300);
+  }
+
+  // Click the item with name "shakespeare"
+  await page.click('.pig-modal-item-name:has-text("shakespeare")');
   await page.waitForTimeout(500);
 
-  // Verify pig-modal-item exists
-  await page.waitForSelector('.pig-modal-item', { timeout: 5000 });
+  // Complete query into the editor
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('join ', { delay: 100 });
+  await page.waitForTimeout(500);
 
-  // Press down until we find "shakespeare words in wikipedia"
+  // Open the modal again
+  await page.keyboard.press('Control+Shift+KeyY');
+  await page.waitForSelector('.pig-modal', { timeout: 5000 });
+  await page.waitForTimeout(1000);
+
+  // Type "join" to filter results, then press down until we find "wikipedia to shakespeare"
   await page.click('.pig-modal-input');
+  await page.type('.pig-modal-input', 'join', { delay: 100 });
+  await page.waitForTimeout(500);
   while (true) {
-    await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(100);
     const activeText = await page.$eval('.pig-modal-item.active .pig-modal-item-name', el => el.textContent);
-    if (activeText === 'shakespeare words in wikipedia') break;
+    if (activeText === 'wikipedia to shakespeare') break;
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(300);
   }
 
   await screenshot(`store/${lang}/pigquery-2.png`);
 
-  // Clear and type "formatter demo"
-  await page.fill('.pig-modal-input', 'formatter demo');
+  // Click the item with name "wikipedia to shakespeare"
+  await page.click('.pig-modal-item-name:has-text("wikipedia to shakespeare")');
   await page.waitForTimeout(500);
 
-  // Click the item with name "formatter demo"
-  await page.click('.pig-modal-item-name:has-text("formatter demo")');
+  // Complete query into the editor
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+  await page.keyboard.type('group by s.word order by 2 desc limit 10;', { delay: 100 });
   await page.waitForTimeout(500);
 
   // Run the query with command+enter
@@ -181,18 +233,50 @@ async function recordAction(lang) {
 
   // Focus the table with ctrl+shift+u
   await page.keyboard.press('Control+Shift+KeyU');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
 
   // Hit right arrow twice to change focused cell
   await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(300);
   await page.keyboard.press('ArrowRight');
   await page.waitForTimeout(300);
 
   // Hit enter to open the snippets modal
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(3000);
 
-  await screenshot(`screenshots/${lang}/pigquery-3.png`);
+  await screenshot(`store/${lang}/pigquery-3.png`);
+
+  // Hit escape to return to results then open the modal again
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(3000);
+
+  // Type "wiki" to filter snippets then go to Wikipedia
+  await page.click('.pig-modal-input');
+  await page.type('.pig-modal-input', 'wiki', { delay: 100 });
+  await page.waitForTimeout(500);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(3000);
+
+  // Get the new tab and close it
+  pages = context.pages();
+  wikiPage = pages[pages.length - 1];
+  await wikiPage.close();
+  await page.waitForTimeout(3000);
 
   console.log('Stopping video recording...');
   await stopVideoRecording(ffmpegProcess);

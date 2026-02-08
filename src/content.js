@@ -1149,6 +1149,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
   overlayEl.appendChild(modalEl);
   document.body.appendChild(overlayEl);
+  ignoreMouseTemporarily();
   renderList();
   updateContentPanel();
 
