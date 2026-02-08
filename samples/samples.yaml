@@ -576,9 +576,9 @@
     select * from (
       select 'json' as type, '{"user": {"name": "Alice", "age": 30, "active": true, "roles": ["admin", "editor"], "metadata": {"created": "2026-01-15", "lastLogin": null}}, "settings": {"theme": "dark", "notifications": {"email": true, "push": false}}}' as value
       union all
-      select 'json_array', '[{"id": 1, "name": "Item One", "tags": ["new", "featured"]}, {"id": 2, "name": "Item Two", "tags": ["sale"]}, {"id": 3, "name": "Item Three", "tags": []}]'
+      select 'timestamp', '1770573986907'
       union all
-      select 'timestamp', cast(current_timestamp() as string)
+      select 'date', '2026-02-08T18:06:26.907Z'
       union all
       select 'jwt', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
       union all
@@ -591,14 +591,6 @@
       select 'base64', to_base64(b'Hello, World!')
       union all
       select 'uuid', generate_uuid()
-      union all
-      select 'email', 'user@example.com'
-      union all
-      select 'ipv4', '192.168.1.1'
-      union all
-      select 'duration', '3600'
-      union all
-      select 'bytes', '1048576'
     );
 
 # =============================================================================

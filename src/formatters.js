@@ -205,11 +205,17 @@ function tryDate(original) {
   if (year < 1900 || year > 2200) return null;
 
   const typeName = i18n.getMessage('typeDate', LOCALE);
-  return [
-    { label: `${typeName} – ${i18n.getMessage('date', LOCALE)}`, value: formatDate(date) },
-    { label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`, value: formatDateLocalized(date) },
-    { label: `${typeName} – ${i18n.getMessage('milliseconds', LOCALE)}`, value: String(date.getTime()) },
-  ];
+  const items = [];
+
+  const isoDate = formatDate(date);
+  if (isoDate !== text) {
+    items.push({ label: `${typeName} – ${i18n.getMessage('date', LOCALE)}`, value: isoDate });
+  }
+
+  items.push({ label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`, value: formatDateLocalized(date) });
+  items.push({ label: `${typeName} – ${i18n.getMessage('milliseconds', LOCALE)}`, value: String(date.getTime()) });
+
+  return items;
 }
 
 function tryNumber(original) {
