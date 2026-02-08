@@ -574,9 +574,9 @@
   tag: query
   value: |-
     select * from (
-      select 'json' as type, '{"name": "Alice", "age": 30, "active": true}' as value
+      select 'json' as type, '{"user": {"name": "Alice", "age": 30, "active": true, "roles": ["admin", "editor"], "metadata": {"created": "2026-01-15", "lastLogin": null}}, "settings": {"theme": "dark", "notifications": {"email": true, "push": false}}}' as value
       union all
-      select 'json_array', '[1, 2, 3, {"nested": "object"}]'
+      select 'json_array', '[{"id": 1, "name": "Item One", "tags": ["new", "featured"]}, {"id": 2, "name": "Item Two", "tags": ["sale"]}, {"id": 3, "name": "Item Three", "tags": []}]'
       union all
       select 'timestamp', cast(current_timestamp() as string)
       union all

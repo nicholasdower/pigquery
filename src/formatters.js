@@ -166,9 +166,11 @@ function tryDate(text) {
   // - 2023-10-15T14:30:00+00:00
   // - 2023-10-15T14:30:00.123+05:30
   // - 2023-10-15 14:30:00.123456 UTC (BigQuery format)
-  const isoFullRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})?$/;
+  // - 2023-10-15 14:30:00.123456+00 (PostgreSQL format)
+  // - 2023-10-15 14:30:00.123456+00:00 (PostgreSQL format with full offset)
+  const isoFullRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}(:\d{2})?)?$/;
   const dateTimeNoTzRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$/;
-  const sqlDateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,6})?( UTC)?$/;
+  const sqlDateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,6})?( UTC|[+-]\d{2}(:\d{2})?)?$/;
   const rfcRegex = /^[A-Za-z]{3},?\s+\d{1,2}\s+[A-Za-z]{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s*(GMT|UTC|[+-]\d{4})?$/;
 
   const isDateOnly = dateOnlyRegex.test(text);
@@ -176,11 +178,16 @@ function tryDate(text) {
 
   if (!isDateOnly && !isDateTime) return null;
 
-  // Normalize SQL/BigQuery format to ISO format for reliable parsing
+  // Normalize SQL/BigQuery/PostgreSQL format to ISO format for reliable parsing
   let normalized = text;
   if (sqlDateTimeRegex.test(text)) {
     // Convert "2023-10-15 14:30:00.123456 UTC" to "2023-10-15T14:30:00.123456Z"
-    normalized = text.replace(' UTC', 'Z').replace(' ', 'T');
+    // Convert "2023-10-15 14:30:00.123456+00" to "2023-10-15T14:30:00.123456+00:00"
+    normalized = text.replace(' UTC', 'Z');
+    // Handle short timezone offset like +00 or -05 (without :00)
+    normalized = normalized.replace(/([+-]\d{2})$/, '$1:00');
+    // Replace space with T for ISO format
+    normalized = normalized.replace(' ', 'T');
   }
 
   const date = new Date(normalized);
