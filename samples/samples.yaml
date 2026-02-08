@@ -1,67 +1,617 @@
+# =============================================================================
+# TABLES - Quick table references for FROM clauses
+# =============================================================================
+
+# Shakespeare
 - group: shakespeare
   name: shakespeare
   tag: table
   value: "`bigquery-public-data.samples.shakespeare` s"
+
+# Wikipedia
 - group: wikipedia
   name: wikipedia
   tag: table
   value: "`bigquery-public-data.samples.wikipedia` w"
-- group: wikipedia
-  name: wikipedia all
-  tag: query
-  value: |-
-    select
-      *
-    from `bigquery-public-data.samples.wikipedia` w
-    limit 100;
-- group: wikipedia
-  name: wikipedia top contributors
-  tag: query
-  value: |-
-    select
-      w.contributor_username, count(*) as contributions
-    from `bigquery-public-data.samples.wikipedia` w
-    group by 1
-    order by 2 desc
-    limit 100;
-- group: wikipedia
-  name: wikipedia most contributions
-  tag: query
-  value: |-
-    select
-      w.title, count(*) as contributions
-    from `bigquery-public-data.samples.wikipedia` w
-    where w.title not like '%Wikipedia%'
-    group by 1
-    order by 2 desc
-    limit 100;
+
+# GSOD Weather
+- group: gsod
+  name: gsod
+  tag: table
+  value: "`bigquery-public-data.samples.gsod` g"
+
+# Natality (US Births)
+- group: natality
+  name: natality
+  tag: table
+  value: "`bigquery-public-data.samples.natality` n"
+
+# GitHub
+- group: github
+  name: github_timeline
+  tag: table
+  value: "`bigquery-public-data.samples.github_timeline` gh"
+
+- group: github
+  name: github_nested
+  tag: table
+  value: "`bigquery-public-data.samples.github_nested` ghn"
+
+# Trigrams
+- group: trigrams
+  name: trigrams
+  tag: table
+  value: "`bigquery-public-data.samples.trigrams` t"
+
+# =============================================================================
+# JOINS - Combine tables in interesting ways
+# =============================================================================
+
 - group: common
   name: shakespeare to wikipedia
   tag: join
   value: "`bigquery-public-data.samples.shakespeare` s on s.word = w.title"
-- group: shakespeare
-  name: shakespeare top words
-  tag: query
-  value: |-
-    select
-      word, sum(word_count)
-    from `bigquery-public-data.samples.shakespeare` s
-    group by 1
-    order by 2 desc
-    limit 100;
+
+- group: common
+  name: wikipedia to shakespeare
+  tag: join
+  value: "`bigquery-public-data.samples.wikipedia` w on w.title = s.word"
+
+- group: common
+  name: trigrams to shakespeare
+  tag: join
+  value: "`bigquery-public-data.samples.trigrams` t on t.first = s.word"
+
+# =============================================================================
+# COLUMNS - Useful column expressions and transformations
+# =============================================================================
+
 - group: wikipedia
   name: timestamp
   tag: column
   value: "timestamp_seconds(w.timestamp) as timestamp"
+
+- group: gsod
+  name: temp fahrenheit to celsius
+  tag: column
+  value: "round((g.mean_temp - 32) * 5/9, 1) as temp_celsius"
+
+- group: gsod
+  name: date from year/month/day
+  tag: column
+  value: "date(g.year, g.mo, g.da) as weather_date"
+
+- group: natality
+  name: weight kg
+  tag: column
+  value: "round(n.weight_pounds * 0.453592, 2) as weight_kg"
+
+# =============================================================================
+# WHERE - Filter conditions
+# =============================================================================
+
 - group: wikipedia
   name: timestamp
   tag: where
   value: "timestamp_seconds(w.timestamp)"
+
+- group: gsod
+  name: has precipitation
+  tag: where
+  value: "g.prcp > 0 and g.prcp < 99"
+
+- group: gsod
+  name: extreme heat
+  tag: where
+  value: "g.max_temp > 100"
+
+- group: natality
+  name: twins or more
+  tag: where
+  value: "n.plurality > 1"
+
+# =============================================================================
+# QUERIES - Shakespeare
+# =============================================================================
+
+- group: shakespeare
+  name: top words
+  tag: query
+  value: |-
+    select
+      word,
+      sum(word_count) as total_count
+    from `bigquery-public-data.samples.shakespeare` s
+    group by word
+    order by total_count desc
+    limit 100;
+
+- group: shakespeare
+  name: words by work
+  tag: query
+  value: |-
+    select
+      corpus,
+      count(distinct word) as unique_words,
+      sum(word_count) as total_words
+    from `bigquery-public-data.samples.shakespeare` s
+    group by corpus
+    order by total_words desc;
+
+- group: shakespeare
+  name: longest words
+  tag: query
+  value: |-
+    select distinct
+      word,
+      length(word) as word_length
+    from `bigquery-public-data.samples.shakespeare` s
+    where length(word) > 12
+    order by word_length desc
+    limit 50;
+
+- group: shakespeare
+  name: words starting with...
+  tag: query
+  value: |-
+    select
+      word,
+      sum(word_count) as count
+    from `bigquery-public-data.samples.shakespeare` s
+    where lower(word) like 'love%'
+    group by word
+    order by count desc
+    limit 50;
+
+# =============================================================================
+# QUERIES - Wikipedia
+# =============================================================================
+
+- group: wikipedia
+  name: sample rows
+  tag: query
+  value: |-
+    select
+      title,
+      contributor_username,
+      timestamp_seconds(timestamp) as edit_time,
+      comment
+    from `bigquery-public-data.samples.wikipedia` w
+    limit 100;
+
+- group: wikipedia
+  name: top contributors
+  tag: query
+  value: |-
+    select
+      contributor_username,
+      count(*) as edits
+    from `bigquery-public-data.samples.wikipedia` w
+    where contributor_username is not null
+    group by contributor_username
+    order by edits desc
+    limit 100;
+
+- group: wikipedia
+  name: most edited articles
+  tag: query
+  value: |-
+    select
+      title,
+      count(*) as revision_count
+    from `bigquery-public-data.samples.wikipedia` w
+    where title not like 'Wikipedia:%'
+      and title not like 'User:%'
+      and title not like 'Talk:%'
+    group by title
+    order by revision_count desc
+    limit 100;
+
+- group: wikipedia
+  name: edits by hour
+  tag: query
+  value: |-
+    select
+      extract(hour from timestamp_seconds(timestamp)) as hour_of_day,
+      count(*) as edit_count
+    from `bigquery-public-data.samples.wikipedia` w
+    group by hour_of_day
+    order by hour_of_day;
+
+- group: wikipedia
+  name: bot vs human edits
+  tag: query
+  value: |-
+    select
+      case
+        when lower(contributor_username) like '%bot%' then 'Bot'
+        else 'Human'
+      end as editor_type,
+      count(*) as edits
+    from `bigquery-public-data.samples.wikipedia` w
+    where contributor_username is not null
+    group by editor_type;
+
+# =============================================================================
+# QUERIES - GSOD Weather
+# =============================================================================
+
+- group: gsod
+  name: sample rows
+  tag: query
+  value: |-
+    select
+      station_number,
+      year,
+      mo as month,
+      da as day,
+      mean_temp,
+      min_temp,
+      max_temp,
+      prcp as precipitation
+    from `bigquery-public-data.samples.gsod` g
+    limit 100;
+
+- group: gsod
+  name: hottest days ever
+  tag: query
+  value: |-
+    select
+      station_number,
+      date(year, mo, da) as date,
+      max_temp as temperature_f,
+      round((max_temp - 32) * 5/9, 1) as temperature_c
+    from `bigquery-public-data.samples.gsod` g
+    where max_temp < 200
+    order by max_temp desc
+    limit 50;
+
+- group: gsod
+  name: coldest days ever
+  tag: query
+  value: |-
+    select
+      station_number,
+      date(year, mo, da) as date,
+      min_temp as temperature_f,
+      round((min_temp - 32) * 5/9, 1) as temperature_c
+    from `bigquery-public-data.samples.gsod` g
+    where min_temp > -200
+    order by min_temp asc
+    limit 50;
+
+- group: gsod
+  name: average temp by year
+  tag: query
+  value: |-
+    select
+      year,
+      round(avg(mean_temp), 2) as avg_temp_f,
+      round(avg((mean_temp - 32) * 5/9), 2) as avg_temp_c,
+      count(*) as readings
+    from `bigquery-public-data.samples.gsod` g
+    where mean_temp between -50 and 150
+    group by year
+    order by year;
+
+- group: gsod
+  name: rainiest days
+  tag: query
+  value: |-
+    select
+      station_number,
+      date(year, mo, da) as date,
+      prcp as precipitation_inches
+    from `bigquery-public-data.samples.gsod` g
+    where prcp > 0 and prcp < 99
+    order by prcp desc
+    limit 50;
+
+- group: gsod
+  name: temperature extremes by month
+  tag: query
+  value: |-
+    select
+      mo as month,
+      round(avg(mean_temp), 1) as avg_temp,
+      round(min(min_temp), 1) as record_low,
+      round(max(max_temp), 1) as record_high
+    from `bigquery-public-data.samples.gsod` g
+    where mean_temp between -100 and 150
+      and min_temp > -100
+      and max_temp < 200
+    group by month
+    order by month;
+
+# =============================================================================
+# QUERIES - Natality (US Births)
+# =============================================================================
+
+- group: natality
+  name: sample rows
+  tag: query
+  value: |-
+    select
+      year,
+      state,
+      mother_age,
+      father_age,
+      weight_pounds,
+      is_male,
+      plurality
+    from `bigquery-public-data.samples.natality` n
+    limit 100;
+
+- group: natality
+  name: births by year
+  tag: query
+  value: |-
+    select
+      year,
+      count(*) as total_births,
+      round(avg(weight_pounds), 2) as avg_weight_lbs,
+      round(avg(mother_age), 1) as avg_mother_age
+    from `bigquery-public-data.samples.natality` n
+    group by year
+    order by year;
+
+- group: natality
+  name: births by state
+  tag: query
+  value: |-
+    select
+      state,
+      count(*) as total_births,
+      round(avg(weight_pounds), 2) as avg_weight_lbs
+    from `bigquery-public-data.samples.natality` n
+    where state is not null
+    group by state
+    order by total_births desc;
+
+- group: natality
+  name: twins and multiples
+  tag: query
+  value: |-
+    select
+      plurality,
+      case plurality
+        when 1 then 'Single'
+        when 2 then 'Twins'
+        when 3 then 'Triplets'
+        when 4 then 'Quadruplets'
+        else 'Quintuplets+'
+      end as birth_type,
+      count(*) as count,
+      round(avg(weight_pounds), 2) as avg_weight
+    from `bigquery-public-data.samples.natality` n
+    group by plurality
+    order by plurality;
+
+- group: natality
+  name: weight distribution
+  tag: query
+  value: |-
+    select
+      floor(weight_pounds) as weight_bucket,
+      count(*) as count
+    from `bigquery-public-data.samples.natality` n
+    where weight_pounds between 1 and 15
+    group by weight_bucket
+    order by weight_bucket;
+
+- group: natality
+  name: mother age trends
+  tag: query
+  value: |-
+    select
+      year,
+      round(avg(mother_age), 1) as avg_mother_age,
+      min(mother_age) as youngest_mother,
+      max(mother_age) as oldest_mother
+    from `bigquery-public-data.samples.natality` n
+    where mother_age is not null
+    group by year
+    order by year;
+
+- group: natality
+  name: gender ratio by year
+  tag: query
+  value: |-
+    select
+      year,
+      countif(is_male) as boys,
+      countif(not is_male) as girls,
+      round(countif(is_male) / count(*) * 100, 2) as male_percentage
+    from `bigquery-public-data.samples.natality` n
+    group by year
+    order by year;
+
+# =============================================================================
+# QUERIES - GitHub
+# =============================================================================
+
+- group: github
+  name: sample timeline
+  tag: query
+  value: |-
+    select
+      repository_name,
+      repository_owner,
+      type,
+      created_at,
+      actor
+    from `bigquery-public-data.samples.github_timeline` gh
+    limit 100;
+
+- group: github
+  name: most active repos
+  tag: query
+  value: |-
+    select
+      repository_name,
+      repository_owner,
+      count(*) as events
+    from `bigquery-public-data.samples.github_timeline` gh
+    where repository_name is not null
+    group by repository_name, repository_owner
+    order by events desc
+    limit 100;
+
+- group: github
+  name: event types
+  tag: query
+  value: |-
+    select
+      type,
+      count(*) as count
+    from `bigquery-public-data.samples.github_timeline` gh
+    where type is not null
+    group by type
+    order by count desc;
+
+- group: github
+  name: most active users
+  tag: query
+  value: |-
+    select
+      actor,
+      count(*) as events,
+      count(distinct repository_name) as repos_touched
+    from `bigquery-public-data.samples.github_timeline` gh
+    where actor is not null
+    group by actor
+    order by events desc
+    limit 100;
+
+- group: github
+  name: top languages
+  tag: query
+  value: |-
+    select
+      repository_language,
+      count(distinct repository_name) as repo_count,
+      count(*) as total_events
+    from `bigquery-public-data.samples.github_timeline` gh
+    where repository_language is not null
+      and repository_language != ''
+    group by repository_language
+    order by repo_count desc
+    limit 50;
+
+# =============================================================================
+# QUERIES - Trigrams
+# =============================================================================
+
+- group: trigrams
+  name: sample rows
+  tag: query
+  value: |-
+    select
+      ngram,
+      first,
+      second,
+      third,
+      cell.volume_count
+    from `bigquery-public-data.samples.trigrams` t,
+    unnest(cell) as cell
+    limit 100;
+
+- group: trigrams
+  name: top trigrams
+  tag: query
+  value: |-
+    select
+      ngram,
+      sum(cell.volume_count) as total_volumes
+    from `bigquery-public-data.samples.trigrams` t,
+    unnest(cell) as cell
+    group by ngram
+    order by total_volumes desc
+    limit 100;
+
+- group: trigrams
+  name: trigrams starting with...
+  tag: query
+  value: |-
+    select
+      ngram,
+      first,
+      second,
+      third,
+      sum(cell.volume_count) as total_volumes
+    from `bigquery-public-data.samples.trigrams` t,
+    unnest(cell) as cell
+    where lower(first) = 'the'
+    group by ngram, first, second, third
+    order by total_volumes desc
+    limit 100;
+
+# =============================================================================
+# QUERIES - Cross-Table Analysis
+# =============================================================================
+
+- group: common
+  name: shakespeare words in wikipedia
+  tag: query
+  value: |-
+    select
+      s.word,
+      sum(s.word_count) as shakespeare_count,
+      count(distinct w.title) as wikipedia_articles
+    from `bigquery-public-data.samples.shakespeare` s
+    join `bigquery-public-data.samples.wikipedia` w
+      on lower(s.word) = lower(w.title)
+    group by s.word
+    order by shakespeare_count desc
+    limit 50;
+
+- group: common
+  name: weather on birth dates
+  tag: query
+  value: |-
+    select
+      n.year,
+      n.state,
+      count(*) as births,
+      round(avg(g.mean_temp), 1) as avg_temp
+    from `bigquery-public-data.samples.natality` n
+    join `bigquery-public-data.samples.gsod` g
+      on n.year = g.year
+    where n.year between 1980 and 2000
+    group by n.year, n.state
+    order by n.year, births desc
+    limit 100;
+
+# =============================================================================
+# URLS - External lookups for cell data
+# =============================================================================
+
 - group: wikipedia
   name: Wikipedia
   regex: ^.*$
   url: https://en.wikipedia.org/w/index.php?search=%s
+
+- group: github
+  name: GitHub User
+  regex: ^[a-zA-Z0-9_-]+$
+  url: https://github.com/%s
+
+- group: github
+  name: GitHub Repo
+  regex: ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$
+  url: https://github.com/%s
+
 - group: common
   name: Google
   regex: ^.*$
   url: https://www.google.com/search?q=%s
+
+- group: common
+  name: Google Maps
+  regex: ^.*$
+  url: https://www.google.com/maps/search/%s
+
+- group: common
+  name: Wolfram Alpha
+  regex: ^.*$
+  url: https://www.wolframalpha.com/input?i=%s
