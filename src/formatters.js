@@ -18,11 +18,13 @@ const TYPE_I18N_KEYS = {
   hex: 'typeHex',
 };
 
-function tryJson(text) {
+function tryJson(original) {
+  const text = original.value;
   if (!text.startsWith('{') && !text.startsWith('[')) return null;
   try {
     const parsed = JSON.parse(text);
     const formatted = JSON.stringify(parsed, null, 2);
+    original.type = 'json';
 
     if (formatted !== text) {
       const typeName = i18n.getMessage('typeJson', LOCALE);
@@ -35,7 +37,8 @@ function tryJson(text) {
   }
 }
 
-function tryJwt(text) {
+function tryJwt(original) {
+  const text = original.value;
   // JWT format: header.payload.signature (3 base64url parts separated by dots)
   const parts = text.split('.');
   if (parts.length !== 3) return null;
@@ -76,7 +79,8 @@ function tryJwt(text) {
   }
 }
 
-function tryBase64(text) {
+function tryBase64(original) {
+  const text = original.value;
   // Standard base64 or base64url
   const base64Regex = /^[A-Za-z0-9+/_-]+=*$/;
   if (!base64Regex.test(text)) return null;
@@ -156,7 +160,8 @@ function formatDateLocalized(date) {
   return date.toLocaleString(LOCALE, options);
 }
 
-function tryDate(text) {
+function tryDate(original) {
+  const text = original.value;
   // Date only format: 2023-10-15
   const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -207,7 +212,8 @@ function tryDate(text) {
   ];
 }
 
-function tryNumber(text) {
+function tryNumber(original) {
+  const text = original.value;
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
@@ -240,7 +246,8 @@ function tryNumber(text) {
   return items.length > 0 ? items : null;
 }
 
-function tryTimestampMilliseconds(text) {
+function tryTimestampMilliseconds(original) {
+  const text = original.value;
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
@@ -267,7 +274,8 @@ function tryTimestampMilliseconds(text) {
   ];
 }
 
-function tryTimestampSeconds(text) {
+function tryTimestampSeconds(original) {
+  const text = original.value;
   // Match integers and decimals, with optional negative sign
   if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
 
@@ -294,7 +302,8 @@ function tryTimestampSeconds(text) {
   ];
 }
 
-function tryUrl(text) {
+function tryUrl(original) {
+  const text = original.value;
   // Must start with http:// or https://
   if (!text.startsWith('http://') && !text.startsWith('https://')) return null;
 
@@ -331,7 +340,8 @@ function tryUrl(text) {
   }
 }
 
-function tryXml(text) {
+function tryXml(original) {
+  const text = original.value;
   // Must start with < and contain at least one tag
   if (!text.startsWith('<')) return null;
   if (!/<[a-zA-Z][\w-]*[^>]*>/.test(text)) return null;
@@ -380,6 +390,7 @@ function tryXml(text) {
       return null;
     }
 
+    original.type = 'xml';
     const typeName = i18n.getMessage('typeXml', LOCALE);
     const label = i18n.getMessage('formatted', LOCALE);
     return [
@@ -390,7 +401,8 @@ function tryXml(text) {
   }
 }
 
-function tryYaml(text) {
+function tryYaml(original) {
+  const text = original.value;
   // YAML typically starts with common patterns
   // Check for YAML indicators: keys with colons, list items with dashes, or document separators
   const yamlPatterns = [
@@ -413,13 +425,15 @@ function tryYaml(text) {
     // Must parse to an object or array (not just a string or number)
     if (typeof parsed !== 'object' || parsed === null) return null;
 
+    original.type = 'yaml';
     return [];
   } catch (_) {
     return null;
   }
 }
 
-function tryHex(text) {
+function tryHex(original) {
+  const text = original.value;
   // Must be hex characters only, even length, at least 20 chars
   if (text.length < 20 || text.length % 2 !== 0) return null;
   if (!/^[0-9a-fA-F]+$/.test(text)) return null;
@@ -468,7 +482,8 @@ function tryHex(text) {
   return items;
 }
 
-function tryUuid(text) {
+function tryUuid(original) {
+  const text = original.value;
   // Standard UUID format: 8-4-4-4-12
   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-([1-5])[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
   const match = text.match(uuidRegex);
@@ -511,7 +526,7 @@ function tryFormatters(original, excludeTypes = []) {
   for (const formatter of FORMATTERS) {
     if (excludeTypes.includes(formatter.type)) continue;
 
-    const result = formatter.func(original.value);
+    const result = formatter.func(original);
     if (result && result.length > 0) {
       allResults.push(...result);
     }
