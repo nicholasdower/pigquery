@@ -1031,7 +1031,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   settingsBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    chrome.runtime.sendMessage({ action: "openOptionsPage" });
+    chrome.runtime.sendMessage({ action: "openOptionsPage", locale: LOCALE });
   });
   header.appendChild(settingsBtn);
 

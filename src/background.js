@@ -31,7 +31,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.action === "openOptionsPage") {
-    chrome.runtime.openOptionsPage();
+    const url = message.locale
+      ? chrome.runtime.getURL(`src/options.html?hl=${message.locale}`)
+      : chrome.runtime.getURL("src/options.html");
+    chrome.tabs.create({ url });
   }
 });
 

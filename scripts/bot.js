@@ -5,9 +5,29 @@ const util = require('util');
 
 const execPromise = util.promisify(exec);
 
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const result = { action: null, lang: 'en' };
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--lang' && args[i + 1]) {
+      result.lang = args[++i];
+    } else if (!args[i].startsWith('-')) {
+      result.action = args[i];
+    }
+  }
+
+  return result;
+}
+
+function getBigQueryUrl(lang) {
+  const base = 'https://console.cloud.google.com/bigquery';
+  return lang ? `${base}?hl=${lang}` : base;
+}
+
 async function startChrome(url) {
-  const profileDir = path.join(__dirname, '..', 'profile');
   console.log('Starting Chrome with remote debugging...');
+  const profileDir = path.join(__dirname, '..', 'profile');
   const chromeProcess = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--remote-debugging-port=9222',
     `--user-data-dir=${profileDir}`,
@@ -15,7 +35,7 @@ async function startChrome(url) {
     url
   ], {
     detached: false,
-    stdio: 'ignore'
+    stdio: "ignore",
   });
 
   console.log('Waiting for Chrome to start...');
@@ -41,13 +61,13 @@ async function screenshot(filename) {
   await execPromise(`screencapture -x -R${x1},${y1},${x2 - x1},${y2 - y1} ${filename}`);
 }
 
-async function openAction() {
-  await startChrome('https://console.cloud.google.com/bigquery');
+async function openAction(lang) {
+  await startChrome(getBigQueryUrl(lang));
   await connectToChrome();
 }
 
-async function recordAction() {
-  const chromeProcess = await startChrome('https://console.cloud.google.com/bigquery');
+async function recordAction(lang) {
+  const chromeProcess = await startChrome(getBigQueryUrl(lang));
   const [browser, page] = await connectToChrome();
 
   await page.waitForSelector('.view-lines', { timeout: 30000 });
@@ -74,7 +94,7 @@ async function recordAction() {
   }
 
   // Take a screenshot of empty options
-  await screenshot('screenshots/pigquery-1.png');
+  await screenshot(`screenshots/${lang}/pigquery-1.png`);
 
   // Enter URL in the input and press Enter
   await optionsPage.fill('#urlInput', 'https://raw.githubusercontent.com/nicholasdower/pigquery/refs/heads/master/samples/samples.yaml');
@@ -100,7 +120,7 @@ async function recordAction() {
     if (activeText === 'shakespeare words in wikipedia') break;
   }
 
-  await screenshot('screenshots/pigquery-2.png');
+  await screenshot(`screenshots/${lang}/pigquery-2.png`);
 
   // Clear and type "formatter demo"
   await page.fill('.pig-modal-input', 'formatter demo');
@@ -130,26 +150,27 @@ async function recordAction() {
   await page.keyboard.press('Enter');
   await page.waitForTimeout(1000);
 
-  await screenshot('screenshots/pigquery-3.png');
+  await screenshot(`screenshots/${lang}/pigquery-3.png`);
 
   chromeProcess.kill('SIGTERM');
 }
 
 async function main() {
-  const action = process.argv[2];
+  const { action, lang } = parseArgs();
 
   switch (action) {
     case 'open':
-      await openAction();
+      await openAction(lang);
       break;
     case 'record':
-      await recordAction();
+      await recordAction(lang);
       break;
     default:
       console.error('Unknown action:', action);
-      console.log('Usage: node record-demo.js [open|record]');
+      console.log('Usage: node bot.js [open|record] [--lang <code>]');
       console.log('  open   - Open Chrome with BigQuery');
-      console.log('  record - Record a demo (default)');
+      console.log('  record - Record a demo');
+      console.log('  --lang - Set the language (e.g., de, en)');
       process.exit(1);
   }
 }
