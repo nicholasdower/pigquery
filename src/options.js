@@ -1,6 +1,6 @@
 const config = window.pigquery.config;
 const i18n = window.pigquery.i18n;
-const LOCALE = i18n.getSystemLocale();
+const LOCALE = new URLSearchParams(window.location.search).get("hl") || i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
 
 const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
