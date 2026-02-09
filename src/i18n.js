@@ -124,6 +124,16 @@ const TRANSLATIONS = {
     en: "Editor not found.",
     de: "Editor nicht gefunden.",
   },
+  // content.js: Toast after successfully inserting query
+  queryInsertSucceeded: {
+    en: "Query inserted.",
+    de: "Abfrage eingefügt.",
+  },
+  // content.js: Toast when query insert failed or timed out
+  queryInsertFailed: {
+    en: "Query insert failed.",
+    de: "Abfrage-Einfügen fehlgeschlagen.",
+  },
   // content.js: Toast after copying share link to clipboard
   linkCopied: {
     en: "Link copied to clipboard.",

@@ -123,7 +123,7 @@ if (query && query.length > 0) {
     const ta = findEditorTextArea(editor);
     if (!ta) return;
 
-    cleanup();
+    cleanup(true);
     insertIntoEditor(editor, query.trim());
   });
 
@@ -132,9 +132,14 @@ if (query && query.length > 0) {
     subtree: true,
   });
 
-  const timeoutId = setTimeout(cleanup, 10_000);
+  const timeoutId = setTimeout(() => cleanup(false), 10_000);
 
-  function cleanup() {
+  function cleanup(inserted) {
+    if (inserted) {
+      showToast(i18n.getMessage("queryInsertSucceeded", LOCALE));
+    } else {
+      showToast(i18n.getMessage("queryInsertFailed", LOCALE));
+    }
     observer.disconnect();
     clearTimeout(timeoutId);
   }
