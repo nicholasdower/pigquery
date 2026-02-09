@@ -119,6 +119,11 @@ const TRANSLATIONS = {
     en: "Editor not focused.",
     de: "Editor ist nicht fokussiert.",
   },
+  // content.js: Toast when editor not found
+  editorNotFound: {
+    en: "Editor not found.",
+    de: "Editor nicht gefunden.",
+  },
   // content.js: Toast after copying share link to clipboard
   linkCopied: {
     en: "Link copied to clipboard.",

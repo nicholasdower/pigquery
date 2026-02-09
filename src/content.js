@@ -1261,9 +1261,13 @@ document.addEventListener(
         }
 
         const cell = table.querySelector('[role="cell"]');
+        const header = table.querySelector('[role="columnheader"]');
         if (cell) {
           cell.focus();
           cell.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        } else if (header) {
+          header.focus();
+          header.scrollIntoView({ block: "nearest", behavior: "smooth" });
         } else {
           table.focus();
           table.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -1272,7 +1276,7 @@ document.addEventListener(
         // Focus editor
         const editor = getVisibleOrActiveEditor();
         if (!editor) {
-          showToast(i18n.getMessage("editorNotFocused", LOCALE));
+          showToast(i18n.getMessage("editorNotFound", LOCALE));
           return;
         }
 
