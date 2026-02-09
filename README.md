@@ -4,7 +4,7 @@
 
 A Chrome Extension offering some BigQuery enhancements.
 
-[<img src="embed.jpg" width="800"/>](https://www.youtube.com/watch?v=wgEkK5jHHaM)
+[<img src="embed.jpg" width="800"/>](https://www.youtube.com/watch?v=0iEPxfJW-x0)
 
 ## Features
 
