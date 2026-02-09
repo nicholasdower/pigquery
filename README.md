@@ -42,8 +42,9 @@ A Chrome Extension offering some BigQuery enhancements.
 
 **Note:** The profile is saved locally in the `profile/` directory.
 
-### Recording a demo video
+### Recording a demo video and taking screenshots
 
 ```bash
-node scripts/bot.js record
+node scripts/bot.js record --lang en
+node scripts/bot.js record --lang de
 ```
