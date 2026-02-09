@@ -14,10 +14,10 @@ const TRANSLATIONS = {
     en: "Share",
     de: "Teilen",
   },
-  // popup.html: Shortcut label for opening external site
-  shortcutOpenSite: {
-    en: "Open site",
-    de: "Website öffnen",
+  // popup.html: Shortcut label for opening cell
+  shortcutOpenCell: {
+    en: "Open Cell",
+    de: "Zelle öffnen",
   },
   // popup.html: Shortcut label for copy table cell
   shortcutCopyCell: {

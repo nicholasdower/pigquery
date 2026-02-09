@@ -7,7 +7,7 @@ const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
 
 const isMac = navigator.userAgentData.platform === 'macOS';
 document.getElementById('shortcut-share').textContent = isMac ? '⌘+A' : 'Ctrl+A';
-document.getElementById('shortcut-copy-cell').textContent = isMac ? 'Alt+⌘+Click / Enter' : 'Ctrl+Alt+Click / Enter';
+document.getElementById('shortcut-copy-cell').textContent = isMac ? 'Alt+⌘+Click / ⌘+C' : 'Ctrl+Alt+Click / Ctrl+C';
 
 const shortcutInsertEl = document.getElementById('shortcut-insert');
 const shortcutFocusTableEl = document.getElementById('shortcut-focus-table');
