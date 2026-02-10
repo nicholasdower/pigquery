@@ -124,6 +124,11 @@ const TRANSLATIONS = {
     en: "Editor not found.",
     de: "Editor nicht gefunden.",
   },
+  // content.js: Toast when extension context has been invalidated
+  extensionNotAvailable: {
+    en: "Extension invalid. Please reload.",
+    de: "Erweiterung ungültig. Bitte neu laden.",
+  },
   // content.js: Toast after successfully inserting query
   queryInsertSucceeded: {
     en: "Query inserted.",

@@ -17,8 +17,6 @@ This document contains findings from a comprehensive code review of the PigQuery
   
   **Recommendation:** At minimum, log errors to help with debugging. Consider adding error telemetry.
 
-- [ ] **Handle extension context invalidation** - When the extension is updated or removed, content scripts lose access to `chrome.runtime` APIs. Calls to `chrome.storage` or `chrome.runtime.sendMessage` will throw errors. Add try/catch around these calls and show a user-friendly message prompting them to refresh the page.
-
 ### Code Duplication
 
 - [ ] **Duplicate timestamp formatting logic** - Nearly identical date/time formatting code appears in:

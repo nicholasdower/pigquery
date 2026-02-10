@@ -5,8 +5,25 @@ const formatters = window.pigquery.formatters;
 const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
-const ICON_URL = chrome.runtime.getURL("icons/icon.svg");
-const ICON_ERROR_URL = chrome.runtime.getURL("icons/icon-badge-error.svg");
+// Load icons as data URLs at startup so they remain available even if extension context is invalidated
+let ICON_URL = "";
+let ICON_ERROR_URL = "";
+
+async function loadIconAsDataURL(path) {
+  const url = chrome.runtime.getURL(path);
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
+
+(async () => {
+  ICON_URL = await loadIconAsDataURL("icons/icon.svg");
+  ICON_ERROR_URL = await loadIconAsDataURL("icons/icon-badge-error.svg");
+})();
 
 const isMac = navigator.userAgentData.platform === 'macOS';
 
@@ -703,7 +720,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   function closePopup() {
     if (!overlayEl) return;
     onConfigurationChange = null;
-    if (busyListener) {
+    if (busyListener && chrome.runtime?.id) {
       chrome.storage.onChanged.removeListener(busyListener);
     }
     if (focusRedirectHandler) {
@@ -1005,22 +1022,28 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
   updateErrorBadge();
 
-  // Check initial busy state
-  chrome.storage.local.get(config.BUSY_KEY, (result) => {
-    updateRefreshState(!!result[config.BUSY_KEY]);
-  });
+  // Check initial busy state, skip if extension context has been invalidated
+  if (chrome.runtime?.id) {
+    chrome.storage.local.get(config.BUSY_KEY, (result) => {
+      updateRefreshState(!!result[config.BUSY_KEY]);
+    });
 
-  // Listen for busy state changes
-  busyListener = (changes) => {
-    if (config.BUSY_KEY in changes) {
-      updateRefreshState(!!changes[config.BUSY_KEY].newValue);
-    }
-  };
-  chrome.storage.onChanged.addListener(busyListener);
+    // Listen for busy state changes
+    busyListener = (changes) => {
+      if (config.BUSY_KEY in changes) {
+        updateRefreshState(!!changes[config.BUSY_KEY].newValue);
+      }
+    };
+    chrome.storage.onChanged.addListener(busyListener);
+  }
 
   refreshBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!chrome.runtime?.id) {
+      showToast(i18n.getMessage("extensionNotAvailable", LOCALE));
+      return;
+    }
     if (!isBusy) {
       chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
     }
@@ -1036,6 +1059,10 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   settingsBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!chrome.runtime?.id) {
+      showToast(i18n.getMessage("extensionNotAvailable", LOCALE));
+      return;
+    }
     chrome.runtime.sendMessage({ action: "openOptionsPage", locale: LOCALE });
   });
   header.appendChild(settingsBtn);
