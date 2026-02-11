@@ -28,24 +28,37 @@ A Chrome Extension offering some BigQuery enhancements.
    npm install
    ```
 
-2. Create development environment:
+2. Build the extension:
 
    ```bash
-   npm run setup
+   npm run build
    ```
 
-   This creates a `dev/` directory with symlinks to your source files and adds the `management` permission to enable in-extension reloading.
+   This bundles all source files and dependencies into the `dist/` directory using esbuild.
 
 3. Load the extension in Chrome:
    - Go to `chrome://extensions`
    - Enable "Developer mode"
    - Click "Load unpacked"
-   - Select the `dev/` directory
+   - Select the project root directory (contains `manifest.json`)
 
 4. Development workflow:
-   - Changes to source files will be immediately reflected after reloading the extension
+   - After making changes to source files, run `npm run build` to rebuild
    - Click the extension icon to open the popup, which includes a "Reload Extension" button in the Developer section
    - Use this button to quickly reload the extension without visiting `chrome://extensions`
+
+### Build commands
+
+```bash
+# Development build (with sourcemaps)
+npm run build
+
+# Production build (minified, no sourcemaps)
+npm run build:prod
+
+# Watch mode (auto-rebuild on file changes) - coming soon
+# npm run watch
+```
 
 ### Code quality
 
@@ -65,11 +78,28 @@ npm run format
 
 ### Build for distribution
 
+To create a production build and package the extension:
+
 ```bash
 npm run package
 ```
 
-This creates a signed `.crx` file in the `dist/` directory.
+**Requirements:**
+
+- The `privatekey` file must exist in the project root (used to sign the `.crx`)
+- Chrome must be installed at `/Applications/Google Chrome.app/` (macOS)
+
+**What it does:**
+
+1. Runs `npm run build:prod` to create minified bundles in `dist/`
+2. Creates a `package/pigquery-{version}/` directory with:
+   - Production manifest.json (without `management` and `tabs` permissions)
+   - Bundled files from `dist/`
+   - Icons, locales, and license files
+3. Uses Chrome to create a signed `.crx` file: `package/pigquery-{version}.crx`
+
+**Testing the production build:**
+You can test the production build by loading the `package/pigquery-{version}/` directory unpacked in Chrome.
 
 ## Demo video & screenshots
 
@@ -83,6 +113,10 @@ This creates a signed `.crx` file in the `dist/` directory.
    ```
 
 2. Set up a local Chrome profile:
+   - Build the extension first:
+     ```bash
+     npm run build
+     ```
    - Run the script once:
      ```bash
      node scripts/bot.js open
@@ -91,7 +125,7 @@ This creates a signed `.crx` file in the `dist/` directory.
      - Log in to BigQuery
      - Go to chrome://extensions
      - Enable "Developer mode"
-     - Click "Load unpacked" and select this project directory
+     - Click "Load unpacked" and select the project root directory
    - Close Chrome
 
 **Note:** The profile is saved locally in the `profile/` directory.

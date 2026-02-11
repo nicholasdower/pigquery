@@ -4,9 +4,15 @@ import * as search from './search.js';
 import * as formatters from './formatters.js';
 import hljs from 'highlight.js/lib/core';
 import sql from 'highlight.js/lib/languages/sql';
+import highlightCss from 'highlight.js/styles/atom-one-dark.min.css';
 
 // Register SQL for syntax highlighting in editor
 hljs.registerLanguage('sql', sql);
+
+// Inject highlight.js theme CSS
+const style = document.createElement('style');
+style.textContent = highlightCss;
+document.head.appendChild(style);
 
 // log current time
 console.log(`piggy: ${new Date().toISOString()} hi 5`);

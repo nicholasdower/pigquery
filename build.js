@@ -5,6 +5,20 @@ import path from 'path';
 
 const distDir = 'dist';
 
+// Plugin to import CSS as string
+const cssTextPlugin = {
+  name: 'css-text',
+  setup(build) {
+    build.onLoad({ filter: /\.css$/ }, async args => {
+      const css = await fs.promises.readFile(args.path, 'utf8');
+      return {
+        contents: `export default ${JSON.stringify(css)}`,
+        loader: 'js',
+      };
+    });
+  },
+};
+
 // Clean and create dist directory
 if (fs.existsSync(distDir)) {
   fs.rmSync(distDir, { recursive: true });
@@ -49,6 +63,7 @@ async function build() {
       entryPoints: ['src/content.js'],
       outfile: `${distDir}/content.js`,
       external: ['chrome'],
+      plugins: [cssTextPlugin],
     });
 
     // Build popup script
@@ -78,9 +93,6 @@ async function build() {
     // Copy and update HTML files
     updateHtmlScriptPaths('src/popup.html', `${distDir}/popup.html`, 'popup.js');
     updateHtmlScriptPaths('src/options.html', `${distDir}/options.html`, 'options.js');
-
-    // Copy highlight.js theme CSS from node_modules
-    copyFile('node_modules/highlight.js/styles/atom-one-dark.min.css', `${distDir}/highlight-theme.css`);
 
     console.log('✓ Build completed successfully');
   } catch (error) {
