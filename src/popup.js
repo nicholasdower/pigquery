@@ -31,16 +31,19 @@ refreshBtn.addEventListener('click', () => {
 
 updateBtn.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const optionsUrl = chrome.runtime.getURL('dist-build/options.html');
+  const optionsUrl = chrome.runtime.getURL('dist/options.html');
 
   // Check if options page is currently open
   const optionsTabs = await chrome.tabs.query({ url: optionsUrl + '*' });
   const hasOptionsPage = optionsTabs.length > 0;
   const optionsPageWasActive = tab?.url?.startsWith(optionsUrl);
 
+  // Only reload the tab if it's a BigQuery tab that has our content script
+  const isBigQueryTab = tab?.url?.startsWith('https://console.cloud.google.com/');
+  const shouldReloadTab = isBigQueryTab && !optionsPageWasActive;
+
   const reloadState = {
-    reopenPopup: true,
-    reloadTabId: tab?.id,
+    reloadTabId: shouldReloadTab ? tab.id : null,
     reopenOptionsPage: hasOptionsPage,
     optionsPageWasActive: optionsPageWasActive,
   };

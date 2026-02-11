@@ -65,7 +65,7 @@ setTimeout(() => {
     if (reloadState) {
       chrome.storage.local.remove('reloadState');
 
-      const { reloadTabId, reopenPopup, reopenOptionsPage, optionsPageWasActive } = reloadState;
+      const { reloadTabId, reopenOptionsPage, optionsPageWasActive } = reloadState;
 
       if (reloadTabId && !optionsPageWasActive) {
         chrome.tabs.reload(reloadTabId).catch(() => {
@@ -75,14 +75,8 @@ setTimeout(() => {
 
       if (reopenOptionsPage) {
         // Open options page as active if it was active, otherwise in background
-        const optionsUrl = chrome.runtime.getURL('dist-build/options.html');
+        const optionsUrl = chrome.runtime.getURL('dist/options.html');
         chrome.tabs.create({ url: optionsUrl, active: optionsPageWasActive });
-      }
-
-      if (reopenPopup) {
-        chrome.action.openPopup().catch(() => {
-          // May fail if no browser window is focused
-        });
       }
     }
   });
