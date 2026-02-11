@@ -9,7 +9,8 @@ echo "Building PigQuery version $version ($commit)"
 rm -rf dist
 mkdir -p "$dir"
 
-cp manifest.json "$dir/"
+# Remove management permission from manifest.json. It is only needed for development.
+jq 'del(.permissions[] | select(. == "management" or . == "tabs"))' manifest.json > "$dir/manifest.json"
 cp LICENSE.txt "$dir/"
 cp -R src "$dir/"
 cp -R icons "$dir/"

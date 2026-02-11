@@ -4,8 +4,7 @@
     "lint:fix": "eslint src/ scripts/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
-    "package": "scripts/package",
-    "setup": "scripts/setup-dev"
+    "package": "scripts/package"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

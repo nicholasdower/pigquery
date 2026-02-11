@@ -59,3 +59,33 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 // Check on startup
 updateErrorBadge();
 config.clearStaleBusy();
+
+// Reload tab and reopen popup/options if needed after extension reload
+// Add a small delay to ensure extension is fully loaded after reload
+setTimeout(() => {
+  chrome.storage.local.get('reloadState').then(({ reloadState }) => {
+    if (reloadState) {
+      chrome.storage.local.remove('reloadState');
+
+      const { reloadTabId, reopenPopup, reopenOptionsPage, optionsPageWasActive } = reloadState;
+
+      if (reloadTabId && !optionsPageWasActive) {
+        chrome.tabs.reload(reloadTabId).catch(() => {
+          // Tab may no longer exist, ignore error
+        });
+      }
+
+      if (reopenOptionsPage) {
+        // Open options page as active if it was active, otherwise in background
+        const optionsUrl = chrome.runtime.getURL('src/options.html');
+        chrome.tabs.create({ url: optionsUrl, active: optionsPageWasActive });
+      }
+
+      if (reopenPopup) {
+        chrome.action.openPopup().catch(() => {
+          // May fail if no browser window is focused
+        });
+      }
+    }
+  });
+}, 100);

@@ -337,19 +337,19 @@ async function main() {
   const { action, lang } = parseArgs();
 
   switch (action) {
-    case 'open':
-      await openAction(lang);
-      break;
-    case 'record':
-      await recordAction(lang);
-      break;
-    default:
-      console.error('Unknown action:', action);
-      console.log('Usage: node bot.js [open|record] [--lang <code>]');
-      console.log('  open   - Open Chrome with BigQuery');
-      console.log('  record - Record a demo video and take screenshots');
-      console.log('  --lang - Set the language (e.g., de, en)');
-      process.exit(1);
+  case 'open':
+    await openAction(lang);
+    break;
+  case 'record':
+    await recordAction(lang);
+    break;
+  default:
+    console.error('Unknown action:', action);
+    console.log('Usage: node bot.js [open|record] [--lang <code>]');
+    console.log('  open   - Open Chrome with BigQuery');
+    console.log('  record - Record a demo video and take screenshots');
+    console.log('  --lang - Set the language (e.g., de, en)');
+    process.exit(1);
   }
 }
 

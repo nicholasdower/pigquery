@@ -12,7 +12,7 @@
   },
   "host_permissions": ["https://console.cloud.google.com/*"],
   "optional_host_permissions": ["https://*/*", "http://*/*"],
-  "permissions": ["storage"],
+  "permissions": ["storage", "management", "tabs"],
   "background": {
     "service_worker": "src/background.js"
   },

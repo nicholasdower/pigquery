@@ -34,7 +34,7 @@ A Chrome Extension offering some BigQuery enhancements.
    npm run setup
    ```
 
-   This creates a `dev/` directory with symlinks to your source files.
+   This creates a `dev/` directory with symlinks to your source files and adds the `management` permission to enable in-extension reloading.
 
 3. Load the extension in Chrome:
    - Go to `chrome://extensions`
@@ -42,7 +42,10 @@ A Chrome Extension offering some BigQuery enhancements.
    - Click "Load unpacked"
    - Select the `dev/` directory
 
-   Changes to source files will be immediately reflected (you may need to reload the extension after manifest changes).
+4. Development workflow:
+   - Changes to source files will be immediately reflected after reloading the extension
+   - Click the extension icon to open the popup, which includes a "Reload Extension" button in the Developer section
+   - Use this button to quickly reload the extension without visiting `chrome://extensions`
 
 ### Code quality
 

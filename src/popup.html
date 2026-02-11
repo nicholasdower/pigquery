@@ -104,6 +104,24 @@
         opacity: 0.5;
         cursor: not-allowed;
       }
+      .dev-section {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid #444;
+      }
+      .update-btn {
+        width: 100%;
+        padding: 8px;
+        background: #0e639c;
+        color: #e0e0e0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .update-btn:hover {
+        background: #1177bb;
+      }
     </style>
   </head>
   <body>
@@ -142,6 +160,11 @@
       <div class="status-row">
         <button class="refresh-btn" id="refresh-btn"></button>
       </div>
+    </div>
+
+    <div class="dev-section" id="dev-section" style="display: none;">
+      <h2>Developer</h2>
+      <button class="update-btn" id="update-btn">Reload Extension</button>
     </div>
 
     <div class="footer">
