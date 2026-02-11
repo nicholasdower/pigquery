@@ -1258,105 +1258,105 @@ keydownListener1 = e => {
   }
 
   if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-      if (!(e.target instanceof Element)) {
-        showToast(i18n.getMessage('editorNotFocused', LOCALE));
+    if (!(e.target instanceof Element)) {
+      showToast(i18n.getMessage('editorNotFocused', LOCALE));
 
-        return;
-      }
-      const editor = e.target.closest('cfc-code-editor');
-      if (!editor) {
-        showToast(i18n.getMessage('editorNotFocused', LOCALE));
-        return;
-      }
-      openPopup(
-        () => configuration.snippets,
-        option => {
-          addRecentSnippetGroup(option.group);
-          configuration.snippets = sortSnippets(configuration.snippets);
-          insertIntoEditor(editor, option.value);
-        },
-        () => configuration.hasErrors,
-        item => [{ label: 'SQL', value: item.value, type: 'sql' }]
-      );
       return;
     }
-
-    if (
-      !e.isComposing &&
-      !e.repeat &&
-      e.key.toLowerCase() === 'a' &&
-      !e.shiftKey &&
-      !e.altKey &&
-      (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
-    ) {
-      if (!e.target.closest('cfc-code-editor')) {
-        showToast(i18n.getMessage('editorNotFocused', LOCALE));
-        return;
-      }
-      if (copyTimeoutId) {
-        clearTimeout(copyTimeoutId);
-        copyTimeoutId = null;
-      }
-      copyTimeoutId = copyShareLink();
+    const editor = e.target.closest('cfc-code-editor');
+    if (!editor) {
+      showToast(i18n.getMessage('editorNotFocused', LOCALE));
       return;
     }
+    openPopup(
+      () => configuration.snippets,
+      option => {
+        addRecentSnippetGroup(option.group);
+        configuration.snippets = sortSnippets(configuration.snippets);
+        insertIntoEditor(editor, option.value);
+      },
+      () => configuration.hasErrors,
+      item => [{ label: 'SQL', value: item.value, type: 'sql' }]
+    );
+    return;
+  }
 
-    if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.focusTable)) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+  if (
+    !e.isComposing &&
+    !e.repeat &&
+    e.key.toLowerCase() === 'a' &&
+    !e.shiftKey &&
+    !e.altKey &&
+    (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
+  ) {
+    if (!e.target.closest('cfc-code-editor')) {
+      showToast(i18n.getMessage('editorNotFocused', LOCALE));
+      return;
+    }
+    if (copyTimeoutId) {
+      clearTimeout(copyTimeoutId);
+      copyTimeoutId = null;
+    }
+    copyTimeoutId = copyShareLink();
+    return;
+  }
 
-      // Check if currently in editor
-      const isInEditor = e.target instanceof Element && e.target.closest('cfc-code-editor');
+  if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.focusTable)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-      if (isInEditor) {
-        // Focus table
-        const table = document.querySelector('bq-results-table-optimized');
-        if (!table) {
-          showToast(i18n.getMessage('tableNotFound', LOCALE));
-          return;
-        }
+    // Check if currently in editor
+    const isInEditor = e.target instanceof Element && e.target.closest('cfc-code-editor');
 
-        const cell = table.querySelector('[role="cell"]');
-        const header = table.querySelector('[role="columnheader"]');
-        if (cell) {
-          cell.focus();
-          cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        } else if (header) {
-          header.focus();
-          header.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        } else {
-          table.focus();
-          table.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
+    if (isInEditor) {
+      // Focus table
+      const table = document.querySelector('bq-results-table-optimized');
+      if (!table) {
+        showToast(i18n.getMessage('tableNotFound', LOCALE));
+        return;
+      }
+
+      const cell = table.querySelector('[role="cell"]');
+      const header = table.querySelector('[role="columnheader"]');
+      if (cell) {
+        cell.focus();
+        cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } else if (header) {
+        header.focus();
+        header.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       } else {
-        // Focus editor
-        const editor = getVisibleOrActiveEditor();
-        if (!editor) {
-          showToast(i18n.getMessage('editorNotFound', LOCALE));
-          return;
-        }
-
-        const ta = findEditorTextArea(editor);
-        if (ta) {
-          ta.focus();
-          editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        } else {
-          editor.focus();
-          editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
+        table.focus();
+        table.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
-      return;
-    }
+    } else {
+      // Focus editor
+      const editor = getVisibleOrActiveEditor();
+      if (!editor) {
+        showToast(i18n.getMessage('editorNotFound', LOCALE));
+        return;
+      }
 
-    //
-    if (e.key === 'Alt') {
-      document.documentElement.classList.add('alt-down');
+      const ta = findEditorTextArea(editor);
+      if (ta) {
+        ta.focus();
+        editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } else {
+        editor.focus();
+        editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
     }
+    return;
+  }
+
+  //
+  if (e.key === 'Alt') {
+    document.documentElement.classList.add('alt-down');
+  }
 };
 
 document.addEventListener('keydown', keydownListener1, true);
