@@ -165,7 +165,9 @@ function scoreItem({ group, name, tag }, query) {
       const match = matchesField(qt, field.norm, field.tokens, field.acronym);
       if (match) {
         const effectiveScore = match.score * field.weight - match.startIndex * POSITION_PENALTY;
-        const bestEffective = bestMatch ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY : -Infinity;
+        const bestEffective = bestMatch
+          ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY
+          : -Infinity;
         if (effectiveScore > bestEffective) {
           bestMatch = match;
           bestWeight = field.weight;
@@ -187,9 +189,15 @@ function scoreItem({ group, name, tag }, query) {
 
         const seqResult = tokenPrefixMatch(combinedTokens, qt);
         if (seqResult) {
-          const candidate = { type: 'combined-sequence', score: seqResult.score * 0.7, startIndex: seqResult.startIndex };
+          const candidate = {
+            type: 'combined-sequence',
+            score: seqResult.score * 0.7,
+            startIndex: seqResult.startIndex,
+          };
           const candidateEffective = candidate.score * 0.7 - candidate.startIndex * POSITION_PENALTY;
-          const bestEffective = bestMatch ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY : -Infinity;
+          const bestEffective = bestMatch
+            ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY
+            : -Infinity;
           if (candidateEffective > bestEffective) {
             bestMatch = candidate;
             bestWeight = 0.7;

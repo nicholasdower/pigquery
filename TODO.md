@@ -14,7 +14,7 @@ This document contains findings from a comprehensive code review of the PigQuery
   - `content.js:189, 203, 229` - Editor insertion fallbacks
   - `formatters.js:13, 31, 85, 131, 476, 535, 616` - Various format detection
   - `config.js:29` - YAML parsing
-  
+
   **Recommendation:** At minimum, log errors to help with debugging. Consider adding error telemetry.
 
 ### Code Duplication
@@ -22,7 +22,7 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Duplicate timestamp formatting logic** - Nearly identical date/time formatting code appears in:
   - `formatters.js:138-224` (`formatDateTimeOutput`)
   - `formatters.js:379-433` (inside `tryNumber`)
-  
+
   **Recommendation:** Extract shared timestamp formatting into a single reusable function.
 
 - [ ] **Duplicate relative time calculation** - Same relative time logic ("X minutes ago") in:
@@ -31,7 +31,7 @@ This document contains findings from a comprehensive code review of the PigQuery
 
 - [ ] **Similar status update patterns** - `options.js` has three nearly identical status functions:
   - `setLocalStatus()`, `setAddUrlStatus()`, `setShortcutsStatus()`
-  
+
   **Recommendation:** Create a single `setStatus(element, message, kind)` function.
 
 - [ ] **Duplicate busy state handling** - Similar patterns in `options.js` for checking/setting busy state across multiple async functions.
@@ -45,7 +45,7 @@ This document contains findings from a comprehensive code review of the PigQuery
   - Renders list items
   - Manages content panel
   - Handles refresh state
-  
+
   **Recommendation:** Split into smaller focused functions or a class:
   - `createModalDOM()`
   - `ModalKeyboardHandler`
@@ -53,25 +53,27 @@ This document contains findings from a comprehensive code review of the PigQuery
   - `ContentPanelManager`
 
 - [ ] **`tryNumber()` in formatters.js is ~140 lines** (lines 296-439)
-  
+
   **Recommendation:** Extract sub-formatters: `formatAsFileSize()`, `formatAsTimestamp()`, `formatIntegerRepresentations()`.
 
 ### Global State
 
 - [ ] **Multiple global variables in content.js** (lines 13-16):
+
   ```js
   let configuration;
   let shortcuts = config.DEFAULT_SHORTCUTS;
   let onConfigurationChange = null;
   let recentSnippetGroups = [];
   ```
+
   **Recommendation:** Consider encapsulating in a state object or module pattern.
 
 - [ ] **Global state in options.js** (lines 25-29):
   ```js
   let sources = [];
   let busy = null;
-  let lastLoadedLocal = "";
+  let lastLoadedLocal = '';
   let shortcuts = {};
   let recordingShortcut = null;
   ```
@@ -83,7 +85,6 @@ This document contains findings from a comprehensive code review of the PigQuery
   - `el` function in options.js - consider `getElementById` or `byId`
   - `s` in various places for source
   - `e` for events (acceptable but inconsistent with `event` elsewhere)
-
 - [ ] **Inconsistent naming patterns:**
   - `STORAGE_KEY` vs `config.BUSY_KEY` (some constants exposed, some not)
   - `loadConfiguration` vs `loadSources` vs `loadBusy` (inconsistent return semantics)
@@ -91,7 +92,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 ### Missing Type Safety / Documentation
 
 - [ ] **No JSDoc on public API functions** - Functions like `filter()`, `detectContentType()`, `loadConfiguration()` would benefit from type documentation.
-
 - [ ] **Magic numbers:**
   - `formatters.js:1` - `MIN_CONTENT_LENGTH_FOR_DISPLAY = 200` (good!)
   - `formatters.js:95` - `text.length < 20` (should be a constant)
@@ -107,12 +107,10 @@ This document contains findings from a comprehensive code review of the PigQuery
 ### Dead Code / Unused
 
 - [ ] **Verify CSS usage** - Several CSS classes defined in `content.js` styles block. Audit for unused classes.
-
 - [ ] **Unused function parameter** - `search.js:94` `matchesField` receives `fieldNorm` but never uses it:
   ```js
   function matchesField(queryToken, fieldNorm, fieldTokens, fieldAcronym)
   ```
-
 - [ ] **Potentially unused** - `config.js` exports many functions. Verify all are used.
 
 ### Comments
@@ -122,21 +120,12 @@ This document contains findings from a comprehensive code review of the PigQuery
 ### Simplification Opportunities
 
 - [ ] **Deep nesting in search.js** - `scoreItem()` function has 4+ levels of nesting. Consider early returns or extraction.
-
 - [ ] **Repetitive event listener setup** - `options.js` lines 355-394 could use a helper for adding click handlers.
-
 - [ ] **String template in options.js:232-250** - Large HTML template string. Consider a template helper or DOM builder.
-
-### Style Consistency
-
-- [ ] **Inconsistent optional chaining** - Some places use `?.` others use explicit null checks.
-
----
 
 ## 🔵 P3 - Enhancements
 
 - [ ] **Add light mode** - Currently only dark theme
-- [ ] **Add tests** - No test coverage currently
 - [ ] **Support multiple tags** - Current model is single tag per item
 - [ ] **Disable groups feature** - Allow users to disable entire groups
 - [ ] **Precreate search index** - Performance optimization for large configs
@@ -168,9 +157,3 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Unit tests for formatters.js** - Pure functions with clear inputs/outputs
 - [ ] **Unit tests for config.js validation** - `validateConfigItems()`
 - [ ] **Integration tests** - Chrome extension testing
-
-### Build & Tooling
-
-- [ ] **Add formatter** - Prettier for consistent style
-- [ ] **Add TypeScript** - Optional, for better type safety
-- [ ] **Add bundler** - Currently raw JS files; could benefit from bundling for tree-shaking

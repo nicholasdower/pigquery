@@ -12,7 +12,7 @@ document.getElementById('shortcut-copy-cell').textContent = isMac ? 'Alt+⌘+Cli
 const shortcutInsertEl = document.getElementById('shortcut-insert');
 const shortcutFocusTableEl = document.getElementById('shortcut-focus-table');
 
-document.getElementById('options-link').addEventListener('click', (e) => {
+document.getElementById('options-link').addEventListener('click', e => {
   e.preventDefault();
   chrome.runtime.openOptionsPage();
 });

@@ -23,6 +23,7 @@ A Chrome Extension offering some BigQuery enhancements.
 ### Setup
 
 1. Install Playwright:
+
    ```bash
    npm install
    npx playwright install ffmpeg

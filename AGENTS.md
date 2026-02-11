@@ -1,6 +1,6 @@
 ## Planning
 
- - If there are multiple options for how to proceed and you need to ask the user, be sure to make a suggestion for how to proceed.
+- If there are multiple options for how to proceed and you need to ask the user, be sure to make a suggestion for how to proceed.
 
 ## Editing
 

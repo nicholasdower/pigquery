@@ -1,5 +1,4 @@
-(function() {
-
+(function () {
   const i18n = self.pigquery.i18n;
   const LOCALE = i18n.getBigQueryLocale();
 
@@ -33,10 +32,10 @@
     if (!base64urlRegex.test(parts[0]) || !base64urlRegex.test(parts[1])) return null;
 
     try {
-      const decodeBase64Url = (str) => {
+      const decodeBase64Url = str => {
         // Convert base64url to base64
         const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-        const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
         return JSON.parse(atob(padded));
       };
 
@@ -48,15 +47,35 @@
 
       const typeName = i18n.getMessage('typeJwt', LOCALE);
       const items = [
-        { label: `${typeName} – ${i18n.getMessage('header', LOCALE)}`, value: JSON.stringify(header, null, 2), type: 'json' },
-        { label: `${typeName} – ${i18n.getMessage('payload', LOCALE)}`, value: JSON.stringify(payload, null, 2), type: 'json' },
+        {
+          label: `${typeName} – ${i18n.getMessage('header', LOCALE)}`,
+          value: JSON.stringify(header, null, 2),
+          type: 'json',
+        },
+        {
+          label: `${typeName} – ${i18n.getMessage('payload', LOCALE)}`,
+          value: JSON.stringify(payload, null, 2),
+          type: 'json',
+        },
         { label: `${typeName} – ${i18n.getMessage('signature', LOCALE)}`, value: parts[2] },
       ];
 
       // Add human-readable timestamps if present
-      if (payload.iat) items.push({ label: `${typeName} – ${i18n.getMessage('issued', LOCALE)}`, value: formatDate(new Date(payload.iat * 1000)) });
-      if (payload.exp) items.push({ label: `${typeName} – ${i18n.getMessage('expires', LOCALE)}`, value: formatDate(new Date(payload.exp * 1000)) });
-      if (payload.nbf) items.push({ label: `${typeName} – ${i18n.getMessage('notBefore', LOCALE)}`, value: formatDate(new Date(payload.nbf * 1000)) });
+      if (payload.iat)
+        items.push({
+          label: `${typeName} – ${i18n.getMessage('issued', LOCALE)}`,
+          value: formatDate(new Date(payload.iat * 1000)),
+        });
+      if (payload.exp)
+        items.push({
+          label: `${typeName} – ${i18n.getMessage('expires', LOCALE)}`,
+          value: formatDate(new Date(payload.exp * 1000)),
+        });
+      if (payload.nbf)
+        items.push({
+          label: `${typeName} – ${i18n.getMessage('notBefore', LOCALE)}`,
+          value: formatDate(new Date(payload.nbf * 1000)),
+        });
 
       return items;
     } catch (_) {
@@ -79,10 +98,11 @@
       const decoded = atob(standard);
 
       // Check if result is printable text (allow some control chars like newline, tab)
-      const printableRatio = decoded.split('').filter(c => {
-        const code = c.charCodeAt(0);
-        return (code >= 32 && code < 127) || code === 9 || code === 10 || code === 13;
-      }).length / decoded.length;
+      const printableRatio =
+        decoded.split('').filter(c => {
+          const code = c.charCodeAt(0);
+          return (code >= 32 && code < 127) || code === 9 || code === 10 || code === 13;
+        }).length / decoded.length;
 
       // Must be mostly printable
       if (printableRatio < 0.9) return null;
@@ -123,7 +143,7 @@
       minute: '2-digit',
       second: '2-digit',
       fractionalSecondDigits: 3,
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     };
 
     return date.toLocaleString(LOCALE, options);
@@ -148,7 +168,8 @@
     const rfcRegex = /^[A-Za-z]{3},?\s+\d{1,2}\s+[A-Za-z]{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s*(GMT|UTC|[+-]\d{4})?$/;
 
     const isDateOnly = dateOnlyRegex.test(text);
-    const isDateTime = isoFullRegex.test(text) || dateTimeNoTzRegex.test(text) || sqlDateTimeRegex.test(text) || rfcRegex.test(text);
+    const isDateTime =
+      isoFullRegex.test(text) || dateTimeNoTzRegex.test(text) || sqlDateTimeRegex.test(text) || rfcRegex.test(text);
 
     if (!isDateOnly && !isDateTime) return null;
 
@@ -181,7 +202,10 @@
       items.push({ label: `${typeName} – ${i18n.getMessage('date', LOCALE)}`, value: isoDate });
     }
 
-    items.push({ label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`, value: formatDateLocalized(date) });
+    items.push({
+      label: `${typeName} – ${i18n.getMessage('dateLocalized', LOCALE)}`,
+      value: formatDateLocalized(date),
+    });
     items.push({ label: `${typeName} – ${i18n.getMessage('milliseconds', LOCALE)}`, value: String(date.getTime()) });
 
     return items;
@@ -294,8 +318,10 @@
       ];
 
       if (url.port) items.push({ label: `${typeName} – ${i18n.getMessage('port', LOCALE)}`, value: url.port });
-      if (url.pathname !== '/') items.push({ label: `${typeName} – ${i18n.getMessage('path', LOCALE)}`, value: url.pathname });
-      if (url.hash) items.push({ label: `${typeName} – ${i18n.getMessage('fragment', LOCALE)}`, value: url.hash.slice(1) });
+      if (url.pathname !== '/')
+        items.push({ label: `${typeName} – ${i18n.getMessage('path', LOCALE)}`, value: url.pathname });
+      if (url.hash)
+        items.push({ label: `${typeName} – ${i18n.getMessage('fragment', LOCALE)}`, value: url.hash.slice(1) });
 
       if (hasParams) {
         for (const [key, value] of url.searchParams) {
@@ -362,9 +388,7 @@
       original.type = 'xml';
       const typeName = i18n.getMessage('typeXml', LOCALE);
       const label = i18n.getMessage('formatted', LOCALE);
-      return [
-        { label: `${typeName} – ${label}`, value: formatted, type: 'xml' },
-      ];
+      return [{ label: `${typeName} – ${label}`, value: formatted, type: 'xml' }];
     } catch (_) {
       return null;
     }
@@ -375,10 +399,10 @@
     // YAML typically starts with common patterns
     // Check for YAML indicators: keys with colons, list items with dashes, or document separators
     const yamlPatterns = [
-      /^---/,                           // Document separator
-      /^\w+:/m,                         // Key-value pair
-      /^-\s+\w+:/m,                     // List item with object
-      /^-\s+[^-]/m,                     // List item
+      /^---/, // Document separator
+      /^\w+:/m, // Key-value pair
+      /^-\s+\w+:/m, // List item with object
+      /^-\s+[^-]/m, // List item
     ];
 
     const hasYamlPattern = yamlPatterns.some(pattern => pattern.test(text));
@@ -441,7 +465,7 @@
       for (let i = 0; i < bytes.length; i += 16) {
         const chunk = bytes.slice(i, i + 16);
         const hex = chunk.map(b => b.toString(16).padStart(2, '0')).join(' ');
-        const ascii = chunk.map(b => (b >= 32 && b < 127) ? String.fromCharCode(b) : '.').join('');
+        const ascii = chunk.map(b => (b >= 32 && b < 127 ? String.fromCharCode(b) : '.')).join('');
         hexDump += `${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48)}  ${ascii}\n`;
       }
       const typeName = i18n.getMessage('typeHex', LOCALE);
@@ -460,16 +484,19 @@
 
     const version = match[1];
     const versionNames = {
-      '1': i18n.getMessage('uuidVersion1', LOCALE),
-      '2': i18n.getMessage('uuidVersion2', LOCALE),
-      '3': i18n.getMessage('uuidVersion3', LOCALE),
-      '4': i18n.getMessage('uuidVersion4', LOCALE),
-      '5': i18n.getMessage('uuidVersion5', LOCALE)
+      1: i18n.getMessage('uuidVersion1', LOCALE),
+      2: i18n.getMessage('uuidVersion2', LOCALE),
+      3: i18n.getMessage('uuidVersion3', LOCALE),
+      4: i18n.getMessage('uuidVersion4', LOCALE),
+      5: i18n.getMessage('uuidVersion5', LOCALE),
     };
 
     const typeName = i18n.getMessage('typeUuid', LOCALE);
     return [
-      { label: `${typeName} – ${i18n.getMessage('version', LOCALE)}`, value: `${version} – ${versionNames[version] || i18n.getMessage('unknown', LOCALE)}` },
+      {
+        label: `${typeName} – ${i18n.getMessage('version', LOCALE)}`,
+        value: `${version} – ${versionNames[version] || i18n.getMessage('unknown', LOCALE)}`,
+      },
     ];
   }
 
@@ -514,5 +541,4 @@
   self.pigquery.formatters = {
     detectContentType,
   };
-
 })();

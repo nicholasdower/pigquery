@@ -13,7 +13,7 @@ async function loadIconAsDataURL(path) {
   const url = chrome.runtime.getURL(path);
   const response = await fetch(url);
   const blob = await response.blob();
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result);
     reader.readAsDataURL(blob);
@@ -36,11 +36,13 @@ let recentSnippetGroups = [];
  * Checks if a keyboard event matches a shortcut configuration.
  */
 function matchesShortcut(e, shortcut) {
-  return e.code === shortcut.code &&
-         e.ctrlKey === shortcut.ctrl &&
-         e.altKey === shortcut.alt &&
-         e.shiftKey === shortcut.shift &&
-         e.metaKey === shortcut.meta;
+  return (
+    e.code === shortcut.code &&
+    e.ctrlKey === shortcut.ctrl &&
+    e.altKey === shortcut.alt &&
+    e.shiftKey === shortcut.shift &&
+    e.metaKey === shortcut.meta
+  );
 }
 
 function sortSnippets(items) {
@@ -77,10 +79,7 @@ function sortSites(items, prioritySite) {
 }
 
 async function load() {
-  const [loaded, loadedShortcuts] = await Promise.all([
-    config.loadConfiguration(),
-    config.loadShortcuts(),
-  ]);
+  const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(), config.loadShortcuts()]);
   configuration = {
     snippets: sortSnippets(loaded.snippets),
     sites: sortSites(loaded.sites, null),
@@ -92,7 +91,7 @@ async function load() {
 
 load();
 
-chrome.storage.onChanged.addListener((changes) => {
+chrome.storage.onChanged.addListener(changes => {
   if (config.STORAGE_KEY in changes || config.SHORTCUTS_KEY in changes) {
     load();
   }
@@ -125,7 +124,6 @@ if (url.searchParams.has('pig')) {
 
 let clickedTab = false;
 if (query && query.length > 0) {
-
   const observer = new MutationObserver(() => {
     if (!clickedTab) {
       const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
@@ -149,7 +147,7 @@ if (query && query.length > 0) {
     subtree: true,
   });
 
-  const cleanup = (inserted) => {
+  const cleanup = inserted => {
     if (inserted) {
       showToast(i18n.getMessage('queryInsertSucceeded', LOCALE));
     } else {
@@ -226,8 +224,8 @@ function insertIntoEditor(editor, text) {
   // (Kept for environments where ClipboardEvent/DataTransfer is unavailable.)
   try {
     ta.focus();
-    const start = ta.selectionStart ?? (ta.value?.length ?? 0);
-    const end = ta.selectionEnd ?? (ta.value?.length ?? 0);
+    const start = ta.selectionStart ?? ta.value?.length ?? 0;
+    const end = ta.selectionEnd ?? ta.value?.length ?? 0;
 
     if (typeof ta.setRangeText === 'function') {
       ta.setRangeText(text, start, end, 'end');
@@ -654,16 +652,16 @@ function hashString(str) {
 function getLabelColor(name) {
   // Vibrant colors for tags
   const colors = [
-    { bg: 'rgba(59, 130, 246, 0.2)', text: 'rgb(147, 197, 253)' },  // blue
-    { bg: 'rgba(16, 185, 129, 0.2)', text: 'rgb(110, 231, 183)' },  // green
-    { bg: 'rgba(245, 158, 11, 0.2)', text: 'rgb(251, 191, 36)' },   // amber
-    { bg: 'rgba(139, 92, 246, 0.2)', text: 'rgb(196, 181, 253)' },  // purple
-    { bg: 'rgba(236, 72, 153, 0.2)', text: 'rgb(249, 168, 212)' },  // pink
-    { bg: 'rgba(6, 182, 212, 0.2)', text: 'rgb(103, 232, 249)' },   // cyan
-    { bg: 'rgba(239, 68, 68, 0.2)', text: 'rgb(252, 165, 165)' },   // red
-    { bg: 'rgba(168, 85, 247, 0.2)', text: 'rgb(216, 180, 254)' },  // violet
-    { bg: 'rgba(34, 197, 94, 0.2)', text: 'rgb(134, 239, 172)' },   // emerald
-    { bg: 'rgba(234, 179, 8, 0.2)', text: 'rgb(250, 204, 21)' },    // yellow
+    { bg: 'rgba(59, 130, 246, 0.2)', text: 'rgb(147, 197, 253)' }, // blue
+    { bg: 'rgba(16, 185, 129, 0.2)', text: 'rgb(110, 231, 183)' }, // green
+    { bg: 'rgba(245, 158, 11, 0.2)', text: 'rgb(251, 191, 36)' }, // amber
+    { bg: 'rgba(139, 92, 246, 0.2)', text: 'rgb(196, 181, 253)' }, // purple
+    { bg: 'rgba(236, 72, 153, 0.2)', text: 'rgb(249, 168, 212)' }, // pink
+    { bg: 'rgba(6, 182, 212, 0.2)', text: 'rgb(103, 232, 249)' }, // cyan
+    { bg: 'rgba(239, 68, 68, 0.2)', text: 'rgb(252, 165, 165)' }, // red
+    { bg: 'rgba(168, 85, 247, 0.2)', text: 'rgb(216, 180, 254)' }, // violet
+    { bg: 'rgba(34, 197, 94, 0.2)', text: 'rgb(134, 239, 172)' }, // emerald
+    { bg: 'rgba(234, 179, 8, 0.2)', text: 'rgb(250, 204, 21)' }, // yellow
   ];
 
   const index = Math.abs(hashString(name)) % colors.length;
@@ -733,7 +731,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     lastFocusedEl.focus();
   }
 
-  overlayEl.addEventListener('mousedown', (e) => {
+  overlayEl.addEventListener('mousedown', e => {
     if (e.target === overlayEl) {
       e.preventDefault();
       e.stopPropagation();
@@ -742,7 +740,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   });
 
   // Document-level Escape handler (keydown on modal only works when focus is inside)
-  escapeHandler = (e) => {
+  escapeHandler = e => {
     if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
@@ -780,13 +778,13 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
   const modalEl = makeEl('div', { className: 'pig-modal pig-modal-with-content' });
 
-  modalEl.addEventListener('keydown', (e) => {
+  modalEl.addEventListener('keydown', e => {
     // Trap focus within modal
     if (e.key === 'Tab') {
       // Get all focusable elements in the modal dynamically
-      const allFocusable = Array.from(modalEl.querySelectorAll(
-        'input, button:not([tabindex="-1"]), [tabindex="0"]'
-      )).filter(el => el.offsetParent !== null); // Filter out hidden elements
+      const allFocusable = Array.from(
+        modalEl.querySelectorAll('input, button:not([tabindex="-1"]), [tabindex="0"]')
+      ).filter(el => el.offsetParent !== null); // Filter out hidden elements
 
       if (allFocusable.length === 0) return;
 
@@ -867,9 +865,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
     filtered.forEach((opt, idx) => {
       const itemClass = 'pig-modal-item' + (idx === activeIndex ? ' active' : '');
-      const item = opt.url
-        ? makeEl('a', { className: itemClass })
-        : makeEl('div', { className: itemClass });
+      const item = opt.url ? makeEl('a', { className: itemClass }) : makeEl('div', { className: itemClass });
 
       if (opt.url) {
         item.href = opt.url;
@@ -897,7 +893,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
       item.appendChild(wrapper);
 
-      item.addEventListener('mousedown', (e) => {
+      item.addEventListener('mousedown', e => {
         // Prevent input blur before click handler runs
         e.preventDefault();
       });
@@ -914,7 +910,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       item.addEventListener('mouseenter', updateSelection);
       item.addEventListener('mousemove', updateSelection);
 
-      item.addEventListener('click', (e) => {
+      item.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
         onOptionSelected(filtered[idx]);
@@ -968,10 +964,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
     // Try to find the previously selected item in the new filtered list
     if (currentItem) {
-      const newIndex = filtered.findIndex(item =>
-        item.group === currentItem.group &&
-        item.name === currentItem.name &&
-        item.tag === currentItem.tag
+      const newIndex = filtered.findIndex(
+        item => item.group === currentItem.group && item.name === currentItem.name && item.tag === currentItem.tag
       );
       activeIndex = newIndex !== -1 ? newIndex : 0;
     } else {
@@ -990,7 +984,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   // Refresh button
   const refreshBtn = makeEl('button', { className: 'pig-modal-refresh' });
   refreshBtn.type = 'button';
-  refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
+  refreshBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
   refreshBtn.title = 'Refresh';
 
   let isBusy = false;
@@ -1021,12 +1016,12 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
   // Check initial busy state, skip if extension context has been invalidated
   if (chrome.runtime?.id) {
-    chrome.storage.local.get(config.BUSY_KEY, (result) => {
+    chrome.storage.local.get(config.BUSY_KEY, result => {
       updateRefreshState(!!result[config.BUSY_KEY]);
     });
 
     // Listen for busy state changes
-    busyListener = (changes) => {
+    busyListener = changes => {
       if (config.BUSY_KEY in changes) {
         updateRefreshState(!!changes[config.BUSY_KEY].newValue);
       }
@@ -1034,7 +1029,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     chrome.storage.onChanged.addListener(busyListener);
   }
 
-  refreshBtn.addEventListener('click', (e) => {
+  refreshBtn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
     if (!chrome.runtime?.id) {
@@ -1051,9 +1046,10 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   // Settings button
   const settingsBtn = makeEl('button', { className: 'pig-modal-settings' });
   settingsBtn.type = 'button';
-  settingsBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
+  settingsBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
   settingsBtn.title = 'Settings';
-  settingsBtn.addEventListener('click', (e) => {
+  settingsBtn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
     if (!chrome.runtime?.id) {
@@ -1115,9 +1111,10 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
         headerEl.appendChild(labelEl);
 
         copyBtn = makeEl('button', { className: 'pig-format-item-copy' });
-        copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
+        copyBtn.innerHTML =
+          '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
         copyBtn.title = 'Copy';
-        copyBtn.addEventListener('click', (e) => {
+        copyBtn.addEventListener('click', e => {
           e.stopPropagation();
           const currentValue = valueEl.textContent;
           navigator.clipboard.writeText(currentValue);
@@ -1155,7 +1152,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       labelEl.textContent = item.label;
 
       if (['json', 'xml', 'yaml', 'sql'].includes(item.type)) {
-        const highlighted = hljs.highlight(item.value, {language: item.type});
+        const highlighted = hljs.highlight(item.value, { language: item.type });
         valueEl.innerHTML = highlighted.value;
         if (!valueEl.classList.contains('hljs')) {
           valueEl.classList.add('hljs');
@@ -1183,7 +1180,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   updateContentPanel();
 
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
-  focusRedirectHandler = (e) => {
+  focusRedirectHandler = e => {
     if (!modalEl.contains(e.target)) {
       inputEl.focus();
     }
@@ -1197,11 +1194,9 @@ function getVisibleOrActiveEditor() {
   const editors = document.querySelectorAll('cfc-code-editor');
 
   const visibleEditors = Array.from(editors).filter(el =>
-    el.checkVisibility ? el.checkVisibility() : (
-      el.offsetWidth > 0 &&
-      el.offsetHeight > 0 &&
-      getComputedStyle(el).visibility !== 'hidden'
-    )
+    el.checkVisibility
+      ? el.checkVisibility()
+      : el.offsetWidth > 0 && el.offsetHeight > 0 && getComputedStyle(el).visibility !== 'hidden'
   );
 
   if (visibleEditors.length === 1) {
@@ -1222,7 +1217,7 @@ function getVisibleOrActiveEditor() {
 
 document.addEventListener(
   'keydown',
-  (e) => {
+  e => {
     if (document.querySelector('.pig-modal-overlay')) return;
 
     if (window.copyTimeoutId) {
@@ -1246,18 +1241,26 @@ document.addEventListener(
         return;
       }
       openPopup(
-        () => configuration.snippets, (option) => {
+        () => configuration.snippets,
+        option => {
           addRecentSnippetGroup(option.group);
           configuration.snippets = sortSnippets(configuration.snippets);
           insertIntoEditor(editor, option.value);
         },
         () => configuration.hasErrors,
-        (item) => [{ label: 'SQL', value: item.value, type: 'sql' }]
+        item => [{ label: 'SQL', value: item.value, type: 'sql' }]
       );
       return;
     }
 
-    if (!e.isComposing && !e.repeat && e.key.toLowerCase() === 'a' && !e.shiftKey && !e.altKey && (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)) {
+    if (
+      !e.isComposing &&
+      !e.repeat &&
+      e.key.toLowerCase() === 'a' &&
+      !e.shiftKey &&
+      !e.altKey &&
+      (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
+    ) {
       if (!e.target.closest('cfc-code-editor')) {
         showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
@@ -1326,33 +1329,32 @@ document.addEventListener(
   true
 );
 
-document.addEventListener(
-  'keyup',
-  (e) => {
-    if (e.key === 'Alt') {
-      document.documentElement.classList.remove('alt-down');
-    }
+document.addEventListener('keyup', e => {
+  if (e.key === 'Alt') {
+    document.documentElement.classList.remove('alt-down');
   }
-);
+});
 
 function handleTableCellOpenPopup(cell) {
   const content = cell.innerText;
 
-  const getMatchingOptions = () => configuration.sites
-    .filter(option => option.regex.test(content))
-    .map(option => ({
-      ...option,
-      url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content))
-    }));
+  const getMatchingOptions = () =>
+    configuration.sites
+      .filter(option => option.regex.test(content))
+      .map(option => ({
+        ...option,
+        url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content)),
+      }));
   const contentInfo = formatters.detectContentType(content);
   openPopup(
     getMatchingOptions,
-    (option) => {
+    option => {
       configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
       window.open(option.url, '_blank', 'noopener,noreferrer');
     },
     () => configuration.hasErrors,
-    contentInfo);
+    contentInfo
+  );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
   const onFocusIn = () => {
@@ -1370,7 +1372,7 @@ function handleTableCellOpenPopup(cell) {
 
 document.addEventListener(
   'click',
-  (e) => {
+  e => {
     if (!e.altKey) return;
     if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
 
@@ -1401,7 +1403,7 @@ document.addEventListener(
 
 document.addEventListener(
   'keydown',
-  (e) => {
+  e => {
     if (e.key !== 'Enter') return;
 
     if (!(e.target instanceof Element)) return false;
@@ -1421,7 +1423,7 @@ document.addEventListener(
 
 function copyShareLink() {
   // Set up a one-time copy event handler to intercept Monaco's copy
-  const handler = (e) => {
+  const handler = e => {
     document.removeEventListener('copy', handler, true);
 
     // Get the selected text - Monaco should have prepared the selection

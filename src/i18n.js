@@ -498,7 +498,7 @@ const TRANSLATIONS = {
   uuidVersion5: {
     en: 'Name-based (SHA-1)',
     de: 'Namensbasiert (SHA-1)',
-  }
+  },
 };
 
 function getSystemLocale() {
@@ -534,16 +534,16 @@ function setMessage(element, key, attribute, locale, substitutions) {
 }
 
 function applyI18n(locale) {
-  document.querySelectorAll('[data-i18n]').forEach((element) => {
+  document.querySelectorAll('[data-i18n]').forEach(element => {
     setMessage(element, element.dataset.i18n, 'textContent', locale);
   });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
     setMessage(element, element.dataset.i18nPlaceholder, 'placeholder', locale);
   });
-  document.querySelectorAll('[data-i18n-title]').forEach((element) => {
+  document.querySelectorAll('[data-i18n-title]').forEach(element => {
     setMessage(element, element.dataset.i18nTitle, 'title', locale);
   });
-  document.querySelectorAll('[data-i18n-alt]').forEach((element) => {
+  document.querySelectorAll('[data-i18n-alt]').forEach(element => {
     setMessage(element, element.dataset.i18nAlt, 'alt', locale);
   });
 }

@@ -7,7 +7,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     config.refreshRemoteSources();
   }
   if (message.action === 'addSource') {
-    config.addSource(message.url).then((result) => {
+    config.addSource(message.url).then(result => {
       sendResponse(result);
     });
     return true;
@@ -19,13 +19,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.action === 'saveLocalSource') {
-    config.saveLocalSource(message.yaml).then((result) => {
+    config.saveLocalSource(message.yaml).then(result => {
       sendResponse(result);
     });
     return true;
   }
   if (message.action === 'saveShortcuts') {
-    config.saveShortcuts(message.shortcuts).then((result) => {
+    config.saveShortcuts(message.shortcuts).then(result => {
       sendResponse(result);
     });
     return true;

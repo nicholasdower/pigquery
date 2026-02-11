@@ -28,15 +28,14 @@ function getBigQueryUrl(lang) {
 async function startChrome(url) {
   console.log('Starting Chrome with remote debugging...');
   const profileDir = path.join(__dirname, '..', 'profile');
-  const chromeProcess = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
-    '--remote-debugging-port=9222',
-    `--user-data-dir=${profileDir}`,
-    '--window-size=1280,800',
-    url
-  ], {
-    detached: false,
-    stdio: 'ignore',
-  });
+  const chromeProcess = spawn(
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    ['--remote-debugging-port=9222', `--user-data-dir=${profileDir}`, '--window-size=1280,800', url],
+    {
+      detached: false,
+      stdio: 'ignore',
+    }
+  );
 
   console.log('Waiting for Chrome to start...');
   await new Promise(resolve => setTimeout(resolve, 3000));
@@ -74,12 +73,8 @@ async function startVideoRecording(filename) {
   await new Promise(resolve => setTimeout(resolve, 300));
   const { x, y, width, height } = await getChromeBounds();
 
-  const screencapture = spawn('screencapture', [
-    '-v',
-    '-R', `${x},${y},${width},${height}`,
-    filename
-  ], {
-    stdio: ['pipe', 'ignore', 'ignore']
+  const screencapture = spawn('screencapture', ['-v', '-R', `${x},${y},${width},${height}`, filename], {
+    stdio: ['pipe', 'ignore', 'ignore'],
   });
 
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -141,7 +136,9 @@ async function recordAction(lang) {
   await page.waitForTimeout(2000);
 
   // Enter query into the editor
-  await page.keyboard.type('select\ns.word, sum(s.word_count) as count, max(w.timestamp) as timestamp\nfrom ', { delay: 100 });
+  await page.keyboard.type('select\ns.word, sum(s.word_count) as count, max(w.timestamp) as timestamp\nfrom ', {
+    delay: 100,
+  });
   await page.waitForTimeout(500);
 
   // Open the modal again
@@ -167,13 +164,16 @@ async function recordAction(lang) {
 
   // Tab to focus the URL input
   // eslint-disable-next-line no-undef
-  while (!await optionsPage.evaluate(() => document.activeElement?.id === 'urlInput')) {
+  while (!(await optionsPage.evaluate(() => document.activeElement?.id === 'urlInput'))) {
     await optionsPage.keyboard.press('Tab');
     await optionsPage.waitForTimeout(300);
   }
 
   // Enter URL in the input and press Enter
-  await optionsPage.fill('#urlInput', 'https://raw.githubusercontent.com/nicholasdower/pigquery/refs/heads/master/samples/samples.yaml');
+  await optionsPage.fill(
+    '#urlInput',
+    'https://raw.githubusercontent.com/nicholasdower/pigquery/refs/heads/master/samples/samples.yaml'
+  );
   await page.waitForTimeout(500);
   await optionsPage.keyboard.press('Enter');
 
@@ -337,19 +337,19 @@ async function main() {
   const { action, lang } = parseArgs();
 
   switch (action) {
-  case 'open':
-    await openAction(lang);
-    break;
-  case 'record':
-    await recordAction(lang);
-    break;
-  default:
-    console.error('Unknown action:', action);
-    console.log('Usage: node bot.js [open|record] [--lang <code>]');
-    console.log('  open   - Open Chrome with BigQuery');
-    console.log('  record - Record a demo video and take screenshots');
-    console.log('  --lang - Set the language (e.g., de, en)');
-    process.exit(1);
+    case 'open':
+      await openAction(lang);
+      break;
+    case 'record':
+      await recordAction(lang);
+      break;
+    default:
+      console.error('Unknown action:', action);
+      console.log('Usage: node bot.js [open|record] [--lang <code>]');
+      console.log('  open   - Open Chrome with BigQuery');
+      console.log('  record - Record a demo video and take screenshots');
+      console.log('  --lang - Set the language (e.g., de, en)');
+      process.exit(1);
   }
 }
 

@@ -1,0 +1,7 @@
+*.min.js
+dist
+icons
+lib
+node_modules
+profile
+store

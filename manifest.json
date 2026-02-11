@@ -10,23 +10,28 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "host_permissions": [
-    "https://console.cloud.google.com/*"
-  ],
-  "optional_host_permissions": [
-    "https://*/*",
-    "http://*/*"
-  ],
-  "permissions": [
-    "storage"
-  ],
+  "host_permissions": ["https://console.cloud.google.com/*"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "permissions": ["storage"],
   "background": {
     "service_worker": "src/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": ["lib/js-yaml.min.js", "lib/highlight.min.js", "lib/highlight-sql.min.js", "lib/highlight-json.min.js", "lib/highlight-xml.min.js", "lib/highlight-yaml.min.js", "src/i18n.js", "src/config.js", "src/search.js", "src/formatters.js", "src/content.js"],
+      "js": [
+        "lib/js-yaml.min.js",
+        "lib/highlight.min.js",
+        "lib/highlight-sql.min.js",
+        "lib/highlight-json.min.js",
+        "lib/highlight-xml.min.js",
+        "lib/highlight-yaml.min.js",
+        "src/i18n.js",
+        "src/config.js",
+        "src/search.js",
+        "src/formatters.js",
+        "src/content.js"
+      ],
       "css": ["lib/highlight-theme.css"]
     }
   ],

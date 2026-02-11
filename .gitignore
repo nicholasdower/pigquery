@@ -1,10 +1,8 @@
 .DS_Store
-/pigquery.zip
 /publickey.pem
 /privatekey.pem
 /dist
 /.cursor
 /node_modules
 /profile
-/videos
 *.mp4

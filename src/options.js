@@ -5,7 +5,7 @@ i18n.applyI18n(LOCALE);
 
 const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
 
-const el = (id) => document.getElementById(id);
+const el = id => document.getElementById(id);
 
 const textarea = el('payload');
 const saveBtn = el('save');
@@ -46,8 +46,10 @@ function updateButtonStates() {
   shortcutFocusTableBtn.disabled = !!busy && recordingShortcut !== 'focusTable';
 
   // Reset buttons - disabled when busy or when shortcut matches default
-  const insertIsDefault = shortcuts.insertSnippet && shortcutsMatch(shortcuts.insertSnippet, config.DEFAULT_SHORTCUTS.insertSnippet);
-  const focusTableIsDefault = shortcuts.focusTable && shortcutsMatch(shortcuts.focusTable, config.DEFAULT_SHORTCUTS.focusTable);
+  const insertIsDefault =
+    shortcuts.insertSnippet && shortcutsMatch(shortcuts.insertSnippet, config.DEFAULT_SHORTCUTS.insertSnippet);
+  const focusTableIsDefault =
+    shortcuts.focusTable && shortcutsMatch(shortcuts.focusTable, config.DEFAULT_SHORTCUTS.focusTable);
   resetInsertBtn.disabled = !!busy || insertIsDefault;
   resetFocusTableBtn.disabled = !!busy || focusTableIsDefault;
 }
@@ -114,22 +116,39 @@ function codeToKey(code) {
   if (code.startsWith('Key')) return code.slice(3).toLowerCase();
   if (code.startsWith('Digit')) return code.slice(5);
   const specialKeys = {
-    Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
-    Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/',
-    Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backspace: 'Backspace',
-    ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight',
-    Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown',
-    Insert: 'Insert', Delete: 'Delete',
+    Backquote: '`',
+    Minus: '-',
+    Equal: '=',
+    BracketLeft: '[',
+    BracketRight: ']',
+    Backslash: '\\',
+    Semicolon: ';',
+    Quote: "'",
+    Comma: ',',
+    Period: '.',
+    Slash: '/',
+    Space: 'Space',
+    Enter: 'Enter',
+    Tab: 'Tab',
+    Backspace: 'Backspace',
+    ArrowUp: 'ArrowUp',
+    ArrowDown: 'ArrowDown',
+    ArrowLeft: 'ArrowLeft',
+    ArrowRight: 'ArrowRight',
+    Home: 'Home',
+    End: 'End',
+    PageUp: 'PageUp',
+    PageDown: 'PageDown',
+    Insert: 'Insert',
+    Delete: 'Delete',
   };
   return specialKeys[code] || code;
 }
 
 function shortcutsMatch(s1, s2) {
-  return s1.code === s2.code &&
-         s1.ctrl === s2.ctrl &&
-         s1.alt === s2.alt &&
-         s1.shift === s2.shift &&
-         s1.meta === s2.meta;
+  return (
+    s1.code === s2.code && s1.ctrl === s2.ctrl && s1.alt === s2.alt && s1.shift === s2.shift && s1.meta === s2.meta
+  );
 }
 
 /**
@@ -146,7 +165,11 @@ function handleShortcutKeydown(e) {
   }
 
   // Ignore modifier-only keypresses
-  if (['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight'].includes(e.code)) {
+  if (
+    ['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight'].includes(
+      e.code
+    )
+  ) {
     return;
   }
 
@@ -159,7 +182,7 @@ function handleShortcutKeydown(e) {
     ctrl: e.ctrlKey,
     alt: e.altKey,
     shift: e.shiftKey,
-    meta: e.metaKey
+    meta: e.metaKey,
   };
 
   const shortcutKey = recordingShortcut;
@@ -250,12 +273,13 @@ async function load() {
     return;
   }
 
-  remoteSourcesEl.innerHTML = remote.map((source) => {
-    const metaClass = source.error ? 'source-meta error' : 'source-meta';
-    const metaText = source.error
-      ? t('optionsLastUpdatedError', [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
-      : t('optionsLastUpdated', formatTimestamp(source.timestamp));
-    return `
+  remoteSourcesEl.innerHTML = remote
+    .map(source => {
+      const metaClass = source.error ? 'source-meta error' : 'source-meta';
+      const metaText = source.error
+        ? t('optionsLastUpdatedError', [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+        : t('optionsLastUpdated', formatTimestamp(source.timestamp));
+      return `
       <div class="source-card" data-url="${escapeHtml(source.url)}">
         <div class="source-header">
           <div class="source-info">
@@ -269,7 +293,8 @@ async function load() {
         <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 
   remoteSourcesEl.querySelectorAll('.remove-btn').forEach(btn => {
     btn.addEventListener('click', () => removeSource(btn.dataset.url));
@@ -424,7 +449,7 @@ shortcutFocusTableBtn.addEventListener('click', () => {
 resetInsertBtn.addEventListener('click', () => void resetShortcut('insertSnippet'));
 resetFocusTableBtn.addEventListener('click', () => void resetShortcut('focusTable'));
 
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
   // Handle shortcut recording
   if (recordingShortcut) {
     handleShortcutKeydown(e);
@@ -437,7 +462,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-urlInput.addEventListener('keydown', (e) => {
+urlInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     void addUrl();

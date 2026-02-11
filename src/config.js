@@ -130,13 +130,12 @@ async function loadSources() {
 async function loadConfiguration() {
   const sources = await loadSources();
   // Order remote then local, so local definitions come last and win
-  const allItems = [
-    ...sources.filter(s => s.url !== 'local'),
-    ...sources.filter(s => s.url === 'local'),
-  ].flatMap(source => source.data);
+  const allItems = [...sources.filter(s => s.url !== 'local'), ...sources.filter(s => s.url === 'local')].flatMap(
+    source => source.data
+  );
 
   // Dedupe: first occurrence order, last occurrence value
-  const dedupe = (items) => {
+  const dedupe = items => {
     const map = new Map();
     for (const item of items) {
       map.set(`${item.name}\0${item.group}\0${item.tag ?? ''}\0${item.regex ?? ''}`, item);
@@ -147,9 +146,7 @@ async function loadConfiguration() {
   const hasErrors = sources.some(source => source.error != null);
 
   // Default built-in sites
-  const defaultSites = [
-    { name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false },
-  ];
+  const defaultSites = [{ name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false }];
 
   const userSites = dedupe(allItems.filter(item => item.url)).map(item => ({ ...item, regex: new RegExp(item.regex) }));
 
@@ -206,7 +203,7 @@ async function doSaveLocalSource(rawYaml) {
   filtered.unshift({
     url: 'local',
     timestamp: Date.now(),
-    data: parsed.value
+    data: parsed.value,
   });
   await saveSources(filtered);
   return { ok: true, yaml: jsonToYaml(parsed.value) };
@@ -291,12 +288,12 @@ async function doRefreshRemoteSources() {
         url: source.url,
         timestamp: Date.now(),
         data: result.value,
-        error: null
+        error: null,
       };
     } else {
       sources[index] = {
         ...sources[index],
-        error: { key: result.errorKey, subs: result.errorSubs }
+        error: { key: result.errorKey, subs: result.errorSubs },
       };
     }
   }
@@ -342,7 +339,7 @@ async function doAddSource(url) {
     url: url,
     timestamp: Date.now(),
     data: result.value,
-    error: null
+    error: null,
   });
 
   await saveSources(sources);
@@ -420,5 +417,5 @@ self.pigquery.config = {
   addSource,
   removeSource,
   loadShortcuts,
-  saveShortcuts
+  saveShortcuts,
 };
