@@ -1,16 +1,5 @@
 import * as i18n from './i18n.js';
-import hljs from 'highlight.js/lib/core';
-import sql from 'highlight.js/lib/languages/sql';
-import json from 'highlight.js/lib/languages/json';
-import xml from 'highlight.js/lib/languages/xml';
-import yamlLang from 'highlight.js/lib/languages/yaml';
 import jsyaml from 'js-yaml';
-
-// Register languages
-hljs.registerLanguage('sql', sql);
-hljs.registerLanguage('json', json);
-hljs.registerLanguage('xml', xml);
-hljs.registerLanguage('yaml', yamlLang);
 
 const LOCALE = i18n.getBigQueryLocale();
 

@@ -4,10 +4,16 @@ import * as search from './search.js';
 import * as formatters from './formatters.js';
 import hljs from 'highlight.js/lib/core';
 import sql from 'highlight.js/lib/languages/sql';
+import json from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
 import highlightCss from 'highlight.js/styles/atom-one-dark.min.css';
 
-// Register SQL for syntax highlighting in editor
+// Register languages for syntax highlighting
 hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('yaml', yaml);
 
 // Inject highlight.js theme CSS
 const style = document.createElement('style');
