@@ -18,6 +18,56 @@ A Chrome Extension offering some BigQuery enhancements.
 
 <img src="store/en/pigquery-1.jpg" width="300"> <img src="store/en/pigquery-2.jpg" width="300"> <img src="store/en/pigquery-3.jpg" width="300">
 
+## Development
+
+### Setup for development
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Create development environment:
+
+   ```bash
+   npm run setup
+   ```
+
+   This creates a `dev/` directory with symlinks to your source files.
+
+3. Load the extension in Chrome:
+   - Go to `chrome://extensions`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dev/` directory
+
+   Changes to source files will be immediately reflected (you may need to reload the extension after manifest changes).
+
+### Code quality
+
+```bash
+# Check for linting issues
+npm run lint
+
+# Auto-fix linting issues
+npm run lint:fix
+
+# Check code formatting
+npm run format:check
+
+# Auto-format code
+npm run format
+```
+
+### Build for distribution
+
+```bash
+npm run package
+```
+
+This creates a signed `.crx` file in the `dist/` directory.
+
 ## Demo video & screenshots
 
 ### Setup

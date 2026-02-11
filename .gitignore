@@ -2,6 +2,7 @@
 /publickey.pem
 /privatekey.pem
 /dist
+/dev
 /.cursor
 /node_modules
 /profile
