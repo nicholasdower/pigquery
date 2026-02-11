@@ -501,11 +501,11 @@ const TRANSLATIONS = {
   },
 };
 
-function getSystemLocale() {
+export function getSystemLocale() {
   return chrome.i18n.getUILanguage();
 }
 
-function getBigQueryLocale() {
+export function getBigQueryLocale() {
   return document.documentElement.lang?.trim()?.toLowerCase()?.split(/[-_]/)[0] || getSystemLocale();
 }
 
@@ -519,7 +519,7 @@ function formatMessage(template, substitutions) {
   }, template);
 }
 
-function getMessage(key, locale, substitutions) {
+export function getMessage(key, locale, substitutions) {
   if (!TRANSLATIONS[key]) throw new Error(`Missing translation key "${key}"`);
 
   for (const candidate of [locale, 'en']) {
@@ -533,7 +533,7 @@ function setMessage(element, key, attribute, locale, substitutions) {
   element[attribute] = getMessage(key, locale, substitutions);
 }
 
-function applyI18n(locale) {
+export function applyI18n(locale) {
   document.querySelectorAll('[data-i18n]').forEach(element => {
     setMessage(element, element.dataset.i18n, 'textContent', locale);
   });
@@ -547,11 +547,3 @@ function applyI18n(locale) {
     setMessage(element, element.dataset.i18nAlt, 'alt', locale);
   });
 }
-
-self.pigquery ||= {};
-self.pigquery.i18n = {
-  getBigQueryLocale,
-  getSystemLocale,
-  getMessage,
-  applyI18n,
-};

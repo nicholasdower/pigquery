@@ -215,7 +215,7 @@ function scoreItem({ group, name, tag }, query) {
   return totalScore;
 }
 
-function filter(items, query) {
+export function filter(items, query) {
   if (tokenize(query).length === 0) return items;
 
   return items
@@ -224,6 +224,3 @@ function filter(items, query) {
     .sort((a, b) => b.score - a.score)
     .map(x => x.item);
 }
-
-self.pigquery ||= {};
-self.pigquery.search = { filter };

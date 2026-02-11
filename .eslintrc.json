@@ -7,7 +7,7 @@
   "extends": "eslint:recommended",
   "parserOptions": {
     "ecmaVersion": "latest",
-    "sourceType": "script"
+    "sourceType": "module"
   },
   "rules": {
     "indent": ["error", 2],
@@ -20,14 +20,18 @@
     "no-constant-condition": "off"
   },
   "globals": {
-    "chrome": "readonly",
-    "importScripts": "readonly",
-    "jsyaml": "readonly",
-    "hljs": "readonly"
+    "chrome": "readonly"
   },
   "overrides": [
     {
       "files": ["scripts/**/*.js"],
+      "env": {
+        "node": true,
+        "browser": false
+      }
+    },
+    {
+      "files": ["build.js"],
       "env": {
         "node": true,
         "browser": false

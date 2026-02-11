@@ -1,16 +1,25 @@
 {
+  "type": "module",
   "scripts": {
+    "build": "node build.js",
+    "build:prod": "NODE_ENV=production node build.js",
+    "watch": "node build.js --watch",
     "lint": "eslint src/ scripts/",
     "lint:fix": "eslint src/ scripts/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
-    "package": "scripts/package"
+    "package": "npm run build:prod && scripts/package"
   },
   "devDependencies": {
+    "esbuild": "^0.27.3",
     "eslint": "^8.57.1",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-compat": "^6.1.0",
     "playwright": "^1.58.2",
     "prettier": "^3.4.2"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "js-yaml": "^4.1.1"
   }
 }

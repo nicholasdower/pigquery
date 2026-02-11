@@ -2,21 +2,24 @@
 
 version=$(jq .version manifest.json -r)
 commit=$(git rev-parse HEAD)
-dir="dist/pigquery-$version"
+packageDir="package/pigquery-$version"
 
 echo "Building PigQuery version $version ($commit)"
 
-rm -rf dist
-mkdir -p "$dir"
+# Build the bundled JS files
+echo "Building bundled JS..."
+NODE_ENV=production node build.js
+
+rm -rf package
+mkdir -p "$packageDir"
 
 # Remove management permission from manifest.json. It is only needed for development.
-jq 'del(.permissions[] | select(. == "management" or . == "tabs"))' manifest.json > "$dir/manifest.json"
-cp LICENSE.txt "$dir/"
-cp -R src "$dir/"
-cp -R icons-prod "$dir/icons"
-cp -R lib "$dir/"
-cp -R _locales "$dir/"
+jq 'del(.permissions[] | select(. == "management" or . == "tabs"))' manifest.json > "$packageDir/manifest.json"
+cp LICENSE.txt "$packageDir/"
+cp -R dist "$packageDir/"
+cp -R icons-prod "$packageDir/icons"
+cp -R _locales "$packageDir/"
 
-echo "$commit" > "$dir/commit.txt"
+echo "$commit" > "$packageDir/commit.txt"
 
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --pack-extension="$PWD/$dir" --pack-extension-key="$PWD/privatekey"
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --pack-extension="$PWD/$packageDir" --pack-extension-key="$PWD/privatekey"

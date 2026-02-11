@@ -1,7 +1,15 @@
-const config = window.pigquery.config;
-const i18n = window.pigquery.i18n;
-const search = window.pigquery.search;
-const formatters = window.pigquery.formatters;
+import * as config from './config.js';
+import * as i18n from './i18n.js';
+import * as search from './search.js';
+import * as formatters from './formatters.js';
+import hljs from 'highlight.js/lib/core';
+import sql from 'highlight.js/lib/languages/sql';
+
+// Register SQL for syntax highlighting in editor
+hljs.registerLanguage('sql', sql);
+
+// log current time
+console.log(`piggy: ${new Date().toISOString()} hi 5`);
 const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 

@@ -1,5 +1,6 @@
-const config = window.pigquery.config;
-const i18n = window.pigquery.i18n;
+import * as config from './config.js';
+import * as i18n from './i18n.js';
+
 const LOCALE = new URLSearchParams(window.location.search).get('hl') || i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
 

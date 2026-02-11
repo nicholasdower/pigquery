@@ -1,9 +1,11 @@
-const STORAGE_KEY = 'userPayload';
-const BUSY_KEY = 'busy';
-const SHORTCUTS_KEY = 'shortcuts';
+import yaml from 'js-yaml';
+
+export const STORAGE_KEY = 'userPayload';
+export const BUSY_KEY = 'busy';
+export const SHORTCUTS_KEY = 'shortcuts';
 let operationPromise = null;
 
-const DEFAULT_SHORTCUTS = {
+export const DEFAULT_SHORTCUTS = {
   insertSnippet: { code: 'KeyY', key: 'y', ctrl: true, shift: true, alt: false, meta: false },
   focusTable: { code: 'KeyU', key: 'u', ctrl: true, shift: true, alt: false, meta: false },
 };
@@ -12,7 +14,7 @@ const DEFAULT_SHORTCUTS = {
  * Formats a shortcut object as a human-readable string.
  * e.g., { key: 'y', ctrl: true, shift: true } -> "Ctrl+Shift+Y"
  */
-function formatShortcut(shortcut) {
+export function formatShortcut(shortcut) {
   const isMac = typeof navigator !== 'undefined' && navigator.userAgentData?.platform === 'macOS';
   const parts = [];
   if (shortcut.ctrl) parts.push('Ctrl');
@@ -25,14 +27,14 @@ function formatShortcut(shortcut) {
 
 function safeYamlParse(text) {
   try {
-    return { ok: true, value: jsyaml.load(text) };
+    return { ok: true, value: yaml.load(text) };
   } catch (e) {
     return { ok: false, error: e };
   }
 }
 
-function jsonToYaml(obj) {
-  return jsyaml.dump(obj, { indent: 2, lineWidth: -1, quotingType: '"', forceQuotes: false });
+export function jsonToYaml(obj) {
+  return yaml.dump(obj, { indent: 2, lineWidth: -1, quotingType: '"', forceQuotes: false });
 }
 
 /**
@@ -116,7 +118,7 @@ async function fetchYamlFromUrl(url) {
  * Loads sources from chrome.storage.local.
  * Returns array of source objects.
  */
-async function loadSources() {
+export async function loadSources() {
   const data = await chrome.storage.local.get([STORAGE_KEY]);
   return data[STORAGE_KEY] ? JSON.parse(data[STORAGE_KEY]) : [];
 }
@@ -127,7 +129,7 @@ async function loadSources() {
  * preferring local over remote (last definition wins).
  * Returns { snippets: [...], sites: [...], hasErrors: boolean }.
  */
-async function loadConfiguration() {
+export async function loadConfiguration() {
   const sources = await loadSources();
   // Order remote then local, so local definitions come last and win
   const allItems = [...sources.filter(s => s.url !== 'local'), ...sources.filter(s => s.url === 'local')].flatMap(
@@ -170,7 +172,7 @@ async function saveSources(sources) {
  * Pass empty string to remove it.
  * Returns { ok: true, yaml: string } or { ok: false, errorKey, errorSubs }
  */
-async function saveLocalSource(rawYaml) {
+export async function saveLocalSource(rawYaml) {
   if (operationPromise) return { ok: false, errorKey: 'statusBusy' };
 
   operationPromise = doSaveLocalSource(rawYaml);
@@ -212,14 +214,14 @@ async function doSaveLocalSource(rawYaml) {
 /**
  * Gets the local source from sources array.
  */
-function getLocalSource(sources) {
+export function getLocalSource(sources) {
   return sources.find(s => s.url === 'local');
 }
 
 /**
  * Gets remote sources from sources array.
  */
-function getRemoteSources(sources) {
+export function getRemoteSources(sources) {
   return sources.filter(s => s.url !== 'local');
 }
 
@@ -227,7 +229,7 @@ function getRemoteSources(sources) {
  * Loads the busy state from storage.
  * Returns the busy type string or null.
  */
-async function loadBusy() {
+export async function loadBusy() {
   const data = await chrome.storage.local.get([BUSY_KEY]);
   return data[BUSY_KEY] || null;
 }
@@ -236,7 +238,7 @@ async function loadBusy() {
  * Clears stale busy state if no operation is in progress.
  * Should only be called from the service worker on startup.
  */
-async function clearStaleBusy() {
+export async function clearStaleBusy() {
   const busy = await loadBusy();
   if (busy && !operationPromise) {
     await setBusyState(null);
@@ -258,7 +260,7 @@ async function setBusyState(type) {
  * Refreshes all remote sources by fetching their URLs.
  * Updates storage with new data or error state.
  */
-async function refreshRemoteSources() {
+export async function refreshRemoteSources() {
   if (operationPromise) return;
 
   operationPromise = doRefreshRemoteSources();
@@ -307,7 +309,7 @@ async function doRefreshRemoteSources() {
  * Queues behind any in-progress operations.
  * Returns { ok: true } or { ok: false, errorKey, errorSubs }
  */
-async function addSource(url) {
+export async function addSource(url) {
   if (operationPromise) {
     return { ok: false, errorKey: 'statusBusy' };
   }
@@ -349,7 +351,7 @@ async function doAddSource(url) {
 /**
  * Removes a source by URL.
  */
-async function removeSource(url) {
+export async function removeSource(url) {
   if (operationPromise) return;
 
   operationPromise = doRemoveSource(url);
@@ -373,7 +375,7 @@ async function doRemoveSource(url) {
  * Loads keyboard shortcuts from storage.
  * Returns merged defaults with user overrides.
  */
-async function loadShortcuts() {
+export async function loadShortcuts() {
   const data = await chrome.storage.local.get([SHORTCUTS_KEY]);
   return { ...DEFAULT_SHORTCUTS, ...data[SHORTCUTS_KEY] };
 }
@@ -382,7 +384,7 @@ async function loadShortcuts() {
  * Saves keyboard shortcuts to storage.
  * Returns { ok: true } or { ok: false, errorKey }
  */
-async function saveShortcuts(shortcuts) {
+export async function saveShortcuts(shortcuts) {
   if (operationPromise) return { ok: false, errorKey: 'statusBusy' };
 
   operationPromise = (async () => {
@@ -397,25 +399,3 @@ async function saveShortcuts(shortcuts) {
     await setBusyState(null);
   }
 }
-
-self.pigquery = self.pigquery || {};
-self.pigquery.config = {
-  STORAGE_KEY,
-  BUSY_KEY,
-  SHORTCUTS_KEY,
-  DEFAULT_SHORTCUTS,
-  formatShortcut,
-  jsonToYaml,
-  loadSources,
-  loadBusy,
-  clearStaleBusy,
-  loadConfiguration,
-  saveLocalSource,
-  getLocalSource,
-  getRemoteSources,
-  refreshRemoteSources,
-  addSource,
-  removeSource,
-  loadShortcuts,
-  saveShortcuts,
-};

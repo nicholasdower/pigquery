@@ -14,9 +14,9 @@
   <h1>PigQuery Formatter Tests</h1>
   <div id="results"></div>
 
-  <script src="../lib/js-yaml.min.js"></script>
-  <script src="../src/formatters.js"></script>
-  <script>
+  <script type="module">
+    import { detectContentType } from '../dist/content.js';
+
     const results = document.getElementById('results');
     let passed = 0, failed = 0;
 

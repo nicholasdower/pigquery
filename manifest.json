@@ -14,30 +14,18 @@
   "optional_host_permissions": ["https://*/*", "http://*/*"],
   "permissions": ["storage", "management", "tabs"],
   "background": {
-    "service_worker": "src/background.js"
+    "service_worker": "dist/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://console.cloud.google.com/*"],
-      "js": [
-        "lib/js-yaml.min.js",
-        "lib/highlight.min.js",
-        "lib/highlight-sql.min.js",
-        "lib/highlight-json.min.js",
-        "lib/highlight-xml.min.js",
-        "lib/highlight-yaml.min.js",
-        "src/i18n.js",
-        "src/config.js",
-        "src/search.js",
-        "src/formatters.js",
-        "src/content.js"
-      ],
-      "css": ["lib/highlight-theme.css"]
+      "js": ["dist/content.js"],
+      "css": ["dist/highlight-theme.css"]
     }
   ],
-  "options_page": "src/options.html",
+  "options_page": "dist/options.html",
   "action": {
-    "default_popup": "src/popup.html"
+    "default_popup": "dist/popup.html"
   },
   "web_accessible_resources": [
     {

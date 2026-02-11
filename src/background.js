@@ -1,6 +1,4 @@
-importScripts('../lib/js-yaml.min.js', 'config.js');
-
-const config = self.pigquery.config;
+import * as config from './config.js';
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'refreshRemoteSources') {
@@ -32,8 +30,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === 'openOptionsPage') {
     const url = message.locale
-      ? chrome.runtime.getURL(`src/options.html?hl=${message.locale}`)
-      : chrome.runtime.getURL('src/options.html');
+      ? chrome.runtime.getURL(`dist/options.html?hl=${message.locale}`)
+      : chrome.runtime.getURL('dist/options.html');
     chrome.tabs.create({ url });
   }
 });
@@ -77,7 +75,7 @@ setTimeout(() => {
 
       if (reopenOptionsPage) {
         // Open options page as active if it was active, otherwise in background
-        const optionsUrl = chrome.runtime.getURL('src/options.html');
+        const optionsUrl = chrome.runtime.getURL('dist-build/options.html');
         chrome.tabs.create({ url: optionsUrl, active: optionsPageWasActive });
       }
 

@@ -1,5 +1,6 @@
-const i18n = window.pigquery.i18n;
-const config = window.pigquery.config;
+import * as i18n from './i18n.js';
+import * as config from './config.js';
+
 const LOCALE = i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
 
@@ -30,20 +31,20 @@ refreshBtn.addEventListener('click', () => {
 
 updateBtn.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const optionsUrl = chrome.runtime.getURL('src/options.html');
-  
+  const optionsUrl = chrome.runtime.getURL('dist-build/options.html');
+
   // Check if options page is currently open
   const optionsTabs = await chrome.tabs.query({ url: optionsUrl + '*' });
   const hasOptionsPage = optionsTabs.length > 0;
   const optionsPageWasActive = tab?.url?.startsWith(optionsUrl);
-  
+
   const reloadState = {
     reopenPopup: true,
     reloadTabId: tab?.id,
     reopenOptionsPage: hasOptionsPage,
-    optionsPageWasActive: optionsPageWasActive
+    optionsPageWasActive: optionsPageWasActive,
   };
-  
+
   await chrome.storage.local.set({ reloadState });
   chrome.runtime.reload();
 });
