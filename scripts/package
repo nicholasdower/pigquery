@@ -13,7 +13,7 @@ mkdir -p "$dir"
 jq 'del(.permissions[] | select(. == "management" or . == "tabs"))' manifest.json > "$dir/manifest.json"
 cp LICENSE.txt "$dir/"
 cp -R src "$dir/"
-cp -R icons "$dir/"
+cp -R icons-prod "$dir/icons"
 cp -R lib "$dir/"
 cp -R _locales "$dir/"
 
