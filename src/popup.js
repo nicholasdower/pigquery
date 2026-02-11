@@ -23,7 +23,7 @@ const statusErrorEl = document.getElementById('status-error');
 const refreshBtn = document.getElementById('refresh-btn');
 
 refreshBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+  chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
 });
 
 async function load() {
@@ -39,11 +39,11 @@ async function load() {
 
   // Update busy state
   refreshBtn.disabled = !!busy;
-  refreshBtn.textContent = busy === 'refreshing' ? t("popupRefreshing") : t("popupRefresh");
+  refreshBtn.textContent = busy === 'refreshing' ? t('popupRefreshing') : t('popupRefresh');
 
   // Update status display
   if (busy === 'refreshing') {
-    statusTextEl.textContent = t("popupRefreshing");
+    statusTextEl.textContent = t('popupRefreshing');
     statusErrorEl.style.display = 'none';
     return;
   }
@@ -66,8 +66,8 @@ async function load() {
   const hasErrors = remote.some(s => s.error);
 
   statusEl.style.display = '';
-  statusTextEl.textContent = t("popupLastUpdated", date.toLocaleString());
-  statusErrorEl.textContent = hasErrors ? t("popupHasErrors") : '';
+  statusTextEl.textContent = t('popupLastUpdated', date.toLocaleString());
+  statusErrorEl.textContent = hasErrors ? t('popupHasErrors') : '';
   statusErrorEl.style.display = hasErrors ? '' : 'none';
 }
 

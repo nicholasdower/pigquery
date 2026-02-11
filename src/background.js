@@ -3,37 +3,37 @@ importScripts('../lib/js-yaml.min.js', 'config.js');
 const config = self.pigquery.config;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "refreshRemoteSources") {
+  if (message.action === 'refreshRemoteSources') {
     config.refreshRemoteSources();
   }
-  if (message.action === "addSource") {
+  if (message.action === 'addSource') {
     config.addSource(message.url).then((result) => {
       sendResponse(result);
     });
     return true;
   }
-  if (message.action === "removeSource") {
+  if (message.action === 'removeSource') {
     config.removeSource(message.url).then(() => {
       sendResponse({ ok: true });
     });
     return true;
   }
-  if (message.action === "saveLocalSource") {
+  if (message.action === 'saveLocalSource') {
     config.saveLocalSource(message.yaml).then((result) => {
       sendResponse(result);
     });
     return true;
   }
-  if (message.action === "saveShortcuts") {
+  if (message.action === 'saveShortcuts') {
     config.saveShortcuts(message.shortcuts).then((result) => {
       sendResponse(result);
     });
     return true;
   }
-  if (message.action === "openOptionsPage") {
+  if (message.action === 'openOptionsPage') {
     const url = message.locale
       ? chrome.runtime.getURL(`src/options.html?hl=${message.locale}`)
-      : chrome.runtime.getURL("src/options.html");
+      : chrome.runtime.getURL('src/options.html');
     chrome.tabs.create({ url });
   }
 });

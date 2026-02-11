@@ -35,7 +35,7 @@ async function startChrome(url) {
     url
   ], {
     detached: false,
-    stdio: "ignore",
+    stdio: 'ignore',
   });
 
   console.log('Waiting for Chrome to start...');
@@ -54,9 +54,9 @@ async function connectToChrome() {
 }
 
 async function screenshot(filename) {
-  await execPromise(`osascript -e 'tell application "Google Chrome" to activate'`);
+  await execPromise('osascript -e \'tell application "Google Chrome" to activate\'');
   await new Promise(resolve => setTimeout(resolve, 300));
-  const { stdout } = await execPromise(`osascript -e 'tell application "Google Chrome" to get bounds of window 1'`);
+  const { stdout } = await execPromise('osascript -e \'tell application "Google Chrome" to get bounds of window 1\'');
   const [x1, y1, x2, y2] = stdout.trim().split(', ').map(Number);
   await execPromise(`screencapture -x -R${x1},${y1},${x2 - x1},${y2 - y1} ${filename}`);
   // Resize to logical pixels (half of Retina resolution)
@@ -64,13 +64,13 @@ async function screenshot(filename) {
 }
 
 async function getChromeBounds() {
-  const { stdout } = await execPromise(`osascript -e 'tell application "Google Chrome" to get bounds of window 1'`);
+  const { stdout } = await execPromise('osascript -e \'tell application "Google Chrome" to get bounds of window 1\'');
   const [x1, y1, x2, y2] = stdout.trim().split(', ').map(Number);
   return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
 }
 
 async function startVideoRecording(filename) {
-  await execPromise(`osascript -e 'tell application "Google Chrome" to activate'`);
+  await execPromise('osascript -e \'tell application "Google Chrome" to activate\'');
   await new Promise(resolve => setTimeout(resolve, 300));
   const { x, y, width, height } = await getChromeBounds();
 
@@ -166,6 +166,7 @@ async function recordAction(lang) {
   await screenshot(`store/${lang}/pigquery-1.png`);
 
   // Tab to focus the URL input
+  // eslint-disable-next-line no-undef
   while (!await optionsPage.evaluate(() => document.activeElement?.id === 'urlInput')) {
     await optionsPage.keyboard.press('Tab');
     await optionsPage.waitForTimeout(300);
@@ -285,7 +286,7 @@ async function recordAction(lang) {
 
   // Get the new tab and close it
   pages = context.pages();
-  wikiPage = pages[pages.length - 1];
+  const wikiPage = pages[pages.length - 1];
   await wikiPage.close();
   await page.waitForTimeout(3000);
 
@@ -295,23 +296,20 @@ async function recordAction(lang) {
   await page.keyboard.press('Meta+a');
   await page.waitForTimeout(3000);
 
-  // Read clipboard content using pbpaste
-  const { stdout: clipboardContent } = await execPromise('pbpaste');
-
   // Open new tab via AppleScript (Cmd+T focuses address bar automatically)
-  await execPromise(`osascript -e 'tell application "System Events" to keystroke "t" using command down'`);
+  await execPromise('osascript -e \'tell application "System Events" to keystroke "t" using command down\'');
   await page.waitForTimeout(1000);
 
   // Paste URL from clipboard
-  await execPromise(`osascript -e 'tell application "System Events" to keystroke "v" using command down'`);
+  await execPromise('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
   await page.waitForTimeout(1000);
 
   // Go to beginning of URL
-  await execPromise(`osascript -e 'tell application "System Events" to key code 123 using command down'`); // Cmd+Left
+  await execPromise('osascript -e \'tell application "System Events" to key code 123 using command down\''); // Cmd+Left
   await page.waitForTimeout(2000);
 
   // Navigate
-  await execPromise(`osascript -e 'tell application "System Events" to key code 36'`); // Enter key
+  await execPromise('osascript -e \'tell application "System Events" to key code 36\''); // Enter key
 
   // Get the new page
   pages = context.pages();
@@ -339,19 +337,19 @@ async function main() {
   const { action, lang } = parseArgs();
 
   switch (action) {
-    case 'open':
-      await openAction(lang);
-      break;
-    case 'record':
-      await recordAction(lang);
-      break;
-    default:
-      console.error('Unknown action:', action);
-      console.log('Usage: node bot.js [open|record] [--lang <code>]');
-      console.log('  open   - Open Chrome with BigQuery');
-      console.log('  record - Record a demo video and take screenshots');
-      console.log('  --lang - Set the language (e.g., de, en)');
-      process.exit(1);
+  case 'open':
+    await openAction(lang);
+    break;
+  case 'record':
+    await recordAction(lang);
+    break;
+  default:
+    console.error('Unknown action:', action);
+    console.log('Usage: node bot.js [open|record] [--lang <code>]');
+    console.log('  open   - Open Chrome with BigQuery');
+    console.log('  record - Record a demo video and take screenshots');
+    console.log('  --lang - Set the language (e.g., de, en)');
+    process.exit(1);
   }
 }
 

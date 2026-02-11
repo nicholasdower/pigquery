@@ -6,8 +6,8 @@ const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
 // Load icons as data URLs at startup so they remain available even if extension context is invalidated
-let ICON_URL = "";
-let ICON_ERROR_URL = "";
+let ICON_URL = '';
+let ICON_ERROR_URL = '';
 
 async function loadIconAsDataURL(path) {
   const url = chrome.runtime.getURL(path);
@@ -21,8 +21,8 @@ async function loadIconAsDataURL(path) {
 }
 
 (async () => {
-  ICON_URL = await loadIconAsDataURL("icons/icon.svg");
-  ICON_ERROR_URL = await loadIconAsDataURL("icons/icon-badge-error.svg");
+  ICON_URL = await loadIconAsDataURL('icons/icon.svg');
+  ICON_ERROR_URL = await loadIconAsDataURL('icons/icon-badge-error.svg');
 })();
 
 const isMac = navigator.userAgentData.platform === 'macOS';
@@ -70,7 +70,7 @@ function sortSites(items, prioritySite) {
     }
     const groupCmp = a.group.localeCompare(b.group);
     if (groupCmp !== 0) return groupCmp;
-    const tagCmp = (a.tag ?? "").localeCompare(b.tag ?? "");
+    const tagCmp = (a.tag ?? '').localeCompare(b.tag ?? '');
     if (tagCmp !== 0) return tagCmp;
     return a.name.localeCompare(b.name);
   });
@@ -97,23 +97,23 @@ chrome.storage.onChanged.addListener((changes) => {
     load();
   }
 });
-chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
 
 // Extract and remove the 'pig' query parameter on page load.
 const url = new URL(window.location.href);
-const queryParam = url.searchParams.get("pig");
+const queryParam = url.searchParams.get('pig');
 let query = queryParam?.length ? base64Decode(queryParam.trim()).trim() : null;
 
-if (url.searchParams.has("pig")) {
-  url.searchParams.delete("pig");
+if (url.searchParams.has('pig')) {
+  url.searchParams.delete('pig');
   window.history.replaceState({}, '', url.toString());
 
   // Keep removing the 'pig' param if the page re-adds it (check for 10 seconds)
   const startTime = Date.now();
   const intervalId = setInterval(() => {
     const currentUrl = new URL(window.location.href);
-    if (currentUrl.searchParams.has("pig")) {
-      currentUrl.searchParams.delete("pig");
+    if (currentUrl.searchParams.has('pig')) {
+      currentUrl.searchParams.delete('pig');
       window.history.replaceState({}, '', currentUrl.toString());
     }
 
@@ -149,22 +149,22 @@ if (query && query.length > 0) {
     subtree: true,
   });
 
-  const timeoutId = setTimeout(() => cleanup(false), 10_000);
-
-  function cleanup(inserted) {
+  const cleanup = (inserted) => {
     if (inserted) {
-      showToast(i18n.getMessage("queryInsertSucceeded", LOCALE));
+      showToast(i18n.getMessage('queryInsertSucceeded', LOCALE));
     } else {
-      showToast(i18n.getMessage("queryInsertFailed", LOCALE));
+      showToast(i18n.getMessage('queryInsertFailed', LOCALE));
     }
     observer.disconnect();
     clearTimeout(timeoutId);
-  }
+  };
+
+  const timeoutId = setTimeout(() => cleanup(false), 10_000);
 }
 
 function base64Encode(str) {
   const bytes = new TextEncoder().encode(str);
-  let binary = "";
+  let binary = '';
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
@@ -177,7 +177,7 @@ function base64Decode(b64) {
 }
 
 function findEditorTextArea(editor) {
-  let ta = editor.querySelector("textarea.inputarea") || editor.querySelector("textarea");
+  let ta = editor.querySelector('textarea.inputarea') || editor.querySelector('textarea');
   if (ta) return ta;
 
   return null;
@@ -193,9 +193,9 @@ function insertIntoEditor(editor, text) {
     ta.focus();
 
     const dt = new DataTransfer();
-    dt.setData("text/plain", text);
+    dt.setData('text/plain', text);
 
-    const pasteEvent = new ClipboardEvent("paste", {
+    const pasteEvent = new ClipboardEvent('paste', {
       bubbles: true,
       cancelable: true,
       clipboardData: dt,
@@ -208,13 +208,13 @@ function insertIntoEditor(editor, text) {
     // ignore and fall back
   }
 
-  const isMultiline = text.includes("\n");
+  const isMultiline = text.includes('\n');
 
   // Single-line inserts: execCommand behaves closest to normal typing.
   if (!isMultiline) {
     try {
       ta.focus();
-      if (document.execCommand && document.execCommand("insertText", false, text)) {
+      if (document.execCommand && document.execCommand('insertText', false, text)) {
         return true;
       }
     } catch (_) {
@@ -229,19 +229,19 @@ function insertIntoEditor(editor, text) {
     const start = ta.selectionStart ?? (ta.value?.length ?? 0);
     const end = ta.selectionEnd ?? (ta.value?.length ?? 0);
 
-    if (typeof ta.setRangeText === "function") {
-      ta.setRangeText(text, start, end, "end");
+    if (typeof ta.setRangeText === 'function') {
+      ta.setRangeText(text, start, end, 'end');
     } else {
-      const v = ta.value ?? "";
+      const v = ta.value ?? '';
       ta.value = v.slice(0, start) + text + v.slice(end);
       const pos = start + text.length;
-      if (typeof ta.selectionStart === "number") {
+      if (typeof ta.selectionStart === 'number') {
         ta.selectionStart = ta.selectionEnd = pos;
       }
     }
 
-    const inputType = isMultiline ? "insertFromPaste" : "insertText";
-    ta.dispatchEvent(new InputEvent("input", { bubbles: true, inputType, data: text }));
+    const inputType = isMultiline ? 'insertFromPaste' : 'insertText';
+    ta.dispatchEvent(new InputEvent('input', { bubbles: true, inputType, data: text }));
     return true;
   } catch (_) {
     return false;
@@ -629,7 +629,7 @@ const styles = `
   }
 `;
 
-document.head.appendChild(makeEl("style", { id: "pig-modal-style", text: styles }));
+document.head.appendChild(makeEl('style', { id: 'pig-modal-style', text: styles }));
 
 function getInitials(name) {
   const words = name.trim().split(/\s+/);
@@ -671,15 +671,15 @@ function getLabelColor(name) {
 }
 
 function showToast(message, duration = 2000) {
-  const toast = makeEl("div", { className: "pig-toast", text: message });
+  const toast = makeEl('div', { className: 'pig-toast', text: message });
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => {
-    toast.classList.add("show");
+    toast.classList.add('show');
   });
 
   setTimeout(() => {
-    toast.classList.remove("show");
+    toast.classList.remove('show');
     setTimeout(() => toast.remove(), 200);
   }, duration);
 }
@@ -704,8 +704,8 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
   const lastFocusedEl = document.activeElement;
 
-  const overlayEl = makeEl("div", { className: "pig-modal-overlay" });
-  const listEl = makeEl("div", { className: "pig-modal-list" });
+  const overlayEl = makeEl('div', { className: 'pig-modal-overlay' });
+  const listEl = makeEl('div', { className: 'pig-modal-list' });
 
   let focusRedirectHandler = null;
   let escapeHandler = null;
@@ -733,7 +733,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     lastFocusedEl.focus();
   }
 
-  overlayEl.addEventListener("mousedown", (e) => {
+  overlayEl.addEventListener('mousedown', (e) => {
     if (e.target === overlayEl) {
       e.preventDefault();
       e.stopPropagation();
@@ -743,16 +743,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
   // Document-level Escape handler (keydown on modal only works when focus is inside)
   escapeHandler = (e) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
       closePopup();
     }
   };
-  document.addEventListener("keydown", escapeHandler, true);
+  document.addEventListener('keydown', escapeHandler, true);
 
   function scrollActiveIntoView() {
-    const items = listEl.querySelectorAll(".pig-modal-item");
+    const items = listEl.querySelectorAll('.pig-modal-item');
     const active = items[activeIndex];
     if (!active) return;
 
@@ -766,37 +766,34 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       return;
     }
 
-    active.scrollIntoView({ block: "nearest" });
+    active.scrollIntoView({ block: 'nearest' });
   }
 
   function updateActiveStyles() {
-    const items = listEl.querySelectorAll(".pig-modal-item");
+    const items = listEl.querySelectorAll('.pig-modal-item');
     items.forEach((el, i) => {
-      if (i === activeIndex) el.classList.add("active");
-      else el.classList.remove("active");
+      if (i === activeIndex) el.classList.add('active');
+      else el.classList.remove('active');
     });
     scrollActiveIntoView();
   }
 
-  const modalEl = makeEl("div", { className: "pig-modal pig-modal-with-content" });
+  const modalEl = makeEl('div', { className: 'pig-modal pig-modal-with-content' });
 
-  // Focusable elements in desired order - will be populated after elements are created
-  let focusableElements = [];
-
-  modalEl.addEventListener("keydown", (e) => {
+  modalEl.addEventListener('keydown', (e) => {
     // Trap focus within modal
-    if (e.key === "Tab") {
+    if (e.key === 'Tab') {
       // Get all focusable elements in the modal dynamically
       const allFocusable = Array.from(modalEl.querySelectorAll(
         'input, button:not([tabindex="-1"]), [tabindex="0"]'
       )).filter(el => el.offsetParent !== null); // Filter out hidden elements
-      
+
       if (allFocusable.length === 0) return;
-      
+
       const currentIndex = allFocusable.indexOf(document.activeElement);
       e.preventDefault();
       e.stopPropagation();
-      
+
       let nextIndex;
       if (currentIndex === -1) {
         nextIndex = 0;
@@ -809,17 +806,17 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       return;
     }
 
-    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && e.altKey) {
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.altKey) {
       // Alt+Arrow scrolls content panel
       const scrollAmount = 40; // pixels to scroll
-      const direction = e.key === "ArrowDown" ? 1 : -1;
+      const direction = e.key === 'ArrowDown' ? 1 : -1;
       contentPanel.scrollTop += scrollAmount * direction;
       e.preventDefault();
       e.stopPropagation();
       return;
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       e.stopPropagation();
       if (filtered.length) {
@@ -831,7 +828,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       return;
     }
 
-    if (e.key === "ArrowUp") {
+    if (e.key === 'ArrowUp') {
       e.preventDefault();
       e.stopPropagation();
       if (filtered.length) {
@@ -843,7 +840,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       return;
     }
 
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       // Let buttons handle their own Enter
       if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
         return;
@@ -862,36 +859,36 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
 
     if (filtered.length === 0) {
-      const empty = makeEl("div", { className: "pig-modal-empty" });
-      empty.textContent = i18n.getMessage("noOptionsFound", LOCALE);
+      const empty = makeEl('div', { className: 'pig-modal-empty' });
+      empty.textContent = i18n.getMessage('noOptionsFound', LOCALE);
       listEl.appendChild(empty);
       return;
     }
 
     filtered.forEach((opt, idx) => {
-      const itemClass = "pig-modal-item" + (idx === activeIndex ? " active" : "");
+      const itemClass = 'pig-modal-item' + (idx === activeIndex ? ' active' : '');
       const item = opt.url
-        ? makeEl("a", { className: itemClass })
-        : makeEl("div", { className: itemClass });
+        ? makeEl('a', { className: itemClass })
+        : makeEl('div', { className: itemClass });
 
       if (opt.url) {
         item.href = opt.url;
-        item.target = "_blank";
-        item.rel = "noopener noreferrer";
+        item.target = '_blank';
+        item.rel = 'noopener noreferrer';
       }
 
-      const wrapper = makeEl("div", { className: "pig-modal-item-wrapper" });
+      const wrapper = makeEl('div', { className: 'pig-modal-item-wrapper' });
 
-      const group = makeEl("span", { className: "pig-modal-item-group", text: getInitials(opt.group) });
+      const group = makeEl('span', { className: 'pig-modal-item-group', text: getInitials(opt.group) });
       const groupColors = getLabelColor(opt.group);
       group.style.color = groupColors.text;
       wrapper.appendChild(group);
 
-      const name = makeEl("span", { className: "pig-modal-item-name", text: opt.name });
+      const name = makeEl('span', { className: 'pig-modal-item-name', text: opt.name });
       wrapper.appendChild(name);
 
       if (opt.tag) {
-        const tag = makeEl("span", { className: "pig-modal-item-tag", text: opt.tag });
+        const tag = makeEl('span', { className: 'pig-modal-item-tag', text: opt.tag });
         const colors = getLabelColor(opt.tag);
         tag.style.backgroundColor = colors.bg;
         tag.style.color = colors.text;
@@ -900,7 +897,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
       item.appendChild(wrapper);
 
-      item.addEventListener("mousedown", (e) => {
+      item.addEventListener('mousedown', (e) => {
         // Prevent input blur before click handler runs
         e.preventDefault();
       });
@@ -914,10 +911,10 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
         }
       };
 
-      item.addEventListener("mouseenter", updateSelection);
-      item.addEventListener("mousemove", updateSelection);
+      item.addEventListener('mouseenter', updateSelection);
+      item.addEventListener('mousemove', updateSelection);
 
-      item.addEventListener("click", (e) => {
+      item.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         onOptionSelected(filtered[idx]);
@@ -930,35 +927,35 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     scrollActiveIntoView();
   }
 
-  const header = makeEl("div", { className: "pig-modal-header" });
-  const iconContainer = makeEl("div", { className: "pig-modal-logo-container" });
-  const iconEl = document.createElement("img");
-  iconEl.className = "pig-modal-logo";
-  iconEl.alt = "PigQuery";
+  const header = makeEl('div', { className: 'pig-modal-header' });
+  const iconContainer = makeEl('div', { className: 'pig-modal-logo-container' });
+  const iconEl = document.createElement('img');
+  iconEl.className = 'pig-modal-logo';
+  iconEl.alt = 'PigQuery';
   iconEl.src = ICON_URL;
   iconContainer.appendChild(iconEl);
   header.appendChild(iconContainer);
 
-  const inputEl = makeEl("input", { className: "pig-modal-input" });
-  inputEl.type = "text";
-  inputEl.placeholder = i18n.getMessage("searchPlaceholder", LOCALE);
-  inputEl.autocomplete = "off";
+  const inputEl = makeEl('input', { className: 'pig-modal-input' });
+  inputEl.type = 'text';
+  inputEl.placeholder = i18n.getMessage('searchPlaceholder', LOCALE);
+  inputEl.autocomplete = 'off';
   inputEl.spellcheck = false;
 
-  inputEl.addEventListener("input", () => {
-    const query = (inputEl.value || "").trim().toLowerCase();
+  inputEl.addEventListener('input', () => {
+    const query = (inputEl.value || '').trim().toLowerCase();
     filtered = search.filter(options, query);
     activeIndex = 0;
     renderList();
     updateContentPanel();
   });
 
-  inputEl.addEventListener("focus", () => {
-    modalEl.classList.add("input-focused");
+  inputEl.addEventListener('focus', () => {
+    modalEl.classList.add('input-focused');
   });
 
-  inputEl.addEventListener("blur", () => {
-    modalEl.classList.remove("input-focused");
+  inputEl.addEventListener('blur', () => {
+    modalEl.classList.remove('input-focused');
   });
 
   onConfigurationChange = () => {
@@ -966,7 +963,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     const currentItem = filtered[activeIndex];
 
     options = getOptions();
-    const query = (inputEl.value || "").trim().toLowerCase();
+    const query = (inputEl.value || '').trim().toLowerCase();
     filtered = search.filter(options, query);
 
     // Try to find the previously selected item in the new filtered list
@@ -991,10 +988,10 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   header.appendChild(inputEl);
 
   // Refresh button
-  const refreshBtn = makeEl("button", { className: "pig-modal-refresh" });
-  refreshBtn.type = "button";
-  refreshBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>`;
-  refreshBtn.title = "Refresh";
+  const refreshBtn = makeEl('button', { className: 'pig-modal-refresh' });
+  refreshBtn.type = 'button';
+  refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
+  refreshBtn.title = 'Refresh';
 
   let isBusy = false;
 
@@ -1010,9 +1007,9 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   function updateErrorBadge() {
     const existingBadge = refreshBtn.querySelector('.pig-modal-refresh-badge');
     if (hasErrors && !existingBadge) {
-      const badgeEl = document.createElement("img");
-      badgeEl.className = "pig-modal-refresh-badge";
-      badgeEl.alt = "Error";
+      const badgeEl = document.createElement('img');
+      badgeEl.className = 'pig-modal-refresh-badge';
+      badgeEl.alt = 'Error';
       badgeEl.src = ICON_ERROR_URL;
       refreshBtn.appendChild(badgeEl);
     } else if (!hasErrors && existingBadge) {
@@ -1037,44 +1034,44 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     chrome.storage.onChanged.addListener(busyListener);
   }
 
-  refreshBtn.addEventListener("click", (e) => {
+  refreshBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!chrome.runtime?.id) {
-      showToast(i18n.getMessage("extensionNotAvailable", LOCALE));
+      showToast(i18n.getMessage('extensionNotAvailable', LOCALE));
       return;
     }
     if (!isBusy) {
-      chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+      chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
     }
   });
 
   header.appendChild(refreshBtn);
 
   // Settings button
-  const settingsBtn = makeEl("button", { className: "pig-modal-settings" });
-  settingsBtn.type = "button";
+  const settingsBtn = makeEl('button', { className: 'pig-modal-settings' });
+  settingsBtn.type = 'button';
   settingsBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
-  settingsBtn.title = "Settings";
-  settingsBtn.addEventListener("click", (e) => {
+  settingsBtn.title = 'Settings';
+  settingsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!chrome.runtime?.id) {
-      showToast(i18n.getMessage("extensionNotAvailable", LOCALE));
+      showToast(i18n.getMessage('extensionNotAvailable', LOCALE));
       return;
     }
-    chrome.runtime.sendMessage({ action: "openOptionsPage", locale: LOCALE });
+    chrome.runtime.sendMessage({ action: 'openOptionsPage', locale: LOCALE });
   });
   header.appendChild(settingsBtn);
 
   modalEl.appendChild(header);
 
   // Create body container for list and content panel
-  const bodyEl = makeEl("div", { className: "pig-modal-body pig-modal-two-panel" });
+  const bodyEl = makeEl('div', { className: 'pig-modal-body pig-modal-two-panel' });
   bodyEl.appendChild(listEl);
 
   // Content panel elements (will be populated by updateContentPanel)
-  const contentPanel = makeEl("div", { className: "pig-modal-content-panel" });
+  const contentPanel = makeEl('div', { className: 'pig-modal-content-panel' });
   bodyEl.appendChild(contentPanel);
 
   const isDynamicContent = typeof contentOrGetter === 'function';
@@ -1111,38 +1108,38 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
         valueEl = itemEl.querySelector('.pig-format-item-value');
       } else {
         // Create new item
-        itemEl = makeEl("div", { className: "pig-format-item" });
+        itemEl = makeEl('div', { className: 'pig-format-item' });
 
-        headerEl = makeEl("div", { className: "pig-format-item-header" });
-        labelEl = makeEl("div", { className: "pig-format-item-label" });
+        headerEl = makeEl('div', { className: 'pig-format-item-header' });
+        labelEl = makeEl('div', { className: 'pig-format-item-label' });
         headerEl.appendChild(labelEl);
 
-        copyBtn = makeEl("button", { className: "pig-format-item-copy" });
+        copyBtn = makeEl('button', { className: 'pig-format-item-copy' });
         copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
-        copyBtn.title = "Copy";
-        copyBtn.addEventListener("click", (e) => {
+        copyBtn.title = 'Copy';
+        copyBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           const currentValue = valueEl.textContent;
           navigator.clipboard.writeText(currentValue);
-          showToast(i18n.getMessage("contentCopied", LOCALE));
+          showToast(i18n.getMessage('contentCopied', LOCALE));
         });
-        copyBtn.addEventListener("focus", () => {
+        copyBtn.addEventListener('focus', () => {
           // Only scroll on keyboard focus, not mouse click
           if (!copyBtn.matches(':focus-visible')) return;
           if (index === 0) {
             contentPanel.scrollTop = 0;
           } else {
-            itemEl.scrollIntoView({ block: "nearest" });
+            itemEl.scrollIntoView({ block: 'nearest' });
           }
         });
         headerEl.appendChild(copyBtn);
 
         itemEl.appendChild(headerEl);
 
-        valueEl = makeEl("div", { className: "pig-format-item-value" });
+        valueEl = makeEl('div', { className: 'pig-format-item-value' });
 
         // Select text on right-click so browser shows "Copy" in context menu
-        valueEl.addEventListener("contextmenu", () => {
+        valueEl.addEventListener('contextmenu', () => {
           const selection = window.getSelection();
           const range = document.createRange();
           range.selectNodeContents(valueEl);
@@ -1185,9 +1182,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   renderList();
   updateContentPanel();
 
-  // Set up focus trap order: input → refresh → settings
-  focusableElements = [inputEl, refreshBtn, settingsBtn];
-
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
   focusRedirectHandler = (e) => {
     if (!modalEl.contains(e.target)) {
@@ -1227,7 +1221,7 @@ function getVisibleOrActiveEditor() {
 }
 
 document.addEventListener(
-  "keydown",
+  'keydown',
   (e) => {
     if (document.querySelector('.pig-modal-overlay')) return;
 
@@ -1242,13 +1236,13 @@ document.addEventListener(
       e.stopImmediatePropagation();
 
       if (!(e.target instanceof Element)) {
-        showToast(i18n.getMessage("editorNotFocused", LOCALE));
+        showToast(i18n.getMessage('editorNotFocused', LOCALE));
 
         return;
       }
       const editor = e.target.closest('cfc-code-editor');
       if (!editor) {
-        showToast(i18n.getMessage("editorNotFocused", LOCALE));
+        showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
       }
       openPopup(
@@ -1265,7 +1259,7 @@ document.addEventListener(
 
     if (!e.isComposing && !e.repeat && e.key.toLowerCase() === 'a' && !e.shiftKey && !e.altKey && (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)) {
       if (!e.target.closest('cfc-code-editor')) {
-        showToast(i18n.getMessage("editorNotFocused", LOCALE));
+        showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
       }
       if (window.copyTimeoutId) {
@@ -1288,7 +1282,7 @@ document.addEventListener(
         // Focus table
         const table = document.querySelector('bq-results-table-optimized');
         if (!table) {
-          showToast(i18n.getMessage("tableNotFound", LOCALE));
+          showToast(i18n.getMessage('tableNotFound', LOCALE));
           return;
         }
 
@@ -1296,29 +1290,29 @@ document.addEventListener(
         const header = table.querySelector('[role="columnheader"]');
         if (cell) {
           cell.focus();
-          cell.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else if (header) {
           header.focus();
-          header.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          header.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else {
           table.focus();
-          table.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          table.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
       } else {
         // Focus editor
         const editor = getVisibleOrActiveEditor();
         if (!editor) {
-          showToast(i18n.getMessage("editorNotFound", LOCALE));
+          showToast(i18n.getMessage('editorNotFound', LOCALE));
           return;
         }
 
         const ta = findEditorTextArea(editor);
         if (ta) {
           ta.focus();
-          editor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else {
           editor.focus();
-          editor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
       }
       return;
@@ -1333,7 +1327,7 @@ document.addEventListener(
 );
 
 document.addEventListener(
-  "keyup",
+  'keyup',
   (e) => {
     if (e.key === 'Alt') {
       document.documentElement.classList.remove('alt-down');
@@ -1355,14 +1349,14 @@ function handleTableCellOpenPopup(cell) {
     getMatchingOptions,
     (option) => {
       configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
-      window.open(option.url, "_blank", "noopener,noreferrer");
+      window.open(option.url, '_blank', 'noopener,noreferrer');
     },
     () => configuration.hasErrors,
     contentInfo);
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
   const onFocusIn = () => {
-    const input = document.querySelector(".pig-modal-input");
+    const input = document.querySelector('.pig-modal-input');
     if (input) {
       input.focus();
     } else {
@@ -1385,16 +1379,16 @@ document.addEventListener(
     if (!table) return false;
     const cell = table.querySelector('[role="cell"]');
     if (!cell) return false;
-  
+
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-  
+
     const content = cell.innerText;
-  
+
     if (isMac ? e.metaKey : e.ctrlKey) {
       navigator.clipboard.writeText(content);
-      showToast(i18n.getMessage("cellCopied", LOCALE));
+      showToast(i18n.getMessage('cellCopied', LOCALE));
       return true;
     }
 
@@ -1415,7 +1409,7 @@ document.addEventListener(
     if (!table) return false;
     const cell = table.querySelector('[role="cell"]');
     if (!cell) return false;
-  
+
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -1442,21 +1436,21 @@ function copyShareLink() {
     e.stopImmediatePropagation();
 
     const url = new URL(window.location.href);
-    const project = url.searchParams.get("project");
-    url.search = "";
-    url.hash = "";
-    url.searchParams.set("pig", base64Encode(selection));
-    if (project) url.searchParams.set("project", project);
+    const project = url.searchParams.get('project');
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('pig', base64Encode(selection));
+    if (project) url.searchParams.set('project', project);
     const shareLink = url.toString();
 
     e.clipboardData.setData('text/plain', shareLink);
-    showToast(i18n.getMessage("linkCopied", LOCALE));
+    showToast(i18n.getMessage('linkCopied', LOCALE));
   };
 
   document.addEventListener('copy', handler, true);
 
   return setTimeout(() => {
-    document.execCommand("copy");
+    document.execCommand('copy');
     // Clean up handler if copy didn't fire (e.g., no selection)
     document.removeEventListener('copy', handler, true);
   }, 500);

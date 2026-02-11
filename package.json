@@ -1,5 +1,12 @@
 {
+  "scripts": {
+    "lint": "eslint src/ scripts/",
+    "lint:fix": "eslint src/ scripts/ --fix"
+  },
   "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-compat": "^6.1.0",
     "playwright": "^1.58.2"
   }
 }

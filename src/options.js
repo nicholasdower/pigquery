@@ -1,31 +1,31 @@
 const config = window.pigquery.config;
 const i18n = window.pigquery.i18n;
-const LOCALE = new URLSearchParams(window.location.search).get("hl") || i18n.getSystemLocale();
+const LOCALE = new URLSearchParams(window.location.search).get('hl') || i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
 
 const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
 
 const el = (id) => document.getElementById(id);
 
-const textarea = el("payload");
-const saveBtn = el("save");
-const localStatusEl = el("localStatus");
-const addUrlStatusEl = el("addUrlStatus");
-const urlInput = el("urlInput");
-const addUrlBtn = el("addUrl");
-const refreshAllBtn = el("refreshAll");
-const remoteSourcesEl = el("remoteSources");
-const exampleEl = el("example");
+const textarea = el('payload');
+const saveBtn = el('save');
+const localStatusEl = el('localStatus');
+const addUrlStatusEl = el('addUrlStatus');
+const urlInput = el('urlInput');
+const addUrlBtn = el('addUrl');
+const refreshAllBtn = el('refreshAll');
+const remoteSourcesEl = el('remoteSources');
+const exampleEl = el('example');
 
 // Shortcuts elements
-const shortcutInsertBtn = el("shortcut-insertSnippet");
-const shortcutFocusTableBtn = el("shortcut-focusTable");
-const resetInsertBtn = el("reset-insertSnippet");
-const resetFocusTableBtn = el("reset-focusTable");
+const shortcutInsertBtn = el('shortcut-insertSnippet');
+const shortcutFocusTableBtn = el('shortcut-focusTable');
+const resetInsertBtn = el('reset-insertSnippet');
+const resetFocusTableBtn = el('reset-focusTable');
 
 let sources = [];
 let busy = null; // Current operation: 'refreshing', 'adding', or null
-let lastLoadedLocal = ""; // Track the last loaded local config to detect unsaved edits
+let lastLoadedLocal = ''; // Track the last loaded local config to detect unsaved edits
 let shortcuts = {}; // Current shortcut configuration
 let recordingShortcut = null; // Which shortcut is being recorded ('insertSnippet', 'focusTable', or null)
 
@@ -33,18 +33,18 @@ function updateButtonStates() {
   const unchanged = textarea.value === lastLoadedLocal;
   saveBtn.disabled = busy || unchanged;
   if (unchanged) {
-    setLocalStatus("", "muted");
+    setLocalStatus('', 'muted');
   }
   addUrlBtn.disabled = !!busy;
-  const hasRemoteSources = sources.some(s => s.url !== "local");
+  const hasRemoteSources = sources.some(s => s.url !== 'local');
   refreshAllBtn.disabled = !!busy || !hasRemoteSources;
-  remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
+  remoteSourcesEl.querySelectorAll('.remove-btn').forEach(btn => {
     btn.disabled = !!busy;
   });
   // Shortcut buttons - disabled when busy (unless currently recording that shortcut)
   shortcutInsertBtn.disabled = !!busy && recordingShortcut !== 'insertSnippet';
   shortcutFocusTableBtn.disabled = !!busy && recordingShortcut !== 'focusTable';
-  
+
   // Reset buttons - disabled when busy or when shortcut matches default
   const insertIsDefault = shortcuts.insertSnippet && shortcutsMatch(shortcuts.insertSnippet, config.DEFAULT_SHORTCUTS.insertSnippet);
   const focusTableIsDefault = shortcuts.focusTable && shortcutsMatch(shortcuts.focusTable, config.DEFAULT_SHORTCUTS.focusTable);
@@ -52,13 +52,13 @@ function updateButtonStates() {
   resetFocusTableBtn.disabled = !!busy || focusTableIsDefault;
 }
 
-function setLocalStatus(message, kind = "muted") {
-  localStatusEl.className = "status " + kind;
+function setLocalStatus(message, kind = 'muted') {
+  localStatusEl.className = 'status ' + kind;
   localStatusEl.textContent = message;
 }
 
-function setAddUrlStatus(message, kind = "muted") {
-  addUrlStatusEl.className = "status " + kind;
+function setAddUrlStatus(message, kind = 'muted') {
+  addUrlStatusEl.className = 'status ' + kind;
   addUrlStatusEl.textContent = message;
 }
 
@@ -67,13 +67,13 @@ function setAddUrlStatus(message, kind = "muted") {
  */
 function updateShortcutButtons() {
   if (recordingShortcut === 'insertSnippet') {
-    shortcutInsertBtn.textContent = t("shortcutRecording") || "Press keys...";
+    shortcutInsertBtn.textContent = t('shortcutRecording') || 'Press keys...';
   } else {
     shortcutInsertBtn.textContent = config.formatShortcut(shortcuts.insertSnippet);
   }
-  
+
   if (recordingShortcut === 'focusTable') {
-    shortcutFocusTableBtn.textContent = t("shortcutRecording") || "Press keys...";
+    shortcutFocusTableBtn.textContent = t('shortcutRecording') || 'Press keys...';
   } else {
     shortcutFocusTableBtn.textContent = config.formatShortcut(shortcuts.focusTable);
   }
@@ -111,15 +111,15 @@ function cancelRecording() {
  * e.g., "KeyO" -> "o", "Digit1" -> "1", "BracketLeft" -> "["
  */
 function codeToKey(code) {
-  if (code.startsWith("Key")) return code.slice(3).toLowerCase();
-  if (code.startsWith("Digit")) return code.slice(5);
+  if (code.startsWith('Key')) return code.slice(3).toLowerCase();
+  if (code.startsWith('Digit')) return code.slice(5);
   const specialKeys = {
-    Backquote: "`", Minus: "-", Equal: "=", BracketLeft: "[", BracketRight: "]",
-    Backslash: "\\", Semicolon: ";", Quote: "'", Comma: ",", Period: ".", Slash: "/",
-    Space: "Space", Enter: "Enter", Tab: "Tab", Backspace: "Backspace",
-    ArrowUp: "ArrowUp", ArrowDown: "ArrowDown", ArrowLeft: "ArrowLeft", ArrowRight: "ArrowRight",
-    Home: "Home", End: "End", PageUp: "PageUp", PageDown: "PageDown",
-    Insert: "Insert", Delete: "Delete",
+    Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
+    Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/',
+    Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backspace: 'Backspace',
+    ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight',
+    Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown',
+    Insert: 'Insert', Delete: 'Delete',
   };
   return specialKeys[code] || code;
 }
@@ -139,14 +139,14 @@ function handleShortcutKeydown(e) {
   if (!recordingShortcut) return;
 
   // Escape cancels recording
-  if (e.code === "Escape") {
+  if (e.code === 'Escape') {
     e.preventDefault();
     cancelRecording();
     return;
   }
 
   // Ignore modifier-only keypresses
-  if (["ControlLeft", "ControlRight", "AltLeft", "AltRight", "ShiftLeft", "ShiftRight", "MetaLeft", "MetaRight"].includes(e.code)) {
+  if (['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight'].includes(e.code)) {
     return;
   }
 
@@ -186,7 +186,7 @@ function handleShortcutKeydown(e) {
 async function saveShortcuts() {
   if (busy) return;
 
-  const result = await chrome.runtime.sendMessage({ action: "saveShortcuts", shortcuts });
+  const result = await chrome.runtime.sendMessage({ action: 'saveShortcuts', shortcuts });
 
   if (!result.ok) {
     return;
@@ -207,7 +207,7 @@ async function resetShortcut(shortcutKey) {
 }
 
 function formatTimestamp(ts) {
-  if (!ts) return "Never";
+  if (!ts) return 'Never';
   const date = new Date(ts);
   return date.toLocaleString();
 }
@@ -233,7 +233,7 @@ async function load() {
   await loadBusyState();
 
   const local = config.getLocalSource(sources);
-  const newLocalValue = local ? config.jsonToYaml(local.data) : "";
+  const newLocalValue = local ? config.jsonToYaml(local.data) : '';
 
   // Only update the textarea if the user hasn't made unsaved edits
   const hasUnsavedEdits = textarea.value !== lastLoadedLocal;
@@ -245,16 +245,16 @@ async function load() {
   const remote = config.getRemoteSources(sources);
 
   if (remote.length === 0) {
-    remoteSourcesEl.innerHTML = "";
+    remoteSourcesEl.innerHTML = '';
     updateButtonStates();
     return;
   }
 
-  remoteSourcesEl.innerHTML = remote.map((source, index) => {
+  remoteSourcesEl.innerHTML = remote.map((source) => {
     const metaClass = source.error ? 'source-meta error' : 'source-meta';
     const metaText = source.error
-      ? t("optionsLastUpdatedError", [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
-      : t("optionsLastUpdated", formatTimestamp(source.timestamp));
+      ? t('optionsLastUpdatedError', [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+      : t('optionsLastUpdated', formatTimestamp(source.timestamp));
     return `
       <div class="source-card" data-url="${escapeHtml(source.url)}">
         <div class="source-header">
@@ -263,16 +263,16 @@ async function load() {
             <div class="${metaClass}">${escapeHtml(metaText)}</div>
           </div>
           <div class="source-actions">
-            <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t("optionsRemove")}</button>
+            <button type="button" class="danger remove-btn" data-url="${escapeHtml(source.url)}" data-i18n="optionsRemove">${t('optionsRemove')}</button>
           </div>
         </div>
         <textarea readonly>${source.data ? escapeHtml(config.jsonToYaml(source.data)) : ''}</textarea>
       </div>
     `;
-  }).join("");
+  }).join('');
 
-  remoteSourcesEl.querySelectorAll(".remove-btn").forEach(btn => {
-    btn.addEventListener("click", () => removeSource(btn.dataset.url));
+  remoteSourcesEl.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeSource(btn.dataset.url));
   });
 
   applyBusyState();
@@ -280,7 +280,7 @@ async function load() {
 }
 
 function escapeHtml(str) {
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
@@ -298,12 +298,12 @@ function applyBusyState() {
     const meta = card.querySelector('.source-meta');
     if (busy === 'refreshing') {
       meta.className = 'source-meta muted';
-      meta.textContent = t("statusRefreshing");
+      meta.textContent = t('statusRefreshing');
     } else {
       const metaClass = source.error ? 'source-meta error' : 'source-meta';
       const metaText = source.error
-        ? t("optionsLastUpdatedError", [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
-        : t("optionsLastUpdated", formatTimestamp(source.timestamp));
+        ? t('optionsLastUpdatedError', [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+        : t('optionsLastUpdated', formatTimestamp(source.timestamp));
       meta.className = metaClass;
       meta.textContent = metaText;
     }
@@ -313,16 +313,16 @@ function applyBusyState() {
 async function saveLocal() {
   if (busy) return;
 
-  const result = await chrome.runtime.sendMessage({ action: "saveLocalSource", yaml: textarea.value });
+  const result = await chrome.runtime.sendMessage({ action: 'saveLocalSource', yaml: textarea.value });
 
   if (!result.ok) {
-    setLocalStatus(t(result.errorKey, result.errorSubs), "error");
+    setLocalStatus(t(result.errorKey, result.errorSubs), 'error');
     return;
   }
 
   textarea.value = result.yaml;
   lastLoadedLocal = result.yaml;
-  setLocalStatus("", "muted");
+  setLocalStatus('', 'muted');
   updateButtonStates();
 }
 
@@ -332,36 +332,36 @@ async function addUrl() {
   const url = urlInput.value.trim();
 
   if (!url) {
-    setAddUrlStatus(t("statusInvalidUrl"), "error");
+    setAddUrlStatus(t('statusInvalidUrl'), 'error');
     return;
   }
 
   try {
     new URL(url);
   } catch (e) {
-    setAddUrlStatus(t("statusInvalidUrl"), "error");
+    setAddUrlStatus(t('statusInvalidUrl'), 'error');
     return;
   }
 
   if (sources.find(s => s.url === url)) {
-    setAddUrlStatus(t("statusUrlExists"), "error");
+    setAddUrlStatus(t('statusUrlExists'), 'error');
     return;
   }
 
   const granted = await requestUrlPermission(url);
   if (!granted) {
-    setAddUrlStatus(t("statusPermissionDenied"), "error");
+    setAddUrlStatus(t('statusPermissionDenied'), 'error');
     return;
   }
 
-  const result = await chrome.runtime.sendMessage({ action: "addSource", url });
+  const result = await chrome.runtime.sendMessage({ action: 'addSource', url });
   if (!result.ok) {
-    setAddUrlStatus(t(result.errorKey, result.errorSubs), "error");
+    setAddUrlStatus(t(result.errorKey, result.errorSubs), 'error');
     return;
   }
 
-  urlInput.value = "";
-  setAddUrlStatus("", "muted");
+  urlInput.value = '';
+  setAddUrlStatus('', 'muted');
 }
 
 /**
@@ -389,7 +389,7 @@ async function requestUrlPermission(url) {
 async function removeSource(url) {
   if (busy) return;
 
-  await chrome.runtime.sendMessage({ action: "removeSource", url });
+  await chrome.runtime.sendMessage({ action: 'removeSource', url });
 }
 
 async function refreshAll() {
@@ -398,55 +398,55 @@ async function refreshAll() {
   const remote = config.getRemoteSources(sources);
   if (remote.length === 0) return;
 
-  await chrome.runtime.sendMessage({ action: "refreshRemoteSources" });
+  await chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
 }
 
-saveBtn.addEventListener("click", () => void saveLocal());
-addUrlBtn.addEventListener("click", () => void addUrl());
-refreshAllBtn.addEventListener("click", () => void refreshAll());
-textarea.addEventListener("input", () => updateButtonStates());
+saveBtn.addEventListener('click', () => void saveLocal());
+addUrlBtn.addEventListener('click', () => void addUrl());
+refreshAllBtn.addEventListener('click', () => void refreshAll());
+textarea.addEventListener('input', () => updateButtonStates());
 
 // Shortcut recording event listeners
-shortcutInsertBtn.addEventListener("click", () => {
-  if (recordingShortcut === "insertSnippet") {
+shortcutInsertBtn.addEventListener('click', () => {
+  if (recordingShortcut === 'insertSnippet') {
     cancelRecording();
   } else {
-    startRecording("insertSnippet");
+    startRecording('insertSnippet');
   }
 });
-shortcutFocusTableBtn.addEventListener("click", () => {
-  if (recordingShortcut === "focusTable") {
+shortcutFocusTableBtn.addEventListener('click', () => {
+  if (recordingShortcut === 'focusTable') {
     cancelRecording();
   } else {
-    startRecording("focusTable");
+    startRecording('focusTable');
   }
 });
-resetInsertBtn.addEventListener("click", () => void resetShortcut("insertSnippet"));
-resetFocusTableBtn.addEventListener("click", () => void resetShortcut("focusTable"));
+resetInsertBtn.addEventListener('click', () => void resetShortcut('insertSnippet'));
+resetFocusTableBtn.addEventListener('click', () => void resetShortcut('focusTable'));
 
-document.addEventListener("keydown", (e) => {
+document.addEventListener('keydown', (e) => {
   // Handle shortcut recording
   if (recordingShortcut) {
     handleShortcutKeydown(e);
     return;
   }
 
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
     e.preventDefault();
     void saveLocal();
   }
 });
 
-urlInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
+urlInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
     e.preventDefault();
     void addUrl();
   }
 });
 
-urlInput.addEventListener("input", () => {
+urlInput.addEventListener('input', () => {
   if (!urlInput.value.trim()) {
-    setAddUrlStatus("", "muted");
+    setAddUrlStatus('', 'muted');
   }
 });
 

@@ -1,6 +1,6 @@
-const STORAGE_KEY = "userPayload";
-const BUSY_KEY = "busy";
-const SHORTCUTS_KEY = "shortcuts";
+const STORAGE_KEY = 'userPayload';
+const BUSY_KEY = 'busy';
+const SHORTCUTS_KEY = 'shortcuts';
 let operationPromise = null;
 
 const DEFAULT_SHORTCUTS = {
@@ -15,12 +15,12 @@ const DEFAULT_SHORTCUTS = {
 function formatShortcut(shortcut) {
   const isMac = typeof navigator !== 'undefined' && navigator.userAgentData?.platform === 'macOS';
   const parts = [];
-  if (shortcut.ctrl) parts.push("Ctrl");
-  if (shortcut.alt) parts.push("Alt");
-  if (shortcut.shift) parts.push("Shift");
-  if (shortcut.meta) parts.push(isMac ? "⌘" : "Win");
+  if (shortcut.ctrl) parts.push('Ctrl');
+  if (shortcut.alt) parts.push('Alt');
+  if (shortcut.shift) parts.push('Shift');
+  if (shortcut.meta) parts.push(isMac ? '⌘' : 'Win');
   parts.push(shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key);
-  return parts.join("+");
+  return parts.join('+');
 }
 
 function safeYamlParse(text) {
@@ -41,46 +41,46 @@ function jsonToYaml(obj) {
  */
 function validateConfigItems(items) {
   if (!Array.isArray(items)) {
-    return { ok: false, errorKey: "statusInvalidConfigArray" };
+    return { ok: false, errorKey: 'statusInvalidConfigArray' };
   }
   for (const option of items) {
     let type;
     if (option.regex) {
-      type = "site";
+      type = 'site';
     } else {
-      type = "snippet";
+      type = 'snippet';
     }
-    if (typeof option.name !== "string" || option.name.trim() === "") {
-      return { ok: false, errorKey: "statusInvalidConfigNameMissing", errorSubs: type };
+    if (typeof option.name !== 'string' || option.name.trim() === '') {
+      return { ok: false, errorKey: 'statusInvalidConfigNameMissing', errorSubs: type };
     }
-    if (typeof option.tag === "string" && option.tag.trim() === "") {
-      return { ok: false, errorKey: "statusInvalidConfigTagInvalid", errorSubs: type };
+    if (typeof option.tag === 'string' && option.tag.trim() === '') {
+      return { ok: false, errorKey: 'statusInvalidConfigTagInvalid', errorSubs: type };
     }
-    if (option.tag && typeof option.tag !== "string") {
-      return { ok: false, errorKey: "statusInvalidConfigTagInvalid", errorSubs: type };
+    if (option.tag && typeof option.tag !== 'string') {
+      return { ok: false, errorKey: 'statusInvalidConfigTagInvalid', errorSubs: type };
     }
-    if (typeof option.group !== "string" || option.group.trim() === "") {
-      return { ok: false, errorKey: "statusInvalidConfigGroupMissing", errorSubs: type };
+    if (typeof option.group !== 'string' || option.group.trim() === '') {
+      return { ok: false, errorKey: 'statusInvalidConfigGroupMissing', errorSubs: type };
     }
-    if (type === "snippet") {
-      if (typeof option.value !== "string" || option.value.trim() === "") {
-        return { ok: false, errorKey: "statusInvalidConfigSnippetsValueMissing" };
+    if (type === 'snippet') {
+      if (typeof option.value !== 'string' || option.value.trim() === '') {
+        return { ok: false, errorKey: 'statusInvalidConfigSnippetsValueMissing' };
       }
     }
-    if (type === "site") {
-      if (typeof option.regex !== "string" || option.regex.trim() === "") {
-        return { ok: false, errorKey: "statusInvalidConfigSitesRegexMissing" };
+    if (type === 'site') {
+      if (typeof option.regex !== 'string' || option.regex.trim() === '') {
+        return { ok: false, errorKey: 'statusInvalidConfigSitesRegexMissing' };
       }
-      if (typeof option.url !== "string" || option.url.trim() === "") {
-        return { ok: false, errorKey: "statusInvalidConfigSitesUrlMissing" };
+      if (typeof option.url !== 'string' || option.url.trim() === '') {
+        return { ok: false, errorKey: 'statusInvalidConfigSitesUrlMissing' };
       }
       try {
         new RegExp(option.regex);
       } catch (e) {
-        return { ok: false, errorKey: "statusInvalidConfigSitesRegexInvalid" };
+        return { ok: false, errorKey: 'statusInvalidConfigSitesRegexInvalid' };
       }
-      if (!option.url.includes("%s")) {
-        return { ok: false, errorKey: "statusInvalidConfigSitesUrlMissingPlaceholder" };
+      if (!option.url.includes('%s')) {
+        return { ok: false, errorKey: 'statusInvalidConfigSitesUrlMissingPlaceholder' };
       }
     }
   }
@@ -95,12 +95,12 @@ async function fetchYamlFromUrl(url) {
   try {
     const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) {
-      return { ok: false, errorKey: "statusFetchError", errorSubs: `HTTP ${response.status}: ${response.statusText}` };
+      return { ok: false, errorKey: 'statusFetchError', errorSubs: `HTTP ${response.status}: ${response.statusText}` };
     }
     const yamlText = await response.text();
     const parsed = safeYamlParse(yamlText);
     if (!parsed.ok) {
-      return { ok: false, errorKey: "statusInvalidYaml", errorSubs: parsed.error.message };
+      return { ok: false, errorKey: 'statusInvalidYaml', errorSubs: parsed.error.message };
     }
     const validation = validateConfigItems(parsed.value);
     if (!validation.ok) {
@@ -108,7 +108,7 @@ async function fetchYamlFromUrl(url) {
     }
     return { ok: true, value: parsed.value };
   } catch (e) {
-    return { ok: false, errorKey: "statusFetchError", errorSubs: e.message };
+    return { ok: false, errorKey: 'statusFetchError', errorSubs: e.message };
   }
 }
 
@@ -131,15 +131,15 @@ async function loadConfiguration() {
   const sources = await loadSources();
   // Order remote then local, so local definitions come last and win
   const allItems = [
-    ...sources.filter(s => s.url !== "local"),
-    ...sources.filter(s => s.url === "local"),
+    ...sources.filter(s => s.url !== 'local'),
+    ...sources.filter(s => s.url === 'local'),
   ].flatMap(source => source.data);
 
   // Dedupe: first occurrence order, last occurrence value
   const dedupe = (items) => {
     const map = new Map();
     for (const item of items) {
-      map.set(`${item.name}\0${item.group}\0${item.tag ?? ""}\0${item.regex ?? ""}`, item);
+      map.set(`${item.name}\0${item.group}\0${item.tag ?? ''}\0${item.regex ?? ''}`, item);
     }
     return [...map.values()];
   };
@@ -174,7 +174,7 @@ async function saveSources(sources) {
  * Returns { ok: true, yaml: string } or { ok: false, errorKey, errorSubs }
  */
 async function saveLocalSource(rawYaml) {
-  if (operationPromise) return { ok: false, errorKey: "statusBusy" };
+  if (operationPromise) return { ok: false, errorKey: 'statusBusy' };
 
   operationPromise = doSaveLocalSource(rawYaml);
   try {
@@ -186,16 +186,16 @@ async function saveLocalSource(rawYaml) {
 
 async function doSaveLocalSource(rawYaml) {
   const sources = await loadSources();
-  const filtered = sources.filter(s => s.url !== "local");
+  const filtered = sources.filter(s => s.url !== 'local');
 
   if (rawYaml.trim() === '') {
     await saveSources(filtered);
-    return { ok: true, yaml: "" };
+    return { ok: true, yaml: '' };
   }
 
   const parsed = safeYamlParse(rawYaml);
   if (!parsed.ok) {
-    return { ok: false, errorKey: "statusInvalidYaml", errorSubs: parsed.error.message };
+    return { ok: false, errorKey: 'statusInvalidYaml', errorSubs: parsed.error.message };
   }
 
   const validation = validateConfigItems(parsed.value);
@@ -204,7 +204,7 @@ async function doSaveLocalSource(rawYaml) {
   }
 
   filtered.unshift({
-    url: "local",
+    url: 'local',
     timestamp: Date.now(),
     data: parsed.value
   });
@@ -216,14 +216,14 @@ async function doSaveLocalSource(rawYaml) {
  * Gets the local source from sources array.
  */
 function getLocalSource(sources) {
-  return sources.find(s => s.url === "local");
+  return sources.find(s => s.url === 'local');
 }
 
 /**
  * Gets remote sources from sources array.
  */
 function getRemoteSources(sources) {
-  return sources.filter(s => s.url !== "local");
+  return sources.filter(s => s.url !== 'local');
 }
 
 /**
@@ -312,7 +312,7 @@ async function doRefreshRemoteSources() {
  */
 async function addSource(url) {
   if (operationPromise) {
-    return { ok: false, errorKey: "statusBusy" };
+    return { ok: false, errorKey: 'statusBusy' };
   }
 
   operationPromise = doAddSource(url);
@@ -330,7 +330,7 @@ async function doAddSource(url) {
   const sources = await loadSources();
 
   if (sources.find(s => s.url === url)) {
-    return { ok: false, errorKey: "statusUrlExists" };
+    return { ok: false, errorKey: 'statusUrlExists' };
   }
 
   const result = await fetchYamlFromUrl(url);
@@ -386,7 +386,7 @@ async function loadShortcuts() {
  * Returns { ok: true } or { ok: false, errorKey }
  */
 async function saveShortcuts(shortcuts) {
-  if (operationPromise) return { ok: false, errorKey: "statusBusy" };
+  if (operationPromise) return { ok: false, errorKey: 'statusBusy' };
 
   operationPromise = (async () => {
     await setBusyState('saving');

@@ -33,7 +33,7 @@
 const SEP = /[^a-z0-9]+/gi;
 
 function norm(s) {
-  return (s ?? "").toLowerCase();
+  return (s ?? '').toLowerCase();
 }
 
 function tokenize(s) {
@@ -41,7 +41,7 @@ function tokenize(s) {
 }
 
 function acronym(tokens) {
-  return tokens.map(t => t[0] || "").join("");
+  return tokens.map(t => t[0] || '').join('');
 }
 
 // IntelliJ-style matching: consume query across successive token prefixes.
@@ -95,25 +95,25 @@ function matchesField(queryToken, fieldNorm, fieldTokens, fieldAcronym) {
   // Exact token match - find earliest matching token
   const exactIndex = fieldTokens.indexOf(queryToken);
   if (exactIndex !== -1) {
-    return { type: "exact", score: 100, startIndex: exactIndex };
+    return { type: 'exact', score: 100, startIndex: exactIndex };
   }
 
   // Token prefix match - find earliest matching token
   const prefixIndex = fieldTokens.findIndex(t => t.startsWith(queryToken));
   if (prefixIndex !== -1) {
-    return { type: "prefix", score: 80, startIndex: prefixIndex };
+    return { type: 'prefix', score: 80, startIndex: prefixIndex };
   }
 
   // Acronym match (requires 2+ chars) - always starts at index 0
   if (queryToken.length >= 2 && fieldAcronym.startsWith(queryToken)) {
-    return { type: "acronym", score: 70, startIndex: 0 };
+    return { type: 'acronym', score: 70, startIndex: 0 };
   }
 
   // Token-prefix sequence match (requires 2+ chars)
   if (queryToken.length >= 2) {
     const seqResult = tokenPrefixMatch(fieldTokens, queryToken);
     if (seqResult) {
-      return { type: "sequence", score: seqResult.score, startIndex: seqResult.startIndex };
+      return { type: 'sequence', score: seqResult.score, startIndex: seqResult.startIndex };
     }
   }
 
@@ -139,9 +139,9 @@ function scoreItem({ group, name, tag }, query) {
 
   // Prepare fields
   const fields = [
-    { name: "group", norm: norm(group), tokens: tokenize(group), weight: 1.0 },
-    { name: "name", norm: norm(name), tokens: tokenize(name), weight: 0.9 },
-    { name: "tag", norm: norm(tag), tokens: tokenize(tag), weight: 0.8 },
+    { name: 'group', norm: norm(group), tokens: tokenize(group), weight: 1.0 },
+    { name: 'name', norm: norm(name), tokens: tokenize(name), weight: 0.9 },
+    { name: 'tag', norm: norm(tag), tokens: tokenize(tag), weight: 0.8 },
   ];
 
   // Pre-compute acronyms
@@ -180,14 +180,14 @@ function scoreItem({ group, name, tag }, query) {
         const combinedAcronym = acronym(combinedTokens);
 
         if (combinedAcronym.startsWith(qt)) {
-          bestMatch = { type: "combined-acronym", score: 50, startIndex: 0 };
+          bestMatch = { type: 'combined-acronym', score: 50, startIndex: 0 };
           bestWeight = 0.7;
           break;
         }
 
         const seqResult = tokenPrefixMatch(combinedTokens, qt);
         if (seqResult) {
-          const candidate = { type: "combined-sequence", score: seqResult.score * 0.7, startIndex: seqResult.startIndex };
+          const candidate = { type: 'combined-sequence', score: seqResult.score * 0.7, startIndex: seqResult.startIndex };
           const candidateEffective = candidate.score * 0.7 - candidate.startIndex * POSITION_PENALTY;
           const bestEffective = bestMatch ? bestMatch.score * bestWeight - bestMatch.startIndex * POSITION_PENALTY : -Infinity;
           if (candidateEffective > bestEffective) {

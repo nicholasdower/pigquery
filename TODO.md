@@ -171,7 +171,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 
 ### Build & Tooling
 
-- [ ] **Add linter** - ESLint with consistent config
 - [ ] **Add formatter** - Prettier for consistent style
 - [ ] **Add TypeScript** - Optional, for better type safety
 - [ ] **Add bundler** - Currently raw JS files; could benefit from bundling for tree-shaking
