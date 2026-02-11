@@ -1,8 +1,7 @@
-.DS_Store
-/publickey.pem
-/privatekey.pem
-/dist
-/.cursor
-/node_modules
-/profile
 *.mp4
+.DS_Store
+/.cursor
+/dist
+/node_modules
+/privatekey
+/profile

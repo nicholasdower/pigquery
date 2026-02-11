@@ -19,4 +19,4 @@ cp -R _locales "$dir/"
 
 echo "$commit" > "$dir/commit.txt"
 
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --pack-extension="$PWD/$dir" --pack-extension-key="$PWD/privatekey.pem"
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --pack-extension="$PWD/$dir" --pack-extension-key="$PWD/privatekey"
