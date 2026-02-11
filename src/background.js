@@ -58,20 +58,40 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 updateErrorBadge();
 config.clearStaleBusy();
 
-// Reload tab and reopen popup/options if needed after extension reload
+// Reinject content script into BigQuery tabs and reopen options page after extension reload
+async function reinjectContentScripts() {
+  try {
+    // Find all BigQuery tabs
+    const tabs = await chrome.tabs.query({ url: 'https://console.cloud.google.com/*' });
+
+    // Reinject content script into each tab
+    for (const tab of tabs) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['dist/content.js'],
+        });
+      } catch (err) {
+        // Tab may not be injectable (e.g., chrome:// page), ignore
+        console.warn(`Could not inject content script into tab ${tab.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('Error reinjecting content scripts:', err);
+  }
+}
+
+// Handle extension reload: reinject scripts and reopen options if needed
 // Add a small delay to ensure extension is fully loaded after reload
 setTimeout(() => {
   chrome.storage.local.get('reloadState').then(({ reloadState }) => {
     if (reloadState) {
       chrome.storage.local.remove('reloadState');
 
-      const { reloadTabId, reopenOptionsPage, optionsPageWasActive } = reloadState;
+      const { reopenOptionsPage, optionsPageWasActive } = reloadState;
 
-      if (reloadTabId && !optionsPageWasActive) {
-        chrome.tabs.reload(reloadTabId).catch(() => {
-          // Tab may no longer exist, ignore error
-        });
-      }
+      // Reinject content scripts into all BigQuery tabs
+      reinjectContentScripts();
 
       if (reopenOptionsPage) {
         // Open options page as active if it was active, otherwise in background

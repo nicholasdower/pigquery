@@ -13,8 +13,8 @@ NODE_ENV=production node build.js
 rm -rf package
 mkdir -p "$packageDir"
 
-# Remove management permission from manifest.json. It is only needed for development.
-jq 'del(.permissions[] | select(. == "management" or . == "tabs"))' manifest.json > "$packageDir/manifest.json"
+# Remove dev-only permissions from manifest.json. They are only needed for development.
+jq 'del(.permissions[] | select(. == "management" or . == "tabs" or . == "scripting"))' manifest.json > "$packageDir/manifest.json"
 cp LICENSE.txt "$packageDir/"
 cp -R dist "$packageDir/"
 cp -R icons-prod "$packageDir/icons"

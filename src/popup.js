@@ -38,12 +38,7 @@ updateBtn.addEventListener('click', async () => {
   const hasOptionsPage = optionsTabs.length > 0;
   const optionsPageWasActive = tab?.url?.startsWith(optionsUrl);
 
-  // Only reload the tab if it's a BigQuery tab that has our content script
-  const isBigQueryTab = tab?.url?.startsWith('https://console.cloud.google.com/');
-  const shouldReloadTab = isBigQueryTab && !optionsPageWasActive;
-
   const reloadState = {
-    reloadTabId: shouldReloadTab ? tab.id : null,
     reopenOptionsPage: hasOptionsPage,
     optionsPageWasActive: optionsPageWasActive,
   };
