@@ -9,6 +9,9 @@ import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import highlightCss from 'highlight.js/styles/atom-one-dark.min.css';
 
+// Clean up any previous instance of PigQuery before initializing
+document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
+
 // Register languages for syntax highlighting
 hljs.registerLanguage('sql', sql);
 hljs.registerLanguage('json', json);
@@ -20,8 +23,6 @@ const style = document.createElement('style');
 style.textContent = highlightCss;
 document.head.appendChild(style);
 
-// log current time
-console.log(`piggy: ${new Date().toISOString()} hi 5`);
 const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
@@ -51,6 +52,15 @@ let configuration;
 let shortcuts = config.DEFAULT_SHORTCUTS;
 let onConfigurationChange = null;
 let recentSnippetGroups = [];
+let copyTimeoutId = null;
+
+// Store references for cleanup
+let storageChangeListener = null;
+let keydownListener1 = null;
+let keyupListener = null;
+let clickListener = null;
+let keydownListener2 = null;
+let mutationObserver = null;
 
 /**
  * Checks if a keyboard event matches a shortcut configuration.
@@ -111,17 +121,19 @@ async function load() {
 
 load();
 
-chrome.storage.onChanged.addListener(changes => {
+storageChangeListener = changes => {
   if (config.STORAGE_KEY in changes || config.SHORTCUTS_KEY in changes) {
     load();
   }
-});
+};
+chrome.storage.onChanged.addListener(storageChangeListener);
 chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
 
 // Extract and remove the 'pig' query parameter on page load.
 const url = new URL(window.location.href);
 const queryParam = url.searchParams.get('pig');
 let query = queryParam?.length ? base64Decode(queryParam.trim()).trim() : null;
+let pigParamIntervalId = null;
 
 if (url.searchParams.has('pig')) {
   url.searchParams.delete('pig');
@@ -129,7 +141,7 @@ if (url.searchParams.has('pig')) {
 
   // Keep removing the 'pig' param if the page re-adds it (check for 10 seconds)
   const startTime = Date.now();
-  const intervalId = setInterval(() => {
+  pigParamIntervalId = setInterval(() => {
     const currentUrl = new URL(window.location.href);
     if (currentUrl.searchParams.has('pig')) {
       currentUrl.searchParams.delete('pig');
@@ -137,14 +149,15 @@ if (url.searchParams.has('pig')) {
     }
 
     if (Date.now() - startTime > 10000) {
-      clearInterval(intervalId);
+      clearInterval(pigParamIntervalId);
+      pigParamIntervalId = null;
     }
   }, 100);
 }
 
 let clickedTab = false;
 if (query && query.length > 0) {
-  const observer = new MutationObserver(() => {
+  mutationObserver = new MutationObserver(() => {
     if (!clickedTab) {
       const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
       if (tabs.length === 0) return;
@@ -162,7 +175,7 @@ if (query && query.length > 0) {
     insertIntoEditor(editor, query.trim());
   });
 
-  observer.observe(document.body, {
+  mutationObserver.observe(document.body, {
     childList: true,
     subtree: true,
   });
@@ -173,7 +186,8 @@ if (query && query.length > 0) {
     } else {
       showToast(i18n.getMessage('queryInsertFailed', LOCALE));
     }
-    observer.disconnect();
+    mutationObserver.disconnect();
+    mutationObserver = null;
     clearTimeout(timeoutId);
   };
 
@@ -1235,17 +1249,15 @@ function getVisibleOrActiveEditor() {
   return null;
 }
 
-document.addEventListener(
-  'keydown',
-  e => {
-    if (document.querySelector('.pig-modal-overlay')) return;
+keydownListener1 = e => {
+  if (document.querySelector('.pig-modal-overlay')) return;
 
-    if (window.copyTimeoutId) {
-      clearTimeout(window.copyTimeoutId);
-      window.copyTimeoutId = null;
-    }
+  if (copyTimeoutId) {
+    clearTimeout(copyTimeoutId);
+    copyTimeoutId = null;
+  }
 
-    if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
+  if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -1285,11 +1297,11 @@ document.addEventListener(
         showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
       }
-      if (window.copyTimeoutId) {
-        clearTimeout(window.copyTimeoutId);
-        window.copyTimeoutId = null;
+      if (copyTimeoutId) {
+        clearTimeout(copyTimeoutId);
+        copyTimeoutId = null;
       }
-      window.copyTimeoutId = copyShareLink();
+      copyTimeoutId = copyShareLink();
       return;
     }
 
@@ -1345,15 +1357,17 @@ document.addEventListener(
     if (e.key === 'Alt') {
       document.documentElement.classList.add('alt-down');
     }
-  },
-  true
-);
+};
 
-document.addEventListener('keyup', e => {
+document.addEventListener('keydown', keydownListener1, true);
+
+keyupListener = e => {
   if (e.key === 'Alt') {
     document.documentElement.classList.remove('alt-down');
   }
-});
+};
+
+document.addEventListener('keyup', keyupListener);
 
 function handleTableCellOpenPopup(cell) {
   const content = cell.innerText;
@@ -1390,56 +1404,52 @@ function handleTableCellOpenPopup(cell) {
   return true;
 }
 
-document.addEventListener(
-  'click',
-  e => {
-    if (!e.altKey) return;
-    if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
+clickListener = e => {
+  if (!e.altKey) return;
+  if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
 
-    if (!(e.target instanceof Element)) return false;
-    const table = e.target.closest('bq-results-table-optimized');
-    if (!table) return false;
-    const cell = table.querySelector('[role="cell"]');
-    if (!cell) return false;
+  if (!(e.target instanceof Element)) return false;
+  const table = e.target.closest('bq-results-table-optimized');
+  if (!table) return false;
+  const cell = table.querySelector('[role="cell"]');
+  if (!cell) return false;
 
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 
-    const content = cell.innerText;
+  const content = cell.innerText;
 
-    if (isMac ? e.metaKey : e.ctrlKey) {
-      navigator.clipboard.writeText(content);
-      showToast(i18n.getMessage('cellCopied', LOCALE));
-      return true;
-    }
+  if (isMac ? e.metaKey : e.ctrlKey) {
+    navigator.clipboard.writeText(content);
+    showToast(i18n.getMessage('cellCopied', LOCALE));
+    return true;
+  }
 
-    // Focus the cell so it's properly focused when the modal closes
-    cell.focus();
-    handleTableCellOpenPopup(cell);
-  },
-  true
-);
+  // Focus the cell so it's properly focused when the modal closes
+  cell.focus();
+  handleTableCellOpenPopup(cell);
+};
 
-document.addEventListener(
-  'keydown',
-  e => {
-    if (e.key !== 'Enter') return;
+document.addEventListener('click', clickListener, true);
 
-    if (!(e.target instanceof Element)) return false;
-    const table = e.target.closest('bq-results-table-optimized');
-    if (!table) return false;
-    const cell = table.querySelector('[role="cell"]');
-    if (!cell) return false;
+keydownListener2 = e => {
+  if (e.key !== 'Enter') return;
 
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+  if (!(e.target instanceof Element)) return false;
+  const table = e.target.closest('bq-results-table-optimized');
+  if (!table) return false;
+  const cell = table.querySelector('[role="cell"]');
+  if (!cell) return false;
 
-    handleTableCellOpenPopup(cell);
-  },
-  true
-);
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+
+  handleTableCellOpenPopup(cell);
+};
+
+document.addEventListener('keydown', keydownListener2, true);
 
 function copyShareLink() {
   // Set up a one-time copy event handler to intercept Monaco's copy
@@ -1477,3 +1487,84 @@ function copyShareLink() {
     document.removeEventListener('copy', handler, true);
   }, 500);
 }
+
+/**
+ * Removes all DOM modifications, event listeners, and intervals added by PigQuery.
+ * Call this to restore the page to its original state.
+ */
+function uninstallPigQuery() {
+  // Remove style elements
+  const highlightStyle = document.querySelector('style');
+  if (highlightStyle?.textContent?.includes('hljs')) {
+    highlightStyle.remove();
+  }
+  const modalStyle = document.getElementById('pig-modal-style');
+  if (modalStyle) {
+    modalStyle.remove();
+  }
+
+  // Remove any active modals
+  const modal = document.querySelector('.pig-modal-overlay');
+  if (modal) {
+    modal.remove();
+  }
+
+  // Remove CSS class from html element
+  document.documentElement.classList.remove('alt-down');
+
+  // Remove event listeners
+  if (keydownListener1) {
+    document.removeEventListener('keydown', keydownListener1, true);
+    keydownListener1 = null;
+  }
+  if (keyupListener) {
+    document.removeEventListener('keyup', keyupListener);
+    keyupListener = null;
+  }
+  if (clickListener) {
+    document.removeEventListener('click', clickListener, true);
+    clickListener = null;
+  }
+  if (keydownListener2) {
+    document.removeEventListener('keydown', keydownListener2, true);
+    keydownListener2 = null;
+  }
+
+  // Remove Chrome storage listener (check if extension context still exists)
+  if (storageChangeListener) {
+    try {
+      if (chrome.runtime?.id) {
+        chrome.storage.onChanged.removeListener(storageChangeListener);
+      }
+    } catch (e) {
+      // Extension context may be invalidated, ignore error
+    }
+    storageChangeListener = null;
+  }
+
+  // Disconnect MutationObserver
+  if (mutationObserver) {
+    mutationObserver.disconnect();
+    mutationObserver = null;
+  }
+
+  // Clear any active intervals
+  if (pigParamIntervalId) {
+    clearInterval(pigParamIntervalId);
+    pigParamIntervalId = null;
+  }
+
+  // Clear any active timeouts
+  if (copyTimeoutId) {
+    clearTimeout(copyTimeoutId);
+    copyTimeoutId = null;
+  }
+
+  // Remove the uninstall event listener
+  document.removeEventListener('pigquery-uninstall', uninstallPigQuery);
+
+  console.log('PigQuery uninstalled successfully');
+}
+
+// Listen for uninstall event from page context
+document.addEventListener('pigquery-uninstall', uninstallPigQuery);
