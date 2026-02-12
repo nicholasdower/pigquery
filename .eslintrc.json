@@ -36,6 +36,13 @@
         "node": true,
         "browser": false
       }
+    },
+    {
+      "files": ["src/__tests__/**/*.js"],
+      "env": {
+        "node": true,
+        "jest": true
+      }
     }
   ]
 }
