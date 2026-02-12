@@ -56,20 +56,6 @@ function copyDir(src, dest) {
   }
 }
 
-function updateHtmlScriptPaths(htmlPath, outputPath, scriptName) {
-  let html = fs.readFileSync(htmlPath, 'utf-8');
-  // Remove lib script tags
-  html = html.replace(/<script src="\.\.\/lib\/js-yaml\.min\.js"><\/script>\s*/g, '');
-  // Remove individual module script tags (i18n.js, config.js, etc.)
-  html = html.replace(/<script src="i18n\.js"><\/script>\s*/g, '');
-  html = html.replace(/<script src="config\.js"><\/script>\s*/g, '');
-  html = html.replace(/<script src="search\.js"><\/script>\s*/g, '');
-  html = html.replace(/<script src="formatters\.js"><\/script>\s*/g, '');
-  // Update the main script to the bundled version
-  html = html.replace(new RegExp(`<script src="${scriptName}"><\\/script>`), `<script src="${scriptName}"></script>`);
-  fs.writeFileSync(outputPath, html);
-  console.log(`✓ Updated and copied ${htmlPath} -> ${outputPath}`);
-}
 
 async function build() {
   try {
@@ -106,9 +92,9 @@ async function build() {
       external: ['chrome'],
     });
 
-    // Copy and update HTML files
-    updateHtmlScriptPaths('src/popup.html', `${distDir}/popup.html`, 'popup.js');
-    updateHtmlScriptPaths('src/options.html', `${distDir}/options.html`, 'options.js');
+    // Copy HTML files
+    copyFile('src/popup.html', `${distDir}/popup.html`);
+    copyFile('src/options.html', `${distDir}/options.html`);
 
     console.log('✓ Build completed successfully');
 
