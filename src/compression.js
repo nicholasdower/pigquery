@@ -1,16 +1,17 @@
 /**
  * Compression utilities for encoding/decoding query strings in share links.
- * Supports both compressed (gzip + base64) and legacy uncompressed (base64 only) formats.
+ * Uses base64url encoding (URL-safe, no padding) for optimal URL compatibility.
+ * Supports both compressed (gzip + base64url) and legacy uncompressed (base64) formats.
  */
 
 import pako from 'pako';
 
 /**
- * Compress and base64-encode a string.
+ * Compress and base64url-encode a string.
  * Uses gzip compression to reduce the size of query strings in share links.
  *
  * @param {string} str - The string to encode
- * @returns {string} Base64-encoded compressed string
+ * @returns {string} Base64url-encoded compressed string
  */
 export function compressAndEncode(str) {
   // Encode string to UTF-8 bytes
@@ -19,22 +20,33 @@ export function compressAndEncode(str) {
   // Compress with gzip
   const compressedBytes = pako.gzip(textBytes);
 
-  // Convert to base64
+  // Convert to base64url (URL-safe base64 without padding)
   let binary = '';
   for (let i = 0; i < compressedBytes.length; i++) {
     binary += String.fromCharCode(compressedBytes[i]);
   }
-  return btoa(binary);
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 /**
- * Base64-decode and decompress a string.
+ * Base64url-decode and decompress a string.
  * Automatically detects whether the input is compressed (gzip) or legacy uncompressed format.
+ * Supports both base64url and standard base64 encoding for backward compatibility.
  *
- * @param {string} b64 - The base64-encoded string to decode
+ * @param {string} b64 - The base64url-encoded string to decode
  * @returns {string} The decoded and decompressed string
  */
 export function decodeAndDecompress(b64) {
+  // Convert base64url to standard base64
+  b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding back if needed
+  while (b64.length % 4) {
+    b64 += '=';
+  }
+
   // Decode from base64
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
