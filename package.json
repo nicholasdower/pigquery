@@ -8,7 +8,7 @@
     "lint:fix": "eslint src/ scripts/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
-    "package": "npm run build:prod && scripts/package"
+    "package": "NODE_ENV=production node build.js --package"
   },
   "devDependencies": {
     "esbuild": "^0.27.3",

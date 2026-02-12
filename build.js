@@ -2,8 +2,10 @@
 import * as esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 const distDir = 'dist';
+const shouldPackage = process.argv.includes('--package');
 
 // Plugin to import CSS as string
 const cssTextPlugin = {
@@ -38,6 +40,20 @@ const buildOptions = {
 function copyFile(src, dest) {
   fs.copyFileSync(src, dest);
   console.log(`✓ Copied ${src} -> ${dest}`);
+}
+
+function copyDir(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
 }
 
 function updateHtmlScriptPaths(htmlPath, outputPath, scriptName) {
@@ -95,8 +111,80 @@ async function build() {
     updateHtmlScriptPaths('src/options.html', `${distDir}/options.html`, 'options.js');
 
     console.log('✓ Build completed successfully');
+
+    // Package and sign if requested
+    if (shouldPackage) {
+      await packageExtension();
+    }
   } catch (error) {
     console.error('Build failed:', error);
+    process.exit(1);
+  }
+}
+
+async function packageExtension() {
+  console.log('\n📦 Packaging extension...');
+
+  const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf-8'));
+  const version = manifest.version;
+  const commit = execSync('git rev-parse HEAD').toString().trim();
+  const packageDir = `package/pigquery-${version}`;
+
+  console.log(`Version: ${version} (${commit})`);
+
+  // Clean and create package directory
+  if (fs.existsSync('package')) {
+    fs.rmSync('package', { recursive: true });
+  }
+  fs.mkdirSync(packageDir, { recursive: true });
+
+  // Copy built files
+  copyDir(distDir, `${packageDir}/dist`);
+
+  // Copy icons (prod version)
+  copyDir('icons-prod', `${packageDir}/icons`);
+
+  // Copy locales
+  copyDir('_locales', `${packageDir}/_locales`);
+
+  // Copy LICENSE
+  copyFile('LICENSE.txt', `${packageDir}/LICENSE.txt`);
+
+  // Create modified manifest (remove dev-only permissions)
+  const prodManifest = { ...manifest };
+  if (prodManifest.permissions) {
+    prodManifest.permissions = prodManifest.permissions.filter(
+      p => p !== 'management' && p !== 'tabs' && p !== 'scripting'
+    );
+  }
+  fs.writeFileSync(
+    `${packageDir}/manifest.json`,
+    JSON.stringify(prodManifest, null, 2)
+  );
+  console.log('✓ Created manifest.json (removed dev-only permissions)');
+
+  // Save commit hash
+  fs.writeFileSync(`${packageDir}/commit.txt`, commit);
+
+  // Sign the extension
+  console.log('\n🔑 Signing extension...');
+  const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  const keyPath = 'privatekey';
+
+  if (!fs.existsSync(keyPath)) {
+    console.warn('⚠️  Private key not found at ./privatekey - skipping signing');
+    console.log('✓ Package created (unsigned)');
+    return;
+  }
+
+  try {
+    execSync(
+      `"${chromePath}" --pack-extension="${process.cwd()}/${packageDir}" --pack-extension-key="${process.cwd()}/${keyPath}"`,
+      { stdio: 'inherit' }
+    );
+    console.log(`✓ Package signed: package/pigquery-${version}.crx`);
+  } catch (error) {
+    console.error('Failed to sign extension:', error.message);
     process.exit(1);
   }
 }
