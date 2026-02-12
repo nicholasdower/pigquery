@@ -1,9 +1,14 @@
-const { chromium } = require('playwright');
-const { spawn, exec } = require('child_process');
-const path = require('path');
-const util = require('util');
+import { chromium } from 'playwright';
+import { spawn, exec } from 'child_process';
+import path from 'path';
+import { promisify } from 'util';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const execPromise = util.promisify(exec);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const execPromise = promisify(exec);
 
 function parseArgs() {
   const args = process.argv.slice(2);
