@@ -143,8 +143,4 @@ This document contains findings from a comprehensive code review of the PigQuery
 
 ### Testing Infrastructure
 
-- [ ] **Set up test framework** - Jest or Vitest
-- [ ] **Unit tests for search.js** - Pure functions, easy to test
-- [ ] **Unit tests for formatters.js** - Pure functions with clear inputs/outputs
-- [ ] **Unit tests for config.js validation** - `validateConfigItems()`
 - [ ] **Integration tests** - Chrome extension testing
