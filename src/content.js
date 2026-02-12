@@ -1560,11 +1560,7 @@ function uninstallPigQuery() {
 
   // Remove the uninstall event listener
   document.removeEventListener('pigquery-uninstall', uninstallPigQuery);
-
-  console.log('PigQuery uninstalled successfully');
 }
 
 // Listen for uninstall event from page context
 document.addEventListener('pigquery-uninstall', uninstallPigQuery);
-
-console.log('PigQuery installed successfully');

@@ -119,9 +119,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] Allow specifying cursor position for snippets. Think function with params.
 - [ ] Custom formatters.
 - [ ] Allow expansion of formatted content so that it takes up the entire modal.
-- [ ] Reinstall content script on extension update. Careful when running on first version with this feature.
-- [ ] Handle case where both prod and dev are installed.
-- [ ] Uninstall content script if extension uninstalled.
 - [ ] Register uninstall callbacks instead of keeping a bunch of globals. Move uninstall to module.
 
 ---

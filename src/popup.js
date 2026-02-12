@@ -32,17 +32,7 @@ refreshBtn.addEventListener('click', () => {
 updateBtn.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const optionsUrl = chrome.runtime.getURL('dist/options.html');
-
-  // Check if options page is currently open
-  const optionsTabs = await chrome.tabs.query({ url: optionsUrl + '*' });
-  const hasOptionsPage = optionsTabs.length > 0;
-  const optionsPageWasActive = tab?.url?.startsWith(optionsUrl);
-
-  const reloadState = {
-    reopenOptionsPage: hasOptionsPage,
-    optionsPageWasActive: optionsPageWasActive,
-  };
-
+  const reloadState = { reopenOptionsPage: tab?.url?.startsWith(optionsUrl) };
   await chrome.storage.local.set({ reloadState });
   chrome.runtime.reload();
 });
@@ -96,11 +86,9 @@ chrome.storage.onChanged.addListener((_, areaName) => {
   if (areaName === 'local') load();
 });
 
-// Check for management permission and show dev section if available
-chrome.permissions.contains({ permissions: ['management'] }).then(hasPermission => {
-  if (hasPermission) {
-    devSectionEl.style.display = '';
-  }
-});
+const isUnpacked = !chrome.runtime.getManifest().update_url;
+if (isUnpacked) {
+  devSectionEl.style.display = '';
+}
 
 load();

@@ -135,15 +135,8 @@ async function packageExtension() {
   // Copy LICENSE
   copyFile('LICENSE.txt', `${packageDir}/LICENSE.txt`);
 
-  // Create modified manifest (remove dev-only permissions)
-  const prodManifest = { ...manifest };
-  if (prodManifest.permissions) {
-    prodManifest.permissions = prodManifest.permissions.filter(
-      p => p !== 'management' && p !== 'tabs' && p !== 'scripting'
-    );
-  }
-  fs.writeFileSync(`${packageDir}/manifest.json`, JSON.stringify(prodManifest, null, 2));
-  console.log('✓ Created manifest.json (removed dev-only permissions)');
+  // Copy manifest
+  copyFile('manifest.json', `${packageDir}/manifest.json`);
 
   // Save commit hash
   fs.writeFileSync(`${packageDir}/commit.txt`, commit);
