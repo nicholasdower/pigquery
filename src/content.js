@@ -1441,18 +1441,17 @@ document.addEventListener('keydown', keydownListener2, true);
 function copyShareLink() {
   // Set up a one-time copy event handler to intercept Monaco's copy
   const handler = e => {
-    document.removeEventListener('copy', handler, true);
+    document.removeEventListener('copy', handler, false);
 
     // Get the selected text - Monaco should have prepared the selection
-    const selection = window.getSelection()?.toString() || '';
+    const selection = e.clipboardData?.getData('text/plain') || '';
     if (!selection.trim()) {
       // Let normal copy proceed if no selection
       return;
     }
 
-    // Prevent Monaco's copy and substitute our share link
-    e.preventDefault();
-    e.stopImmediatePropagation();
+    // Clear clipboard and set our share link instead
+    e.clipboardData.clearData();
 
     const url = new URL(window.location.href);
     const project = url.searchParams.get('project');
@@ -1463,15 +1462,15 @@ function copyShareLink() {
     const shareLink = url.toString();
 
     e.clipboardData.setData('text/plain', shareLink);
+    e.preventDefault();
     showToast(i18n.getMessage('linkCopied', LOCALE));
   };
 
-  document.addEventListener('copy', handler, true);
-
   return setTimeout(() => {
+    document.addEventListener('copy', handler, false);
     document.execCommand('copy');
     // Clean up handler if copy didn't fire (e.g., no selection)
-    document.removeEventListener('copy', handler, true);
+    document.removeEventListener('copy', handler, false);
   }, 500);
 }
 
