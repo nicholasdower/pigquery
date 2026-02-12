@@ -25,10 +25,7 @@ export function compressAndEncode(str) {
   for (let i = 0; i < compressedBytes.length; i++) {
     binary += String.fromCharCode(compressedBytes[i]);
   }
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**

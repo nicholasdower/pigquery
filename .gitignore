@@ -1,8 +1,9 @@
 *.mp4
 .DS_Store
 /.cursor
+/coverage
 /dist
-/package
 /node_modules
+/package
 /privatekey
 /profile

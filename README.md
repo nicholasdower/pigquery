@@ -76,6 +76,19 @@ npm run format:check
 npm run format
 ```
 
+### Testing
+
+```bash
+# Run unit tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
 ### Build for distribution
 
 To create a production build and package the extension:
