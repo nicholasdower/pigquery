@@ -19,16 +19,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 
 ### Code Duplication
 
-- [ ] **Duplicate timestamp formatting logic** - Nearly identical date/time formatting code appears in:
-  - `formatters.js:138-224` (`formatDateTimeOutput`)
-  - `formatters.js:379-433` (inside `tryNumber`)
-
-  **Recommendation:** Extract shared timestamp formatting into a single reusable function.
-
-- [ ] **Duplicate relative time calculation** - Same relative time logic ("X minutes ago") in:
-  - `formatters.js:196-219`
-  - `formatters.js:414-432`
-
 - [ ] **Similar status update patterns** - `options.js` has three nearly identical status functions:
   - `setLocalStatus()`, `setAddUrlStatus()`, `setShortcutsStatus()`
 
@@ -51,10 +41,6 @@ This document contains findings from a comprehensive code review of the PigQuery
   - `ModalKeyboardHandler`
   - `ModalListRenderer`
   - `ContentPanelManager`
-
-- [ ] **`tryNumber()` in formatters.js is ~140 lines** (lines 296-439)
-
-  **Recommendation:** Extract sub-formatters: `formatAsFileSize()`, `formatAsTimestamp()`, `formatIntegerRepresentations()`.
 
 ### Global State
 
@@ -132,6 +118,11 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] **Windows testing** - Verify production build on Windows
 - [ ] Allow specifying cursor position for snippets. Think function with params.
 - [ ] Custom formatters.
+- [ ] Allow expansion of formatted content so that it takes up the entire modal.
+- [ ] Reinstall content script on extension update. Careful when running on first version with this feature.
+- [ ] Handle case where both prod and dev are installed.
+- [ ] Uninstall content script if extension uninstalled.
+- [ ] Register uninstall callbacks instead of keeping a bunch of globals. Move uninstall to module.
 
 ---
 
