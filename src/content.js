@@ -54,6 +54,7 @@ let shortcuts = config.DEFAULT_SHORTCUTS;
 let onConfigurationChange = null;
 let recentSnippetGroups = [];
 let copyTimeoutId = null;
+let hasRemoteSources = false;
 
 // Store references for cleanup
 let storageChangeListener = null;
@@ -117,6 +118,7 @@ async function load() {
     hasErrors: loaded.hasErrors,
   };
   shortcuts = loadedShortcuts;
+  hasRemoteSources = loaded.hasRemoteSources;
   onConfigurationChange?.();
 }
 
@@ -998,6 +1000,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
 
     hasErrors = getHasErrors();
     updateErrorBadge();
+    updateRefreshButtonVisibility();
   };
 
   header.appendChild(inputEl);
@@ -1033,7 +1036,16 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     }
   }
 
+  function updateRefreshButtonVisibility() {
+    if (hasRemoteSources) {
+      refreshBtn.style.display = '';
+    } else {
+      refreshBtn.style.display = 'none';
+    }
+  }
+
   updateErrorBadge();
+  updateRefreshButtonVisibility();
 
   // Check initial busy state, skip if extension context has been invalidated
   if (chrome.runtime?.id) {

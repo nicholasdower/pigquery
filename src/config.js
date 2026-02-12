@@ -127,7 +127,7 @@ export async function loadSources() {
  * Loads and processes configuration from all sources.
  * Deduplicates by name+group+tag within snippets and sites separately,
  * preferring local over remote (last definition wins).
- * Returns { snippets: [...], sites: [...], hasErrors: boolean }.
+ * Returns { snippets: [...], sites: [...], hasErrors: boolean, hasRemoteSources: boolean }.
  */
 export async function loadConfiguration() {
   const sources = await loadSources();
@@ -146,6 +146,7 @@ export async function loadConfiguration() {
   };
 
   const hasErrors = sources.some(source => source.error != null);
+  const hasRemoteSources = getRemoteSources(sources).length > 0;
 
   // Default built-in sites
   const defaultSites = [{ name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false }];
@@ -156,6 +157,7 @@ export async function loadConfiguration() {
     snippets: dedupe(allItems.filter(item => !item.url)),
     sites: [...userSites, ...defaultSites],
     hasErrors,
+    hasRemoteSources,
   };
 }
 
