@@ -2,6 +2,7 @@ import * as config from './config.js';
 import * as i18n from './i18n.js';
 import * as search from './search.js';
 import * as formatters from './formatters.js';
+import { compressAndEncode, decodeAndDecompress } from './compression.js';
 import hljs from 'highlight.js/lib/core';
 import sql from 'highlight.js/lib/languages/sql';
 import json from 'highlight.js/lib/languages/json';
@@ -132,7 +133,7 @@ chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
 // Extract and remove the 'pig' query parameter on page load.
 const url = new URL(window.location.href);
 const queryParam = url.searchParams.get('pig');
-let query = queryParam?.length ? base64Decode(queryParam.trim()).trim() : null;
+let query = queryParam?.length ? decodeAndDecompress(queryParam.trim()).trim() : null;
 let pigParamIntervalId = null;
 
 if (url.searchParams.has('pig')) {
@@ -192,20 +193,6 @@ if (query && query.length > 0) {
   };
 
   const timeoutId = setTimeout(() => cleanup(false), 10_000);
-}
-
-function base64Encode(str) {
-  const bytes = new TextEncoder().encode(str);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
-function base64Decode(b64) {
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new TextDecoder().decode(bytes);
 }
 
 function findEditorTextArea(editor) {
@@ -1471,7 +1458,7 @@ function copyShareLink() {
     const project = url.searchParams.get('project');
     url.search = '';
     url.hash = '';
-    url.searchParams.set('pig', base64Encode(selection));
+    url.searchParams.set('pig', compressAndEncode(selection));
     if (project) url.searchParams.set('project', project);
     const shareLink = url.toString();
 

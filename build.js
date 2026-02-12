@@ -56,7 +56,6 @@ function copyDir(src, dest) {
   }
 }
 
-
 async function build() {
   try {
     // Build content script
@@ -143,10 +142,7 @@ async function packageExtension() {
       p => p !== 'management' && p !== 'tabs' && p !== 'scripting'
     );
   }
-  fs.writeFileSync(
-    `${packageDir}/manifest.json`,
-    JSON.stringify(prodManifest, null, 2)
-  );
+  fs.writeFileSync(`${packageDir}/manifest.json`, JSON.stringify(prodManifest, null, 2));
   console.log('✓ Created manifest.json (removed dev-only permissions)');
 
   // Save commit hash
