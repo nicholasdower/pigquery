@@ -1558,7 +1558,7 @@ function uninstallPigQuery() {
 
   // Remove the uninstall event listener
   document.removeEventListener('pigquery-uninstall', uninstallPigQuery);
-  logger.debug(`uninstalled`);
+  logger.debug('uninstalled');
 }
 
 // Listen for health check from background script
@@ -1571,4 +1571,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Listen for uninstall event from page context
 document.addEventListener('pigquery-uninstall', uninstallPigQuery);
 
-logger.debug(`installed`);
+logger.debug('installed');
