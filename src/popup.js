@@ -86,8 +86,7 @@ chrome.storage.onChanged.addListener((_, areaName) => {
   if (areaName === 'local') load();
 });
 
-const isUnpacked = !chrome.runtime.getManifest().update_url;
-if (isUnpacked) {
+if (process.env.NODE_ENV !== 'prod') {
   devSectionEl.style.display = '';
 }
 

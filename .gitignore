@@ -1,9 +1,9 @@
+*.crx
 *.mp4
 .DS_Store
 /.cursor
+/build
 /coverage
-/dist
 /node_modules
-/package
 /privatekey
 /profile

@@ -1,17 +1,10 @@
-// Simple logger with timestamp
-// __DEBUG__ is a global constant injected by the build process
-
-const NAME = `PigQuery v${chrome.runtime.getManifest().version}`;
+const NAME = `PigQuery v${chrome.runtime.getManifest().version} ${process.env.NODE_ENV}`;
 
 const logger = {
-  log: (...args) => console.log(`${new Date().toISOString()} - ${NAME} - LOG - `, ...args),
-  warn: (...args) => console.warn(`${new Date().toISOString()} - ${NAME} - WARN - `, ...args),
-  error: (...args) => console.error(`${new Date().toISOString()} - ${NAME} - ERROR - `, ...args),
-  debug: (...args) => {
-    if (__DEBUG__) {
-      console.debug(`${new Date().toISOString()} - ${NAME} - DEBUG - `, ...args);
-    }
-  },
+  log: (...args) => console.log(`${new Date().toISOString()} - LOG - ${NAME} - `, ...args),
+  warn: (...args) => console.warn(`${new Date().toISOString()} - WARN - ${NAME} - `, ...args),
+  error: (...args) => console.error(`${new Date().toISOString()} - ERROR - ${NAME} - `, ...args),
+  debug: (...args) => console.debug(`${new Date().toISOString()} - DEBUG - ${NAME} - `, ...args),
 };
 
 export default logger;
