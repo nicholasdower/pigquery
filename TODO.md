@@ -122,6 +122,7 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] Register uninstall callbacks instead of keeping a bunch of globals. Move uninstall to module.
 - [ ] Add country code formatter, show country name, time, currency, etc.
 - [ ] Allow sites and snippets to have a project filter. Maybe an array of regex.
+- [ ] Stop minifying
 
 ---
 
