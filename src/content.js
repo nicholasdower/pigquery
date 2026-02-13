@@ -3,15 +3,13 @@ import * as i18n from './i18n.js';
 import * as search from './search.js';
 import * as formatters from './formatters.js';
 import { compressAndEncode, decodeAndDecompress } from './compression.js';
+import logger from './logger.js';
 import hljs from 'highlight.js/lib/core';
 import sql from 'highlight.js/lib/languages/sql';
 import json from 'highlight.js/lib/languages/json';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import highlightCss from 'highlight.js/styles/atom-one-dark.min.css';
-
-// Clean up any previous instance of PigQuery before initializing
-document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
 
 // Register languages for syntax highlighting
 hljs.registerLanguage('sql', sql);
@@ -1560,7 +1558,17 @@ function uninstallPigQuery() {
 
   // Remove the uninstall event listener
   document.removeEventListener('pigquery-uninstall', uninstallPigQuery);
+  logger.debug(`uninstalled`);
 }
+
+// Listen for health check from background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'ping') {
+    sendResponse({ ok: true });
+  }
+});
 
 // Listen for uninstall event from page context
 document.addEventListener('pigquery-uninstall', uninstallPigQuery);
+
+logger.debug(`installed`);

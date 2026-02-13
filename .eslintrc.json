@@ -20,7 +20,8 @@
     "no-constant-condition": "off"
   },
   "globals": {
-    "chrome": "readonly"
+    "chrome": "readonly",
+    "__DEBUG__": "readonly"
   },
   "overrides": [
     {

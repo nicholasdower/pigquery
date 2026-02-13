@@ -35,6 +35,9 @@ const buildOptions = {
   sourcemap: process.env.NODE_ENV !== 'production',
   minify: process.env.NODE_ENV === 'production',
   logLevel: 'info',
+  define: {
+    __DEBUG__: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
+  },
 };
 
 function copyFile(src, dest) {

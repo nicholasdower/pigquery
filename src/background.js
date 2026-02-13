@@ -1,4 +1,5 @@
 import * as config from './config.js';
+import logger from './logger.js';
 
 // Guard against invalidated extension context
 if (chrome?.runtime?.id) {
@@ -60,38 +61,70 @@ if (chrome?.runtime?.id) {
   updateErrorBadge();
   config.clearStaleBusy();
 
-  // Reinject content script into BigQuery tabs and reopen options page after extension reload
-  async function reinjectContentScripts() {
+  async function reinjectContentScript(force) {
+    logger.log('Reinjecting content script, force:', force);
     try {
       // Find all BigQuery tabs
       const tabs = await chrome.tabs.query({ url: 'https://console.cloud.google.com/*' });
 
-      // Reinject content script into each tab
       for (const tab of tabs) {
+        logger.log(`Checking tab ${tab.id}`);
         try {
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['dist/content.js'],
-          });
+          let needsInjection;
+          if (force) {
+            needsInjection = true;
+          } else {
+            try {
+              await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+              needsInjection = false;
+              logger.log(`Content script already running in tab ${tab.id}`);
+            } catch (err) {
+              logger.log(`Content script not already running in tab ${tab.id}`);
+              needsInjection = true;
+            }
+          }
+
+          if (needsInjection) {
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                  document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
+                }
+              });
+            } catch (err) {
+              // Old script may not be present or already disconnected, continue anyway
+              logger.log(`Could not dispatch uninstall in tab ${tab.id}:`, err.message);
+            }
+
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['dist/content.js'],
+            });
+            logger.log(`Injected content script into tab ${tab.id}`);
+          }
         } catch (err) {
-          // Tab may not be injectable (e.g., chrome:// page), ignore
-          console.warn(`Could not inject content script into tab ${tab.id}:`, err);
+          logger.warn(`Could not inject content script into tab ${tab.id}:`, err);
         }
       }
     } catch (err) {
-      console.error('Error reinjecting content scripts:', err);
+      logger.error('Error reinjecting content scripts:', err);
     }
   }
 
-  reinjectContentScripts();
   chrome.storage.local.get('reloadState').then(({ reloadState }) => {
     if (reloadState) {
+      logger.log('Reload triggered by user');
+      reinjectContentScript(true); // force reinject since the user requested it
       chrome.storage.local.remove('reloadState');
       const { reopenOptionsPage } = reloadState;
       if (reopenOptionsPage) {
         const optionsUrl = chrome.runtime.getURL('dist/options.html');
         chrome.tabs.create({ url: optionsUrl, active: true });
       }
+    } else {
+      logger.log('Updating stale tabs');
+      reinjectContentScript(false); // only reinject if the content script is not already running
     }
   });
 }
