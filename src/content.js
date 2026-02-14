@@ -4,6 +4,7 @@ import * as search from './search.js';
 import * as formatters from './formatters.js';
 import { compressAndEncode, decodeAndDecompress } from './compression.js';
 import logger from './logger.js';
+import Canceler from './canceler.js';
 import {
   makeEl,
   showToast,
@@ -27,9 +28,6 @@ hljs.registerLanguage('sql', sql);
 hljs.registerLanguage('json', json);
 hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('yaml', yaml);
-
-// Inject highlight.js theme CSS
-document.head.appendChild(makeEl('style', { id: 'pig-highlight-style', text: highlightCss }));
 
 const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
@@ -60,16 +58,13 @@ let configuration;
 let shortcuts = config.DEFAULT_SHORTCUTS;
 let onConfigurationChange = null;
 let recentSnippetGroups = [];
-let copyTimeoutId = null;
 let hasRemoteSources = false;
 
-// Store references for cleanup
-let storageChangeListener = null;
-let keydownListener1 = null;
-let keyupListener = null;
-let clickListener = null;
-let keydownListener2 = null;
-let mutationObserver = null;
+// Global canceler for managing all cleanup
+const canceler = new Canceler('content');
+
+// Inject highlight.js theme CSS
+canceler.appendChild(document.head, makeEl('style', { id: 'pig-highlight-style', text: highlightCss }));
 
 function sortSnippets(items) {
   return items.slice().sort((a, b) => {
@@ -103,19 +98,23 @@ async function load() {
 
 load();
 
-storageChangeListener = changes => {
+const storageChangeListener = changes => {
   if (config.STORAGE_KEY in changes || config.SHORTCUTS_KEY in changes) {
     load();
   }
 };
 chrome.storage.onChanged.addListener(storageChangeListener);
+canceler.register(() => {
+  if (chrome.runtime?.id) {
+    chrome.storage.onChanged.removeListener(storageChangeListener);
+  }
+}, 'storageChangeListener');
 chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
 
 // Extract and remove the 'pig' query parameter on page load.
 const url = new URL(window.location.href);
 const queryParam = url.searchParams.get('pig');
 let query = queryParam?.length ? decodeAndDecompress(queryParam.trim()).trim() : null;
-let pigParamIntervalId = null;
 
 if (url.searchParams.has('pig')) {
   url.searchParams.delete('pig');
@@ -123,57 +122,62 @@ if (url.searchParams.has('pig')) {
 
   // Keep removing the 'pig' param if the page re-adds it (check for 10 seconds)
   const startTime = Date.now();
-  pigParamIntervalId = setInterval(() => {
-    const currentUrl = new URL(window.location.href);
-    if (currentUrl.searchParams.has('pig')) {
-      currentUrl.searchParams.delete('pig');
-      window.history.replaceState({}, '', currentUrl.toString());
-    }
+  canceler.setInterval(
+    () => {
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.has('pig')) {
+        currentUrl.searchParams.delete('pig');
+        window.history.replaceState({}, '', currentUrl.toString());
+      }
 
-    if (Date.now() - startTime > 10000) {
-      clearInterval(pigParamIntervalId);
-      pigParamIntervalId = null;
-    }
-  }, 100);
+      if (Date.now() - startTime > 10000) {
+        canceler.cancel('pig-param-cleaner');
+      }
+    },
+    100,
+    'pig-param-cleaner'
+  );
 }
 
 let clickedTab = false;
 if (query && query.length > 0) {
-  mutationObserver = new MutationObserver(() => {
-    if (!clickedTab) {
-      const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
-      if (tabs.length === 0) return;
-      tabs[tabs.length - 1].click();
-      clickedTab = true;
-    }
-
-    const editors = document.querySelectorAll('cfc-code-editor');
-    if (editors.length === 0) return;
-    const editor = editors[editors.length - 1];
-    const ta = findEditorTextArea(editor);
-    if (!ta) return;
-
-    cleanup(true);
-    insertIntoEditor(editor, query.trim());
-  });
-
-  mutationObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-
   const cleanup = inserted => {
     if (inserted) {
       showToast(i18n.getMessage('queryInsertSucceeded', LOCALE));
     } else {
       showToast(i18n.getMessage('queryInsertFailed', LOCALE));
     }
-    mutationObserver.disconnect();
-    mutationObserver = null;
-    clearTimeout(timeoutId);
+    canceler.cancelGroup('query-insert');
   };
 
-  const timeoutId = setTimeout(() => cleanup(false), 10_000);
+  canceler.observe(
+    () => {
+      if (!clickedTab) {
+        const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
+        if (tabs.length === 0) return;
+        tabs[tabs.length - 1].click();
+        clickedTab = true;
+      }
+
+      const editors = document.querySelectorAll('cfc-code-editor');
+      if (editors.length === 0) return;
+      const editor = editors[editors.length - 1];
+      const ta = findEditorTextArea(editor);
+      if (!ta) return;
+
+      cleanup(true);
+      insertIntoEditor(editor, query.trim());
+    },
+    document.body,
+    {
+      childList: true,
+      subtree: true,
+    },
+    'query-insert-observer',
+    'query-insert'
+  );
+
+  canceler.setTimeout(() => cleanup(false), 10_000, 'query-insert-timeout', 'query-insert');
 }
 
 const styles = `
@@ -557,7 +561,7 @@ const styles = `
   }
 `;
 
-document.head.appendChild(makeEl('style', { id: 'pig-modal-style', text: styles }));
+canceler.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: styles }));
 
 function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) {
   if (document.querySelector('.pig-modal-overlay')) return;
@@ -566,16 +570,26 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   let filtered = options.slice();
   let activeIndex = 0;
   let hasErrors = getHasErrors();
-  let busyListener = null;
   let ignoreMouseTimeout = null;
-
-  const lastFocusedEl = document.activeElement;
 
   const overlayEl = makeEl('div', { className: 'pig-modal-overlay' });
   const listEl = makeEl('div', { className: 'pig-modal-list' });
 
-  let focusRedirectHandler = null;
-  let escapeHandler = null;
+  canceler.register(
+    (
+      el => () =>
+        el.focus()
+    )(document.activeElement),
+    'popup-focus-restore',
+    'popup'
+  );
+  canceler.register(
+    () => {
+      onConfigurationChange = null;
+    },
+    'popup-configuration-change-handler',
+    'popup'
+  );
 
   function ignoreMouseTemporarily() {
     if (ignoreMouseTimeout) clearTimeout(ignoreMouseTimeout);
@@ -584,39 +598,29 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     }, 150);
   }
 
-  function closePopup() {
-    if (!overlayEl) return;
-    onConfigurationChange = null;
-    if (busyListener && chrome.runtime?.id) {
-      chrome.storage.onChanged.removeListener(busyListener);
-    }
-    if (focusRedirectHandler) {
-      document.removeEventListener('focusin', focusRedirectHandler);
-    }
-    if (escapeHandler) {
-      document.removeEventListener('keydown', escapeHandler, true);
-    }
-    overlayEl.remove();
-    lastFocusedEl.focus();
-  }
-
   overlayEl.addEventListener('mousedown', e => {
     if (e.target === overlayEl) {
       e.preventDefault();
       e.stopPropagation();
-      closePopup();
+      canceler.cancelGroup('popup');
     }
   });
 
   // Document-level Escape handler (keydown on modal only works when focus is inside)
-  escapeHandler = e => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      closePopup();
-    }
-  };
-  document.addEventListener('keydown', escapeHandler, true);
+  canceler.addEventListener(
+    document,
+    'keydown',
+    e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        canceler.cancelGroup('popup');
+      }
+    },
+    true,
+    'popup-escape-handler',
+    'popup'
+  );
 
   function scrollActiveIntoView() {
     const items = listEl.querySelectorAll('.pig-modal-item');
@@ -715,7 +719,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       e.preventDefault();
       e.stopPropagation();
       onOptionSelected(filtered[activeIndex]);
-      closePopup();
+      canceler.cancelGroup('popup');
       return;
     }
 
@@ -783,7 +787,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
         e.preventDefault();
         e.stopPropagation();
         onOptionSelected(filtered[idx]);
-        closePopup();
+        canceler.cancelGroup('popup');
       });
 
       listEl.appendChild(item);
@@ -900,12 +904,15 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     });
 
     // Listen for busy state changes
-    busyListener = changes => {
-      if (config.BUSY_KEY in changes) {
-        updateRefreshState(!!changes[config.BUSY_KEY].newValue);
-      }
-    };
-    chrome.storage.onChanged.addListener(busyListener);
+    canceler.addChromeStorageListener(
+      changes => {
+        if (config.BUSY_KEY in changes) {
+          updateRefreshState(!!changes[config.BUSY_KEY].newValue);
+        }
+      },
+      'popup-busy-listener',
+      'popup'
+    );
   }
 
   refreshBtn.addEventListener('click', e => {
@@ -1056,141 +1063,149 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   modalEl.appendChild(bodyEl);
 
   overlayEl.appendChild(modalEl);
-  document.body.appendChild(overlayEl);
+  canceler.appendChild(document.body, overlayEl, 'popup-overlay', 'popup');
   ignoreMouseTemporarily();
   renderList();
   updateContentPanel();
 
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
-  focusRedirectHandler = e => {
-    if (!modalEl.contains(e.target)) {
-      inputEl.focus();
-    }
-  };
-  document.addEventListener('focusin', focusRedirectHandler);
+  canceler.addEventListener(
+    document,
+    'focusin',
+    e => {
+      if (!modalEl.contains(e.target)) {
+        inputEl.focus();
+      }
+    },
+    false,
+    'popup-focus-redirect',
+    'popup'
+  );
 
   inputEl.focus();
 }
 
-keydownListener1 = e => {
-  if (document.querySelector('.pig-modal-overlay')) return;
+canceler.addEventListener(
+  document,
+  'keydown',
+  e => {
+    if (document.querySelector('.pig-modal-overlay')) return;
 
-  if (copyTimeoutId) {
-    clearTimeout(copyTimeoutId);
-    copyTimeoutId = null;
-  }
+    // Cancel any pending copy timeout
+    canceler.cancel('copy-share-link-timeout');
 
-  if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+    if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
 
-    if (!(e.target instanceof Element)) {
-      showToast(i18n.getMessage('editorNotFocused', LOCALE));
+      if (!(e.target instanceof Element)) {
+        showToast(i18n.getMessage('editorNotFocused', LOCALE));
 
-      return;
-    }
-    const editor = e.target.closest('cfc-code-editor');
-    if (!editor) {
-      showToast(i18n.getMessage('editorNotFocused', LOCALE));
-      return;
-    }
-    openPopup(
-      () => configuration.snippets,
-      option => {
-        addRecentSnippetGroup(option.group);
-        configuration.snippets = sortSnippets(configuration.snippets);
-        insertIntoEditor(editor, option.value);
-      },
-      () => configuration.hasErrors,
-      item => [{ label: 'SQL', value: item.value, type: 'sql' }]
-    );
-    return;
-  }
-
-  if (
-    !e.isComposing &&
-    !e.repeat &&
-    e.key.toLowerCase() === 'a' &&
-    !e.shiftKey &&
-    !e.altKey &&
-    (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
-  ) {
-    if (!e.target.closest('cfc-code-editor')) {
-      showToast(i18n.getMessage('editorNotFocused', LOCALE));
-      return;
-    }
-    if (copyTimeoutId) {
-      clearTimeout(copyTimeoutId);
-      copyTimeoutId = null;
-    }
-    copyTimeoutId = copyShareLink();
-    return;
-  }
-
-  if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.focusTable)) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    // Check if currently in editor
-    const isInEditor = e.target instanceof Element && e.target.closest('cfc-code-editor');
-
-    if (isInEditor) {
-      // Focus table
-      const table = document.querySelector('bq-results-table-optimized');
-      if (!table) {
-        showToast(i18n.getMessage('tableNotFound', LOCALE));
         return;
       }
-
-      const cell = table.querySelector('[role="cell"]');
-      const header = table.querySelector('[role="columnheader"]');
-      if (cell) {
-        cell.focus();
-        cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      } else if (header) {
-        header.focus();
-        header.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      } else {
-        table.focus();
-        table.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
-    } else {
-      // Focus editor
-      const editor = getVisibleOrActiveEditor();
+      const editor = e.target.closest('cfc-code-editor');
       if (!editor) {
-        showToast(i18n.getMessage('editorNotFound', LOCALE));
+        showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
       }
-
-      const ta = findEditorTextArea(editor);
-      if (ta) {
-        ta.focus();
-        editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      } else {
-        editor.focus();
-        editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
+      openPopup(
+        () => configuration.snippets,
+        option => {
+          addRecentSnippetGroup(option.group);
+          configuration.snippets = sortSnippets(configuration.snippets);
+          insertIntoEditor(editor, option.value);
+        },
+        () => configuration.hasErrors,
+        item => [{ label: 'SQL', value: item.value, type: 'sql' }]
+      );
+      return;
     }
-    return;
-  }
 
-  //
-  if (e.key === 'Alt') {
-    document.documentElement.classList.add('alt-down');
-  }
-};
+    if (
+      !e.isComposing &&
+      !e.repeat &&
+      e.key.toLowerCase() === 'a' &&
+      !e.shiftKey &&
+      !e.altKey &&
+      (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
+    ) {
+      if (!e.target.closest('cfc-code-editor')) {
+        showToast(i18n.getMessage('editorNotFocused', LOCALE));
+        return;
+      }
+      // Cancel any pending copy timeout
+      canceler.cancel('copy-share-link-timeout');
+      copyShareLink();
+      return;
+    }
 
-document.addEventListener('keydown', keydownListener1, true);
+    if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.focusTable)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
 
-keyupListener = e => {
-  if (e.key === 'Alt') {
-    document.documentElement.classList.remove('alt-down');
-  }
-};
+      // Check if currently in editor
+      const isInEditor = e.target instanceof Element && e.target.closest('cfc-code-editor');
 
-document.addEventListener('keyup', keyupListener);
+      if (isInEditor) {
+        // Focus table
+        const table = document.querySelector('bq-results-table-optimized');
+        if (!table) {
+          showToast(i18n.getMessage('tableNotFound', LOCALE));
+          return;
+        }
+
+        const cell = table.querySelector('[role="cell"]');
+        const header = table.querySelector('[role="columnheader"]');
+        if (cell) {
+          cell.focus();
+          cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else if (header) {
+          header.focus();
+          header.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          table.focus();
+          table.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      } else {
+        // Focus editor
+        const editor = getVisibleOrActiveEditor();
+        if (!editor) {
+          showToast(i18n.getMessage('editorNotFound', LOCALE));
+          return;
+        }
+
+        const ta = findEditorTextArea(editor);
+        if (ta) {
+          ta.focus();
+          editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          editor.focus();
+          editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+      return;
+    }
+
+    //
+    if (e.key === 'Alt') {
+      canceler.addClass(document.documentElement, 'alt-down', 'alt-down-class');
+    }
+  },
+  true
+);
+
+canceler.addEventListener(
+  document,
+  'keyup',
+  e => {
+    if (e.key === 'Alt') {
+      canceler.cancel('alt-down-class');
+    }
+  },
+  false
+);
 
 function handleTableCellOpenPopup(cell) {
   const content = cell.innerText;
@@ -1227,52 +1242,58 @@ function handleTableCellOpenPopup(cell) {
   return true;
 }
 
-clickListener = e => {
-  if (!e.altKey) return;
-  if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
+canceler.addEventListener(
+  document,
+  'click',
+  e => {
+    if (!e.altKey) return;
+    if (e.shiftKey) return; // BigQuery ignores shift clicks so we do too.
 
-  if (!(e.target instanceof Element)) return false;
-  const table = e.target.closest('bq-results-table-optimized');
-  if (!table) return false;
-  const cell = table.querySelector('[role="cell"]');
-  if (!cell) return false;
+    if (!(e.target instanceof Element)) return false;
+    const table = e.target.closest('bq-results-table-optimized');
+    if (!table) return false;
+    const cell = table.querySelector('[role="cell"]');
+    if (!cell) return false;
 
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-  const content = cell.innerText;
+    const content = cell.innerText;
 
-  if (isMac ? e.metaKey : e.ctrlKey) {
-    navigator.clipboard.writeText(content);
-    showToast(i18n.getMessage('cellCopied', LOCALE));
-    return true;
-  }
+    if (isMac ? e.metaKey : e.ctrlKey) {
+      navigator.clipboard.writeText(content);
+      showToast(i18n.getMessage('cellCopied', LOCALE));
+      return true;
+    }
 
-  // Focus the cell so it's properly focused when the modal closes
-  cell.focus();
-  handleTableCellOpenPopup(cell);
-};
+    // Focus the cell so it's properly focused when the modal closes
+    cell.focus();
+    handleTableCellOpenPopup(cell);
+  },
+  true
+);
 
-document.addEventListener('click', clickListener, true);
+canceler.addEventListener(
+  document,
+  'keydown',
+  e => {
+    if (e.key !== 'Enter') return;
 
-keydownListener2 = e => {
-  if (e.key !== 'Enter') return;
+    if (!(e.target instanceof Element)) return false;
+    const table = e.target.closest('bq-results-table-optimized');
+    if (!table) return false;
+    const cell = table.querySelector('[role="cell"]');
+    if (!cell) return false;
 
-  if (!(e.target instanceof Element)) return false;
-  const table = e.target.closest('bq-results-table-optimized');
-  if (!table) return false;
-  const cell = table.querySelector('[role="cell"]');
-  if (!cell) return false;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-
-  handleTableCellOpenPopup(cell);
-};
-
-document.addEventListener('keydown', keydownListener2, true);
+    handleTableCellOpenPopup(cell);
+  },
+  true
+);
 
 function copyShareLink() {
   // Set up a one-time copy event handler to intercept Monaco's copy
@@ -1302,99 +1323,34 @@ function copyShareLink() {
     showToast(i18n.getMessage('linkCopied', LOCALE));
   };
 
-  return setTimeout(() => {
-    document.addEventListener('copy', handler, false);
-    document.execCommand('copy');
-    // Clean up handler if copy didn't fire (e.g., no selection)
-    document.removeEventListener('copy', handler, false);
-  }, 500);
-}
-
-/**
- * Removes all DOM modifications, event listeners, and intervals added by PigQuery.
- * Call this to restore the page to its original state.
- */
-function uninstallPigQuery() {
-  // Remove style elements
-  const highlightStyle = document.getElementById('pig-highlight-style');
-  if (highlightStyle) {
-    highlightStyle.remove();
-  }
-  const modalStyle = document.getElementById('pig-modal-style');
-  if (modalStyle) {
-    modalStyle.remove();
-  }
-
-  // Remove any active modals
-  const modal = document.querySelector('.pig-modal-overlay');
-  if (modal) {
-    modal.remove();
-  }
-
-  // Remove CSS class from html element
-  document.documentElement.classList.remove('alt-down');
-
-  // Remove event listeners
-  if (keydownListener1) {
-    document.removeEventListener('keydown', keydownListener1, true);
-    keydownListener1 = null;
-  }
-  if (keyupListener) {
-    document.removeEventListener('keyup', keyupListener);
-    keyupListener = null;
-  }
-  if (clickListener) {
-    document.removeEventListener('click', clickListener, true);
-    clickListener = null;
-  }
-  if (keydownListener2) {
-    document.removeEventListener('keydown', keydownListener2, true);
-    keydownListener2 = null;
-  }
-
-  // Remove Chrome storage listener (check if extension context still exists)
-  if (storageChangeListener) {
-    try {
-      if (chrome.runtime?.id) {
-        chrome.storage.onChanged.removeListener(storageChangeListener);
-      }
-    } catch (e) {
-      // Extension context may be invalidated, ignore error
-    }
-    storageChangeListener = null;
-  }
-
-  // Disconnect MutationObserver
-  if (mutationObserver) {
-    mutationObserver.disconnect();
-    mutationObserver = null;
-  }
-
-  // Clear any active intervals
-  if (pigParamIntervalId) {
-    clearInterval(pigParamIntervalId);
-    pigParamIntervalId = null;
-  }
-
-  // Clear any active timeouts
-  if (copyTimeoutId) {
-    clearTimeout(copyTimeoutId);
-    copyTimeoutId = null;
-  }
-
-  // Remove the uninstall event listener
-  document.removeEventListener('pigquery-uninstall', uninstallPigQuery);
-  logger.debug('uninstalled');
+  canceler.setTimeout(
+    () => {
+      document.addEventListener('copy', handler, false);
+      document.execCommand('copy');
+      // Clean up handler if copy didn't fire (e.g., no selection)
+      document.removeEventListener('copy', handler, false);
+    },
+    500,
+    'copy-share-link-timeout'
+  );
 }
 
 // Listen for health check from background script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+canceler.addChromeMessageListener((message, sender, sendResponse) => {
   if (message.action === 'ping') {
     sendResponse({ ok: true });
   }
 });
 
 // Listen for uninstall event from page context
-document.addEventListener('pigquery-uninstall', uninstallPigQuery);
+canceler.addEventListener(
+  document,
+  'pigquery-uninstall',
+  () => {
+    canceler.cancelAll();
+    logger.debug('uninstalled');
+  },
+  false
+);
 
 logger.debug('installed');
