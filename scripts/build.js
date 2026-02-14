@@ -33,8 +33,8 @@ const buildOptions = {
   bundle: true,
   format: 'iife',
   target: 'chrome120',
-  sourcemap: !isProd,
-  minify: isProd,
+  sourcemap: true,
+  minify: false,
   logLevel: 'info',
   define: {
     'process.env.NODE_ENV': JSON.stringify(nodeEnv),
