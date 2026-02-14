@@ -110,8 +110,6 @@ async function recordAction(lang) {
   // Click settings icon to open options page
   await page.keyboard.press('Tab');
   await page.waitForTimeout(1000);
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(1000);
   await page.keyboard.press('Enter');
   await page.waitForTimeout(2000);
 
@@ -152,8 +150,6 @@ async function recordAction(lang) {
   await page.waitForTimeout(3000);
 
   // Click settings icon to open options page
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(1000);
   await page.keyboard.press('Tab');
   await page.waitForTimeout(1000);
   await page.keyboard.press('Enter');
