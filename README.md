@@ -91,10 +91,10 @@ npm run test:coverage
 
 ### Build for distribution
 
-To create a production build and package the extension:
+To create a production build and pack the extension:
 
 ```bash
-npm run package
+npm run pack
 ```
 
 **Requirements:**
@@ -105,14 +105,13 @@ npm run package
 **What it does:**
 
 1. Runs `npm run build:prod` to create minified bundles in `dist/`
-2. Creates a `package/pigquery-{version}/` directory with:
-   - Production manifest.json (without `management` and `tabs` permissions)
+2. Creates a `build/dev/` directory with:
    - Bundled files from `dist/`
-   - Icons, locales, and license files
-3. Uses Chrome to create a signed `.crx` file: `package/pigquery-{version}.crx`
+   - Manifest, icons, locales, and license files
+3. Uses Chrome to create a signed `.crx` file: `pigquery-{version}.crx`
 
 **Testing the production build:**
-You can test the production build by loading the `package/pigquery-{version}/` directory unpacked in Chrome.
+You can test the production build by loading the `build/prod/` directory unpacked in Chrome.
 
 ## Demo video & screenshots
 
@@ -132,7 +131,7 @@ You can test the production build by loading the `package/pigquery-{version}/` d
      ```
    - Run the script once:
      ```bash
-     node scripts/bot.js open
+     npm run browser
      ```
    - In the Chrome window that opens:
      - Log in to BigQuery
@@ -146,6 +145,6 @@ You can test the production build by loading the `package/pigquery-{version}/` d
 ### Recording a demo video and taking screenshots
 
 ```bash
-node scripts/bot.js record --lang en
-node scripts/bot.js record --lang de
+npm run record -- --lang en
+npm run record -- --lang de
 ```

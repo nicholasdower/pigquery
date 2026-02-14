@@ -3,6 +3,8 @@
   "scripts": {
     "build": "node scripts/build.js",
     "build:prod": "NODE_ENV=prod node scripts/build.js",
+    "browser": "node scripts/bot.js open",
+    "record": "node scripts/bot.js record",
     "watch": "node scripts/build.js --watch",
     "pack": "npm run build:prod && node scripts/pack.js",
     "lint": "eslint src/ scripts/",
