@@ -4,7 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
-const nodeEnv = process.env.NODE_ENV || 'dev';
+const nodeEnv = process.env.NODE_ENV;
+if (!nodeEnv || (nodeEnv !== 'prod' && nodeEnv !== 'dev')) {
+  throw new Error('NODE_ENV must be set to either "prod" or "dev"');
+}
 const isProd = nodeEnv === 'prod';
 const buildDir = `build/${nodeEnv}`;
 

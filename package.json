@@ -1,11 +1,16 @@
 {
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.js",
+    "build": "npm run build:dev",
+    "build:dev": "NODE_ENV=dev node scripts/build.js",
     "build:prod": "NODE_ENV=prod node scripts/build.js",
+    "build:all": "npm run build:dev && npm run build:prod",
     "browser": "node scripts/bot.js open",
     "record": "node scripts/bot.js record",
-    "watch": "node scripts/build.js --watch",
+    "watch": "npm run watch:dev",
+    "watch:dev": "NODE_ENV=dev node scripts/build.js --watch",
+    "watch:prod": "NODE_ENV=prod node scripts/build.js --watch",
+    "watch:all": "npm run watch:dev && npm run watch:prod",
     "pack": "npm run build:prod && node scripts/pack.js",
     "lint": "eslint src/ scripts/",
     "lint:fix": "eslint src/ scripts/ --fix",
