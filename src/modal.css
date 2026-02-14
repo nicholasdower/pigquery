@@ -1,0 +1,378 @@
+.pig-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.pig-modal {
+  width: min(720px, 100%);
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+.pig-modal-header {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pig-modal-input {
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+  padding: 10px 12px 10px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+}
+.pig-modal-input::placeholder {
+  color: rgba(255,255,255,0.45);
+}
+.pig-modal-list {
+  height: min(50vh, 480px);
+  overflow: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pig-modal-empty {
+  padding: 12px 10px;
+  opacity: 0.65;
+  font-size: 13px;
+  user-select: none;
+}
+.pig-modal-item {
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255,255,255,0.04);
+  font-size: 14px;
+  line-height: 1.3;
+}
+.pig-modal-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+.pig-modal-item.active {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.25);
+}
+.pig-modal-item.active:hover {
+  background: rgba(255,255,255,0.14);
+}
+.pig-modal.input-focused .pig-modal-item.active {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+}
+.pig-modal.input-focused .pig-modal-item.active:hover {
+  background: rgba(96, 165, 250, 0.25);
+}
+.pig-modal-item[type="button"] {
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  color: #fff;
+}
+.pig-modal-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.alt-down bq-results-table-optimized {
+  cursor: pointer;
+}
+.pig-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgb(17, 17, 17);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 14px;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.pig-toast.show {
+  opacity: 1;
+}
+.pig-modal-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pig-modal-item-tag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pig-modal-item-group {
+  padding: 3px 0px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: center;
+}
+.pig-modal-logo-container {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 4px;
+  box-sizing: border-box;
+}
+.pig-modal-refresh {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  outline: none;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pig-modal-refresh:hover,
+.pig-modal-settings:hover {
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.08);
+}
+.pig-modal-refresh:focus,
+.pig-modal-settings:focus {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+}
+.pig-modal-settings {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  outline: none;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pig-modal-refresh.busy {
+  pointer-events: none;
+}
+.pig-modal-refresh.busy svg {
+  animation: pig-spin 1s linear infinite;
+}
+.pig-modal-refresh-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+@keyframes pig-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.pig-modal-logo {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.pig-modal.pig-modal-with-content {
+  width: min(1100px, 100%);
+}
+.pig-modal-body {
+  display: flex;
+  flex-direction: column;
+}
+.pig-modal-body.pig-modal-two-panel {
+  flex-direction: row;
+}
+.pig-modal-two-panel .pig-modal-list {
+  flex: 1;
+  min-width: 0;
+  border-right: 1px solid rgba(255,255,255,0.10);
+}
+.pig-modal-content-panel {
+  flex: 1;
+  min-width: 0;
+  max-height: min(50vh, 480px);
+  overflow: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pig-format-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.pig-format-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pig-format-item-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: rgba(255,255,255,0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pig-format-item-value {
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.9);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pig-format-item-value.hljs {
+  background: transparent;
+  padding: 0;
+  color: rgb(255, 255, 255);
+}
+/* BigQuery-inspired syntax highlighting colors */
+.pig-format-item-value .hljs-keyword {
+  color: rgb(138, 180, 248);
+}
+.pig-format-item-value .hljs-string {
+  color: rgb(168, 218, 181);
+}
+.pig-format-item-value .hljs-number {
+  color: rgb(250, 144, 62);
+}
+.pig-format-item-value .hljs-built_in,
+.pig-format-item-value .hljs-title.function_ {
+  color: rgb(138, 180, 248);
+}
+.pig-format-item-value .hljs-literal {
+  color: rgb(250, 144, 62);
+}
+.pig-format-item-value .hljs-type {
+  color: rgb(138, 180, 248);
+}
+.pig-format-item-value .hljs-comment {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+/* JSON-specific: property names */
+.pig-format-item-value .hljs-attr {
+  color: rgb(138, 180, 248);
+}
+/* XML-specific: tag names */
+.pig-format-item-value .hljs-name,
+.pig-format-item-value .hljs-tag {
+  color: rgb(138, 180, 248);
+}
+.pig-format-item-value .hljs-attribute {
+  color: rgb(168, 218, 181);
+}
+.pig-format-item-copy {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+.pig-format-item-copy:hover {
+  color: rgba(255,255,255,0.7);
+}
+.pig-format-item-copy:focus {
+  color: rgba(255,255,255,0.7);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+}
+.pig-format-item-copy:active {
+  color: rgba(255,255,255,0.9);
+}
+.pig-modal-content-type {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+}
+.pig-modal-content-type.sql {
+  background: rgba(99, 102, 241, 0.15);
+  color: rgb(165, 180, 252);
+}
+@media (max-width: 900px) {
+  .pig-modal-body.pig-modal-two-panel {
+    flex-direction: column;
+  }
+  .pig-modal-two-panel .pig-modal-list {
+    flex: 0 0 auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+    height: min(30vh, 300px);
+  }
+  .pig-modal-content-panel {
+    flex: 0 0 auto;
+    height: min(30vh, 300px);
+  }
+}
