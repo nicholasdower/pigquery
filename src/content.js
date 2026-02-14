@@ -918,6 +918,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     if (!isBusy) {
       chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });
     }
+    inputEl.focus();
   });
 
   header.appendChild(refreshBtn);
@@ -936,6 +937,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       return;
     }
     chrome.runtime.sendMessage({ action: 'openOptionsPage', locale: LOCALE });
+    inputEl.focus();
   });
   header.appendChild(settingsBtn);
 
@@ -998,6 +1000,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
           const currentValue = valueEl.textContent;
           navigator.clipboard.writeText(currentValue);
           showToast(i18n.getMessage('contentCopied', LOCALE));
+          inputEl.focus();
         });
         copyBtn.addEventListener('focus', () => {
           // Only scroll on keyboard focus, not mouse click
