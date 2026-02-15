@@ -1,6 +1,83 @@
 import * as config from './config.js';
 import logger from './logger.js';
 
+async function injectContentScript(tab, force) {
+  try {
+    const result = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (force, tabId) => {
+        const logs = [];
+        const log = msg => logs.push(msg);
+
+        try {
+          const MARKER_ID = 'pigquery-extension-marker';
+
+          let marker = document.getElementById(MARKER_ID);
+          if (marker) {
+            log(`Found ${marker.dataset.environment} content script in tab ${tabId}`);
+          }
+
+          if (force) {
+            log('Force mode: uninstalling existing content script');
+            document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
+            marker = document.getElementById(MARKER_ID);
+          } else {
+            if (marker) {
+              const oldEnv = marker.dataset.environment;
+              document.dispatchEvent(new CustomEvent('pigquery-uninstall-if-dead'));
+              marker = document.getElementById(MARKER_ID);
+              if (!marker) {
+                log(`Uninstalled dead ${oldEnv} content script in tab ${tabId}`);
+              }
+            }
+
+            if (marker) {
+              if (process.env.NODE_ENV == 'dev' && marker.dataset.environment === 'prod') {
+                log(`Uninstalling content script in tab ${tabId} because it is in production environment`);
+                document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
+              } else if (process.env.NODE_ENV == 'prod' && marker.dataset.environment === 'dev') {
+                log(`Skipping injection for tab ${tabId} because it is in development environment`);
+                return { inject: false, logs };
+              } else {
+                log(`Content script already running in tab ${tabId}`);
+                return { inject: false, logs };
+              }
+            }
+          }
+
+          marker = document.getElementById(MARKER_ID);
+          if (marker) throw new Error('PigQuery uninstall failed');
+
+          marker = document.createElement('div');
+          marker.id = MARKER_ID;
+          marker.setAttribute('data-environment', process.env.NODE_ENV);
+          document.head.appendChild(marker);
+
+          return { inject: true, logs };
+        } catch (error) {
+          log(`Skipping injection for tab ${tabId} because of error: ${error.message}`);
+          return { inject: false, logs };
+        }
+      },
+      args: [force, tab.id],
+    });
+
+    const { inject, logs } = result[0].result;
+    logs.forEach(msg => logger.log(msg));
+
+    if (!inject) return;
+
+    logger.log(`Injecting content script into tab ${tab.id}`);
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['dist/pigquery.js'],
+    });
+    logger.log(`Injected content script into tab ${tab.id}`);
+  } catch (err) {
+    logger.error(`Error while injecting content script into tab ${tab.id}:`, err);
+  }
+}
+
 async function updateErrorBadge() {
   const { hasErrors } = await config.loadConfiguration();
 
@@ -13,50 +90,14 @@ async function updateErrorBadge() {
 }
 
 async function reinjectContentScript(force) {
-  logger.log('Reinjecting content script, force:', force);
+  logger.log(`Checking tabs for reinjection, force: ${force}`);
   try {
-    // Find all BigQuery tabs
     const tabs = await chrome.tabs.query({ url: 'https://console.cloud.google.com/*' });
+    logger.log(`${tabs.length} BigQuery tab${tabs.length === 1 ? '' : 's'} found`);
+    if (tabs.length === 0) return;
 
     for (const tab of tabs) {
-      logger.log(`Checking tab ${tab.id}`);
-      try {
-        let needsInjection;
-        if (force) {
-          needsInjection = true;
-        } else {
-          try {
-            await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
-            needsInjection = false;
-            logger.log(`Content script already running in tab ${tab.id}`);
-          } catch (err) {
-            logger.log(`Content script not already running in tab ${tab.id}`);
-            needsInjection = true;
-          }
-        }
-
-        if (needsInjection) {
-          try {
-            await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: () => {
-                document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
-              },
-            });
-          } catch (err) {
-            // Old script may not be present or already disconnected, continue anyway
-            logger.log(`Could not dispatch uninstall in tab ${tab.id}:`, err.message);
-          }
-
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['dist/content.js'],
-          });
-          logger.log(`Injected content script into tab ${tab.id}`);
-        }
-      } catch (err) {
-        logger.warn(`Could not inject content script into tab ${tab.id}:`, err);
-      }
+      await injectContentScript(tab, force);
     }
   } catch (err) {
     logger.error('Error reinjecting content scripts:', err);
@@ -66,8 +107,11 @@ async function reinjectContentScript(force) {
 // Guard against invalidated extension context
 if (chrome?.runtime?.id) {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    logger.log(`Received message from tab ${sender.tab.id}: ${message.action}`);
+
     if (message.action === 'refreshRemoteSources') {
       config.refreshRemoteSources();
+      return true;
     }
     if (message.action === 'addSource') {
       config.addSource(message.url).then(result => {
@@ -101,6 +145,14 @@ if (chrome?.runtime?.id) {
     }
   });
 
+  // Inject content script when tab navigates to BigQuery
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.url?.startsWith('https://console.cloud.google.com/')) {
+      logger.log(`Tab ${tab.id} navigated to BigQuery`);
+      injectContentScript(tab, false);
+    }
+  });
+
   // Update badge when sources change
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes[config.STORAGE_KEY]) {
@@ -114,6 +166,7 @@ if (chrome?.runtime?.id) {
 
   chrome.storage.local.get('reloadState').then(({ reloadState }) => {
     if (reloadState) {
+      //
       logger.log('Reload triggered by user');
       reinjectContentScript(true); // force reinject since the user requested it
       chrome.storage.local.remove('reloadState');

@@ -71,11 +71,11 @@ async function build() {
     const distDir = `${buildDir}/dist`;
     fs.mkdirSync(distDir, { recursive: true });
 
-    // Build content script
+    // Build pigquery script
     await esbuild.build({
       ...buildOptions,
-      entryPoints: ['src/content.js'],
-      outfile: `${distDir}/content.js`,
+      entryPoints: ['src/pigquery.js'],
+      outfile: `${distDir}/pigquery.js`,
       external: ['chrome'],
       plugins: [cssTextPlugin],
     });

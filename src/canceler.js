@@ -51,12 +51,12 @@ class Canceler {
    * @throws Will propagate any error thrown by the cancel function
    */
   cancel(name) {
+    logger.debug(`[${this.name}] canceling: ${name}`);
+
     const cancelFn = this.cancelFunctions.get(name);
     if (!cancelFn) {
       return; // Silently ignore if not found
     }
-
-    logger.debug(`[${this.name}] canceling: ${name}`);
 
     // Remove from all data structures first to ensure cleanup even if execution throws
     this.cancelFunctions.delete(name);
@@ -72,6 +72,8 @@ class Canceler {
    * @param {string} group - Name of the group to cancel
    */
   cancelGroup(group) {
+    logger.debug(`[${this.name}] canceling group: ${group}`);
+
     const names = this.groups.get(group);
     if (!names || names.size === 0) {
       return; // Silently ignore if group not found or empty
@@ -85,6 +87,7 @@ class Canceler {
 
     // Cancel in reverse order, catching and ignoring errors
     for (const name of nameArray.reverse()) {
+      logger.debug(`[${this.name}] canceling: ${name}`);
       const cancelFn = this.cancelFunctions.get(name);
       if (cancelFn) {
         this.cancelFunctions.delete(name);
@@ -118,10 +121,10 @@ class Canceler {
    * Executes cancel functions in reverse order (LIFO - last registered, first canceled)
    */
   cancelAll() {
+    logger.debug(`[${this.name}] canceling all`);
+
     // Create array of entries to iterate over
     const entries = Array.from(this.cancelFunctions.entries());
-
-    logger.debug(`[${this.name}] canceling all (${entries.length} functions)`);
 
     // Clear all data structures immediately
     this.cancelFunctions.clear();

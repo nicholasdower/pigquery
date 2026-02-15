@@ -22,7 +22,6 @@ const statusEl = document.getElementById('status');
 const statusTextEl = document.getElementById('status-text');
 const statusErrorEl = document.getElementById('status-error');
 const refreshBtn = document.getElementById('refresh-btn');
-const devSectionEl = document.getElementById('dev-section');
 const updateBtn = document.getElementById('update-btn');
 
 refreshBtn.addEventListener('click', () => {
@@ -85,9 +84,5 @@ async function load() {
 chrome.storage.onChanged.addListener((_, areaName) => {
   if (areaName === 'local') load();
 });
-
-if (process.env.NODE_ENV !== 'prod') {
-  devSectionEl.style.display = '';
-}
 
 load();

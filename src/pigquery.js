@@ -24,6 +24,13 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import highlightCss from 'highlight.js/styles/atom-one-dark.min.css';
 import modalStyles from './modal.css';
 
+const MARKER_ID = 'pigquery-extension-marker';
+const canceler = new Canceler();
+
+if (!document.getElementById(MARKER_ID)) throw new Error('PigQuery marker not set');
+
+canceler.register(() => document.getElementById(MARKER_ID).remove());
+
 // Register languages for syntax highlighting
 hljs.registerLanguage('sql', sql);
 hljs.registerLanguage('json', json);
@@ -60,9 +67,6 @@ let shortcuts = config.DEFAULT_SHORTCUTS;
 let onConfigurationChange = null;
 let recentSnippetGroups = [];
 let hasRemoteSources = false;
-
-// Global canceler for managing all cleanup
-const canceler = new Canceler('content');
 
 // Inject highlight.js theme CSS
 canceler.appendChild(document.head, makeEl('style', { id: 'pig-highlight-style', text: highlightCss }));
@@ -962,13 +966,26 @@ canceler.addChromeMessageListener((message, sender, sendResponse) => {
   }
 });
 
-// Listen for uninstall event from page context
+// Listen for uninstall event
 canceler.addEventListener(
   document,
   'pigquery-uninstall',
   () => {
     canceler.cancelAll();
     logger.debug('uninstalled');
+  },
+  false
+);
+
+// Listen for conditional uninstall event
+canceler.addEventListener(
+  document,
+  'pigquery-uninstall-if-dead',
+  () => {
+    if (!chrome.runtime?.id) {
+      canceler.cancelAll();
+      logger.debug('uninstalled');
+    }
   },
   false
 );

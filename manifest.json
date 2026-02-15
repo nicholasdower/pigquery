@@ -16,12 +16,6 @@
   "background": {
     "service_worker": "dist/background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["https://console.cloud.google.com/*"],
-      "js": ["dist/content.js"]
-    }
-  ],
   "options_page": "dist/options.html",
   "action": {
     "default_popup": "dist/popup.html"

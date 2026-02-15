@@ -40,24 +40,24 @@ function runCommand() {
   console.log('─'.repeat(50));
 
   const startTime = Date.now();
-  
+
   // Parse command (handle npm run, node, etc.)
   const [cmd, ...args] = command.split(' ');
-  
+
   const child = spawn(cmd, args, {
     stdio: 'inherit',
     shell: true,
   });
 
-  child.on('close', (code) => {
+  child.on('close', code => {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    
+
     if (code === 0) {
       console.log(`✅ Completed in ${duration}s`);
     } else {
       console.log(`❌ Failed with exit code ${code}`);
     }
-    
+
     isBuilding = false;
 
     // If changes happened during build, rebuild again
@@ -67,7 +67,7 @@ function runCommand() {
     }
   });
 
-  child.on('error', (error) => {
+  child.on('error', error => {
     console.error('❌ Error running command:', error.message);
     isBuilding = false;
   });
@@ -110,7 +110,11 @@ function watchFile(file) {
   }
 
   try {
-    const watcher = fs.watch(file, onFileChange);
+    const watcher = fs.watch(file, eventType => {
+      // When watching a single file, filename may be null
+      // so we pass the file path explicitly
+      onFileChange(eventType, file);
+    });
     console.log(`👀 Watching: ${file}`);
     return watcher;
   } catch (error) {
@@ -126,7 +130,7 @@ const watchers = [];
 
 for (const target of watchDirs) {
   const stats = fs.existsSync(target) ? fs.statSync(target) : null;
-  
+
   if (!stats) {
     console.log(`⚠️  Not found: ${target}`);
     continue;
