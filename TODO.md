@@ -123,7 +123,8 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] Add country code formatter, show country name, time, currency, etc.
 - [ ] Allow sites and snippets to have a project filter. Maybe an array of regex.
 - [ ] Stop minifying
-- [ ] Use canceler, write tests for canceler and utils, maybe bigquery-specific utils
+- [ ] Write tests for utils, maybe bigquery-specific utils
+- [ ] Add LOGLEVEL to build. Hide debug logs in packed build.
 
 ---
 

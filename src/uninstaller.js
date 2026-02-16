@@ -1,27 +1,27 @@
 import logger from './logger.js';
 
 /**
- * Canceler - Manages a collection of cancellation functions
+ * Uninstaller - Manages a collection of uninstall functions
  * that can be registered, executed, and removed by name.
  */
-class Canceler {
-  constructor(name = 'Canceler') {
+class Uninstaller {
+  constructor(name = 'Uninstaller') {
     this.name = name;
-    // Store cancellation functions in insertion order using Map
-    this.cancelFunctions = new Map();
+    // Store uninstall functions in insertion order using Map
+    this.uninstallFunctions = new Map();
     // Track which names belong to which group
     this.groups = new Map();
   }
 
   /**
-   * Register a cancellation function with an optional name
-   * @param {Function} cancelFn - Function to call when canceling
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
-   * @param {string} [group] - Optional group name to organize cancel functions
+   * Register an uninstall function with an optional name
+   * @param {Function} uninstallFn - Function to call when uninstalling
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
+   * @param {string} [group] - Optional group name to organize uninstall functions
    */
-  register(cancelFn, name, group) {
-    if (typeof cancelFn !== 'function') {
-      throw new TypeError('Cancel function must be a function');
+  register(uninstallFn, name, group) {
+    if (typeof uninstallFn !== 'function') {
+      throw new TypeError('Uninstall function must be a function');
     }
     if (name !== undefined && typeof name !== 'string') {
       throw new TypeError('Name must be a string');
@@ -31,9 +31,9 @@ class Canceler {
     }
 
     // Auto-generate name if not provided
-    const functionName = name || `cancel-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const functionName = name || `uninstall-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-    this.cancelFunctions.set(functionName, cancelFn);
+    this.uninstallFunctions.set(functionName, uninstallFn);
     logger.debug(`[${this.name}] registered: ${functionName}${group ? ` (group: ${group})` : ''}`);
 
     // Add to group if specified
@@ -46,33 +46,33 @@ class Canceler {
   }
 
   /**
-   * Cancel and remove a specific registered function by name
-   * @param {string} name - Name of the cancel function to execute
-   * @throws Will propagate any error thrown by the cancel function
+   * Uninstall and remove a specific registered function by name
+   * @param {string} name - Name of the uninstall function to execute
+   * @throws Will propagate any error thrown by the uninstall function
    */
-  cancel(name) {
-    logger.debug(`[${this.name}] canceling: ${name}`);
+  uninstall(name) {
+    logger.debug(`[${this.name}] uninstalling: ${name}`);
 
-    const cancelFn = this.cancelFunctions.get(name);
-    if (!cancelFn) {
+    const uninstallFn = this.uninstallFunctions.get(name);
+    if (!uninstallFn) {
       return; // Silently ignore if not found
     }
 
     // Remove from all data structures first to ensure cleanup even if execution throws
-    this.cancelFunctions.delete(name);
+    this.uninstallFunctions.delete(name);
     this._removeFromGroups(name);
 
-    // Execute the cancel function (let errors propagate)
-    cancelFn();
+    // Execute the uninstall function (let errors propagate)
+    uninstallFn();
   }
 
   /**
-   * Cancel all functions in a specific group, ignoring any errors
-   * Executes cancel functions in reverse order (LIFO - last registered, first canceled)
-   * @param {string} group - Name of the group to cancel
+   * Uninstall all functions in a specific group, ignoring any errors
+   * Executes uninstall functions in reverse order (LIFO - last registered, first uninstalled)
+   * @param {string} group - Name of the group to uninstall
    */
-  cancelGroup(group) {
-    logger.debug(`[${this.name}] canceling group: ${group}`);
+  uninstallGroup(group) {
+    logger.debug(`[${this.name}] uninstalling group: ${group}`);
 
     const names = this.groups.get(group);
     if (!names || names.size === 0) {
@@ -85,17 +85,17 @@ class Canceler {
     // Remove the group immediately
     this.groups.delete(group);
 
-    // Cancel in reverse order, catching and ignoring errors
+    // Uninstall in reverse order, catching and ignoring errors
     for (const name of nameArray.reverse()) {
-      logger.debug(`[${this.name}] canceling: ${name}`);
-      const cancelFn = this.cancelFunctions.get(name);
-      if (cancelFn) {
-        this.cancelFunctions.delete(name);
+      logger.debug(`[${this.name}] uninstalling: ${name}`);
+      const uninstallFn = this.uninstallFunctions.get(name);
+      if (uninstallFn) {
+        this.uninstallFunctions.delete(name);
         this._removeFromGroups(name);
         try {
-          cancelFn();
+          uninstallFn();
         } catch (error) {
-          // Silently ignore errors during cancelGroup
+          // Silently ignore errors during uninstallGroup
         }
       }
     }
@@ -117,53 +117,53 @@ class Canceler {
   }
 
   /**
-   * Cancel all registered functions, ignoring any errors
-   * Executes cancel functions in reverse order (LIFO - last registered, first canceled)
+   * Uninstall all registered functions, ignoring any errors
+   * Executes uninstall functions in reverse order (LIFO - last registered, first uninstalled)
    */
-  cancelAll() {
-    logger.debug(`[${this.name}] canceling all`);
+  uninstallAll() {
+    logger.debug(`[${this.name}] uninstalling all`);
 
     // Create array of entries to iterate over
-    const entries = Array.from(this.cancelFunctions.entries());
+    const entries = Array.from(this.uninstallFunctions.entries());
 
     // Clear all data structures immediately
-    this.cancelFunctions.clear();
+    this.uninstallFunctions.clear();
     this.groups.clear();
 
-    // Execute all cancel functions in reverse order, catching and ignoring errors
-    for (const [name, cancelFn] of entries.reverse()) {
+    // Execute all uninstall functions in reverse order, catching and ignoring errors
+    for (const [name, uninstallFn] of entries.reverse()) {
       try {
-        logger.debug(`[${this.name}] canceling: ${name}`);
-        cancelFn();
+        logger.debug(`[${this.name}] uninstalling: ${name}`);
+        uninstallFn();
       } catch (error) {
-        // Silently ignore errors during cancelAll
-        logger.debug(`[${this.name}] error canceling ${name}:`, error);
+        // Silently ignore errors during uninstallAll
+        logger.debug(`[${this.name}] error uninstalling ${name}:`, error);
       }
     }
   }
 
   /**
-   * Check if a cancel function is registered
+   * Check if an uninstall function is registered
    * @param {string} name - Name to check
    * @returns {boolean} True if registered
    */
   has(name) {
-    return this.cancelFunctions.has(name);
+    return this.uninstallFunctions.has(name);
   }
 
   /**
-   * Get the number of registered cancel functions
+   * Get the number of registered uninstall functions
    * @returns {number} Count of registered functions
    */
   size() {
-    return this.cancelFunctions.size;
+    return this.uninstallFunctions.size;
   }
 
   /**
    * Remove all registered functions without executing them
    */
   clear() {
-    this.cancelFunctions.clear();
+    this.uninstallFunctions.clear();
     this.groups.clear();
   }
 
@@ -173,7 +173,7 @@ class Canceler {
    * @param {string} type - Event type (e.g., 'keydown', 'click')
    * @param {Function} listener - Event listener function
    * @param {boolean|Object} options - useCapture boolean or options object
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   addEventListener(target, type, listener, options, name, group) {
@@ -191,7 +191,7 @@ class Canceler {
    * Append a child element to a parent and register its cleanup (removal)
    * @param {Node} parent - The parent node to append to
    * @param {Node} child - The child node to append
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   appendChild(parent, child, name, group) {
@@ -209,7 +209,7 @@ class Canceler {
    * Add a CSS class to an element and register its cleanup (removal)
    * @param {Element} element - The element to add the class to
    * @param {string} className - The CSS class name to add
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   addClass(element, className, name, group) {
@@ -226,7 +226,7 @@ class Canceler {
   /**
    * Add a chrome.storage listener and register its cleanup
    * @param {Function} listener - The listener function to add
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   addChromeStorageListener(listener, name, group) {
@@ -245,7 +245,7 @@ class Canceler {
   /**
    * Add a chrome.runtime.onMessage listener and register its cleanup
    * @param {Function} listener - The listener function to add
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   addChromeMessageListener(listener, name, group) {
@@ -265,7 +265,7 @@ class Canceler {
    * Set an interval and register its cleanup
    * @param {Function} callback - The function to call repeatedly
    * @param {number} delay - The delay in milliseconds between calls
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   setInterval(callback, delay, name, group) {
@@ -283,7 +283,7 @@ class Canceler {
    * Set a timeout and register its cleanup
    * @param {Function} callback - The function to call after the delay
    * @param {number} delay - The delay in milliseconds
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   setTimeout(callback, delay, name, group) {
@@ -302,7 +302,7 @@ class Canceler {
    * @param {Function} callback - The callback function for the observer
    * @param {Node} target - The target node to observe
    * @param {MutationObserverInit} options - The observer options
-   * @param {string} [name] - Optional unique identifier for the cancel function (auto-generated if not provided)
+   * @param {string} [name] - Optional unique identifier for the uninstall function (auto-generated if not provided)
    * @param {string} [group] - Optional group name
    */
   observe(callback, target, options, name, group) {
@@ -318,4 +318,4 @@ class Canceler {
   }
 }
 
-export default Canceler;
+export default Uninstaller;

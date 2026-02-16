@@ -7,7 +7,7 @@ export default {
   },
   testMatch: ['**/__tests__/**/*.test.js', '**/?(*.)+(spec|test).js'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
-  collectCoverageFrom: ['src/**/*.js', '!src/**/*.test.js', '!src/**/*.spec.js', '!**/node_modules/**', '!**/dist/**'],
+  collectCoverageFrom: ['src/**/*.js', '!src/**/*.spec.js', '!**/__tests__/**', '!**/node_modules/**', '!**/dist/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   verbose: true,

@@ -4,7 +4,7 @@ import * as search from './search.js';
 import * as formatters from './formatters.js';
 import { compressAndEncode, decodeAndDecompress } from './compression.js';
 import logger from './logger.js';
-import Canceler from './canceler.js';
+import Uninstaller from './uninstaller.js';
 import {
   makeEl,
   showToast,
@@ -25,11 +25,11 @@ import highlightCss from 'highlight.js/styles/atom-one-dark.min.css';
 import modalStyles from './modal.css';
 
 const MARKER_ID = 'pigquery-extension-marker';
-const canceler = new Canceler();
+const uninstaller = new Uninstaller();
 
 if (!document.getElementById(MARKER_ID)) throw new Error('PigQuery marker not set');
 
-canceler.register(() => document.getElementById(MARKER_ID).remove());
+uninstaller.register(() => document.getElementById(MARKER_ID).remove());
 
 // Register languages for syntax highlighting
 hljs.registerLanguage('sql', sql);
@@ -69,7 +69,7 @@ let recentSnippetGroups = [];
 let hasRemoteSources = false;
 
 // Inject highlight.js theme CSS
-canceler.appendChild(document.head, makeEl('style', { id: 'pig-highlight-style', text: highlightCss }));
+uninstaller.appendChild(document.head, makeEl('style', { id: 'pig-highlight-style', text: highlightCss }));
 
 function sortSnippets(items) {
   return items.slice().sort((a, b) => {
@@ -109,7 +109,7 @@ const storageChangeListener = changes => {
   }
 };
 chrome.storage.onChanged.addListener(storageChangeListener);
-canceler.register(() => {
+uninstaller.register(() => {
   if (chrome.runtime?.id) {
     chrome.storage.onChanged.removeListener(storageChangeListener);
   }
@@ -127,7 +127,7 @@ if (url.searchParams.has('pig')) {
 
   // Keep removing the 'pig' param if the page re-adds it (check for 10 seconds)
   const startTime = Date.now();
-  canceler.setInterval(
+  uninstaller.setInterval(
     () => {
       const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.has('pig')) {
@@ -136,7 +136,7 @@ if (url.searchParams.has('pig')) {
       }
 
       if (Date.now() - startTime > 10000) {
-        canceler.cancel('pig-param-cleaner');
+        uninstaller.uninstall('pig-param-cleaner');
       }
     },
     100,
@@ -152,10 +152,10 @@ if (query && query.length > 0) {
     } else {
       showToast(i18n.getMessage('queryInsertFailed', LOCALE));
     }
-    canceler.cancelGroup('query-insert');
+    uninstaller.uninstallGroup('query-insert');
   };
 
-  canceler.observe(
+  uninstaller.observe(
     () => {
       if (!clickedTab) {
         const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
@@ -182,10 +182,10 @@ if (query && query.length > 0) {
     'query-insert'
   );
 
-  canceler.setTimeout(() => cleanup(false), 10_000, 'query-insert-timeout', 'query-insert');
+  uninstaller.setTimeout(() => cleanup(false), 10_000, 'query-insert-timeout', 'query-insert');
 }
 
-canceler.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: modalStyles }));
+uninstaller.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: modalStyles }));
 
 function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) {
   if (document.querySelector('.pig-modal-overlay')) return;
@@ -199,7 +199,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   const overlayEl = makeEl('div', { className: 'pig-modal-overlay' });
   const listEl = makeEl('div', { className: 'pig-modal-list' });
 
-  canceler.register(
+  uninstaller.register(
     (
       el => () =>
         el.focus()
@@ -207,7 +207,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     'popup-focus-restore',
     'popup'
   );
-  canceler.register(
+  uninstaller.register(
     () => {
       onConfigurationChange = null;
     },
@@ -226,19 +226,19 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     if (e.target === overlayEl) {
       e.preventDefault();
       e.stopPropagation();
-      canceler.cancelGroup('popup');
+      uninstaller.uninstallGroup('popup');
     }
   });
 
   // Document-level Escape handler (keydown on modal only works when focus is inside)
-  canceler.addEventListener(
+  uninstaller.addEventListener(
     document,
     'keydown',
     e => {
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        canceler.cancelGroup('popup');
+        uninstaller.uninstallGroup('popup');
       }
     },
     true,
@@ -343,7 +343,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       e.preventDefault();
       e.stopPropagation();
       onOptionSelected(filtered[activeIndex]);
-      canceler.cancelGroup('popup');
+      uninstaller.uninstallGroup('popup');
       return;
     }
 
@@ -411,7 +411,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
         e.preventDefault();
         e.stopPropagation();
         onOptionSelected(filtered[idx]);
-        canceler.cancelGroup('popup');
+        uninstaller.uninstallGroup('popup');
       });
 
       listEl.appendChild(item);
@@ -528,7 +528,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     });
 
     // Listen for busy state changes
-    canceler.addChromeStorageListener(
+    uninstaller.addChromeStorageListener(
       changes => {
         if (config.BUSY_KEY in changes) {
           updateRefreshState(!!changes[config.BUSY_KEY].newValue);
@@ -687,13 +687,13 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   modalEl.appendChild(bodyEl);
 
   overlayEl.appendChild(modalEl);
-  canceler.appendChild(document.body, overlayEl, 'popup-overlay', 'popup');
+  uninstaller.appendChild(document.body, overlayEl, 'popup-overlay', 'popup');
   ignoreMouseTemporarily();
   renderList();
   updateContentPanel();
 
   // Redirect focus back to modal if it escapes (e.g., user clicks URL bar then tabs back)
-  canceler.addEventListener(
+  uninstaller.addEventListener(
     document,
     'focusin',
     e => {
@@ -709,14 +709,14 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   inputEl.focus();
 }
 
-canceler.addEventListener(
+uninstaller.addEventListener(
   document,
   'keydown',
   e => {
     if (document.querySelector('.pig-modal-overlay')) return;
 
-    // Cancel any pending copy timeout
-    canceler.cancel('copy-share-link-timeout');
+    // Uninstall any pending copy timeout
+    uninstaller.uninstall('copy-share-link-timeout');
 
     if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.insertSnippet)) {
       e.preventDefault();
@@ -758,8 +758,8 @@ canceler.addEventListener(
         showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
       }
-      // Cancel any pending copy timeout
-      canceler.cancel('copy-share-link-timeout');
+      // Uninstall any pending copy timeout
+      uninstaller.uninstall('copy-share-link-timeout');
       copyShareLink();
       return;
     }
@@ -814,18 +814,18 @@ canceler.addEventListener(
 
     //
     if (e.key === 'Alt') {
-      canceler.addClass(document.documentElement, 'alt-down', 'alt-down-class');
+      uninstaller.addClass(document.documentElement, 'alt-down', 'alt-down-class');
     }
   },
   true
 );
 
-canceler.addEventListener(
+uninstaller.addEventListener(
   document,
   'keyup',
   e => {
     if (e.key === 'Alt') {
-      canceler.cancel('alt-down-class');
+      uninstaller.uninstall('alt-down-class');
     }
   },
   false
@@ -866,7 +866,7 @@ function handleTableCellOpenPopup(cell) {
   return true;
 }
 
-canceler.addEventListener(
+uninstaller.addEventListener(
   document,
   'click',
   e => {
@@ -898,7 +898,7 @@ canceler.addEventListener(
   true
 );
 
-canceler.addEventListener(
+uninstaller.addEventListener(
   document,
   'keydown',
   e => {
@@ -947,7 +947,7 @@ function copyShareLink() {
     showToast(i18n.getMessage('linkCopied', LOCALE));
   };
 
-  canceler.setTimeout(
+  uninstaller.setTimeout(
     () => {
       document.addEventListener('copy', handler, false);
       document.execCommand('copy');
@@ -960,30 +960,30 @@ function copyShareLink() {
 }
 
 // Listen for health check from background script
-canceler.addChromeMessageListener((message, sender, sendResponse) => {
+uninstaller.addChromeMessageListener((message, sender, sendResponse) => {
   if (message.action === 'ping') {
     sendResponse({ ok: true });
   }
 });
 
 // Listen for uninstall event
-canceler.addEventListener(
+uninstaller.addEventListener(
   document,
   'pigquery-uninstall',
   () => {
-    canceler.cancelAll();
+    uninstaller.uninstallAll();
     logger.debug('uninstalled');
   },
   false
 );
 
 // Listen for conditional uninstall event
-canceler.addEventListener(
+uninstaller.addEventListener(
   document,
   'pigquery-uninstall-if-dead',
   () => {
     if (!chrome.runtime?.id) {
-      canceler.cancelAll();
+      uninstaller.uninstallAll();
       logger.debug('uninstalled');
     }
   },
