@@ -155,32 +155,44 @@ if (query && query.length > 0) {
     uninstaller.uninstallGroup('query-insert');
   };
 
-  uninstaller.observe(
-    () => {
-      if (!clickedTab) {
-        const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
-        if (tabs.length === 0) return;
-        tabs[tabs.length - 1].click();
-        clickedTab = true;
-      }
+  const tryInsertQuery = () => {
+    if (!clickedTab) {
+      const tabs = document.querySelectorAll('cfc-panel-sub-header [role="tab"]');
+      if (tabs.length === 0) return false;
+      tabs[tabs.length - 1].click();
+      clickedTab = true;
+    }
 
-      const editors = document.querySelectorAll('cfc-code-editor');
-      if (editors.length === 0) return;
-      const editor = editors[editors.length - 1];
-      const ta = findEditorTextArea(editor);
-      if (!ta) return;
+    const editors = document.querySelectorAll('cfc-code-editor');
+    if (editors.length === 0) return false;
+    const editor = editors[editors.length - 1];
+    const ta = findEditorTextArea(editor);
+    if (!ta) return false;
 
-      cleanup(true);
-      insertIntoEditor(editor, query.trim());
-    },
-    document.body,
-    {
-      childList: true,
-      subtree: true,
-    },
-    'query-insert-observer',
-    'query-insert'
-  );
+    cleanup(true);
+    insertIntoEditor(editor, query.trim());
+    return true;
+  };
+
+  // Try immediately in case editor already exists
+  if (!tryInsertQuery()) {
+    // If not found, observe for DOM changes
+    uninstaller.observe(
+      () => {
+        if (tryInsertQuery()) {
+          // Successfully inserted, stop observing
+          uninstaller.uninstall('query-insert-observer');
+        }
+      },
+      document.body,
+      {
+        childList: true,
+        subtree: true,
+      },
+      'query-insert-observer',
+      'query-insert'
+    );
+  }
 
   uninstaller.setTimeout(() => cleanup(false), 10_000, 'query-insert-timeout', 'query-insert');
 }

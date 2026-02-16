@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigQuery - Test Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Google Sans', Arial, sans-serif;
+      background: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      height: 48px;
+      background: #1a73e8;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    cfc-panel-sub-header {
+      display: flex;
+      height: 48px;
+      background: #fff;
+      border-bottom: 1px solid #dadce0;
+      align-items: center;
+      padding: 0 12px;
+    }
+
+    [role="tab"] {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #5f6368;
+      border-bottom: 2px solid transparent;
+      user-select: none;
+    }
+
+    [role="tab"]:hover:not([aria-selected="true"]) {
+      background: #f8f9fa;
+    }
+
+    [role="tab"][aria-selected="true"] {
+      color: #1a73e8;
+      border-bottom-color: #1a73e8;
+      font-weight: 500;
+    }
+
+    cfc-code-editor {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    bq-results-table-optimized {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .editor-container {
+      min-height: 250px;
+      height: 35%;
+      border-bottom: 1px solid #dadce0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-header {
+      height: 40px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #dadce0;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+    }
+
+    .run-button {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .run-button:hover {
+      background: #1557b0;
+    }
+
+    .editor {
+      flex: 1;
+      padding: 16px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      border: none;
+      resize: none;
+      outline: none;
+    }
+
+    .results-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .results-header {
+      height: 40px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #dadce0;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #5f6368;
+    }
+
+    .results-table-wrapper {
+      flex: 1;
+      overflow: auto;
+      padding: 0 12px 12px 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8f9fa;
+      text-align: left;
+      padding: 8px 12px;
+      font-weight: 500;
+      color: #5f6368;
+      border-bottom: 2px solid #dadce0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th {
+      outline: none;
+    }
+
+    th:focus {
+      background: #e8f0fe;
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e8eaed;
+      outline: none;
+    }
+
+    td:focus {
+      background: #e8f0fe;
+      position: relative;
+    }
+
+    td:focus::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px solid #1a73e8;
+      pointer-events: none;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    BigQuery
+  </div>
+
+  <div class="main">
+    <cfc-panel-sub-header>
+      <div role="tab" aria-selected="true">Query</div>
+    </cfc-panel-sub-header>
+
+    <div class="editor-container">
+      <div class="editor-header">
+        <button class="run-button">Run</button>
+      </div>
+      <cfc-code-editor>
+        <div class="view-lines" style="display: none;"></div>
+        <textarea class="editor inputarea" placeholder="Enter your SQL query here..." spellcheck="false" autocomplete="off"></textarea>
+      </cfc-code-editor>
+    </div>
+
+    <div class="results-container">
+      <div class="results-header">
+        Query results
+      </div>
+      <div class="results-table-wrapper" id="results-wrapper">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Make textarea work with insertIntoEditor function
+    document.addEventListener('DOMContentLoaded', () => {
+      const textarea = document.querySelector('textarea.inputarea');
+      const runButton = document.querySelector('.run-button');
+      const resultsWrapper = document.getElementById('results-wrapper');
+      if (!textarea || !runButton || !resultsWrapper) return;
+
+      // Ensure paste events work correctly
+      textarea.addEventListener('paste', (e) => {
+        if (e.clipboardData) {
+          const text = e.clipboardData.getData('text/plain');
+          if (text) {
+            e.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const value = textarea.value;
+            textarea.value = value.slice(0, start) + text + value.slice(end);
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+            textarea.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' }));
+          }
+        }
+      });
+
+      // Ensure focus works
+      textarea.tabIndex = 0;
+
+      // Sync textarea content with .view-lines for Monaco Editor compatibility
+      const viewLines = document.querySelector('cfc-code-editor .view-lines');
+      const syncViewLines = () => {
+        viewLines.textContent = textarea.value;
+      };
+      // Initial sync
+      syncViewLines();
+      // Sync on input
+      textarea.addEventListener('input', syncViewLines);
+
+      // Random data generators
+      const firstNames = ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
+      const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+      const domains = ['example.com', 'test.com', 'demo.com', 'sample.org', 'mail.net'];
+      const statuses = ['active', 'pending', 'inactive', 'suspended', 'verified', 'unverified'];
+      const categories = ['electronics', 'clothing', 'food', 'books', 'toys', 'sports', 'home', 'garden'];
+      const countries = ['USA', 'Canada', 'UK', 'Germany', 'France', 'Spain', 'Italy', 'Japan', 'Australia', 'Brazil'];
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function randomItem(arr) {
+        return arr[randomInt(0, arr.length - 1)];
+      }
+
+      function randomDate() {
+        const year = randomInt(2020, 2026);
+        const month = String(randomInt(1, 12)).padStart(2, '0');
+        const day = String(randomInt(1, 28)).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function randomTimestamp() {
+        const date = randomDate();
+        const hour = String(randomInt(0, 23)).padStart(2, '0');
+        const minute = String(randomInt(0, 59)).padStart(2, '0');
+        const second = String(randomInt(0, 59)).padStart(2, '0');
+        return `${date} ${hour}:${minute}:${second}`;
+      }
+
+      function randomJson() {
+        const templates = [
+          () => ({ id: randomInt(1, 1000), active: Math.random() > 0.5 }),
+          () => ({ name: `${randomItem(firstNames)} ${randomItem(lastNames)}`, age: randomInt(18, 80) }),
+          () => ({ category: randomItem(categories), price: (Math.random() * 1000).toFixed(2) }),
+          () => ({ country: randomItem(countries), population: randomInt(1000000, 500000000) }),
+        ];
+        return JSON.stringify(randomItem(templates)());
+      }
+
+      function generateRandomTable() {
+        const numCols = randomInt(4, 6);
+        const numRows = randomInt(5, 15);
+
+        // Define column types
+        const columnTypes = ['id', 'name', 'email', 'date', 'timestamp', 'status', 'json', 'number', 'category', 'country'];
+        const selectedTypes = [];
+        const columnNames = [];
+
+        // Always include ID as first column
+        selectedTypes.push('id');
+        columnNames.push('id');
+
+        // Pick random other columns
+        for (let i = 1; i < numCols; i++) {
+          const type = randomItem(columnTypes.filter(t => t !== 'id'));
+          selectedTypes.push(type);
+          columnNames.push(type === 'json' ? 'metadata' : type);
+        }
+
+        // Build table HTML
+        let html = '<table role="grid"><thead><tr>';
+
+        // Headers
+        columnNames.forEach(name => {
+          html += `<th tabindex="-1">${name}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        // Rows
+        let isFirstCell = true;
+        for (let row = 0; row < numRows; row++) {
+          html += '<tr>';
+          selectedTypes.forEach((type, colIdx) => {
+            let value;
+            switch(type) {
+              case 'id':
+                value = row + 1;
+                break;
+              case 'name':
+                value = `${randomItem(firstNames)} ${randomItem(lastNames)}`;
+                break;
+              case 'email':
+                const fname = randomItem(firstNames).toLowerCase();
+                const lname = randomItem(lastNames).toLowerCase();
+                value = `${fname}.${lname}@${randomItem(domains)}`;
+                break;
+              case 'date':
+                value = randomDate();
+                break;
+              case 'timestamp':
+                value = randomTimestamp();
+                break;
+              case 'status':
+                value = randomItem(statuses);
+                break;
+              case 'json':
+                value = randomJson();
+                break;
+              case 'number':
+                value = (Math.random() * 10000).toFixed(2);
+                break;
+              case 'category':
+                value = randomItem(categories);
+                break;
+              case 'country':
+                value = randomItem(countries);
+                break;
+              default:
+                value = 'N/A';
+            }
+            // Mark the first cell with role="cell" so it can be found
+            const roleAttr = isFirstCell ? ' role="cell"' : '';
+            html += `<td tabindex="-1"${roleAttr}>${value}</td>`;
+            isFirstCell = false;
+          });
+          html += '</tr>';
+        }
+
+        html += '</tbody></table>';
+        return html;
+      }
+
+      function runQuery() {
+        // Create the table element if it doesn't exist
+        let resultsTable = document.querySelector('bq-results-table-optimized');
+        if (!resultsTable) {
+          resultsTable = document.createElement('bq-results-table-optimized');
+          resultsTable.id = 'results-table';
+          resultsTable.tabIndex = 0;
+          resultsWrapper.appendChild(resultsTable);
+        }
+        
+        resultsTable.innerHTML = generateRandomTable();
+        setupTableNavigation();
+      }
+
+      function setupTableNavigation() {
+        const resultsTable = document.querySelector('bq-results-table-optimized');
+        if (!resultsTable) return;
+        
+        const cells = resultsTable.querySelectorAll('td, th');
+        
+        cells.forEach(cell => {
+          // Focus handler - add role="cell" to focused cell only
+          cell.addEventListener('focus', () => {
+            // Remove role="cell" from all other cells
+            resultsTable.querySelectorAll('[role="cell"]').forEach(c => {
+              if (c !== cell) {
+                c.removeAttribute('role');
+              }
+            });
+            // Add role="cell" to focused cell
+            cell.setAttribute('role', 'cell');
+          });
+
+          // Blur handler - remove role when losing focus
+          cell.addEventListener('blur', () => {
+            cell.removeAttribute('role');
+          });
+
+          cell.addEventListener('keydown', (e) => {
+            // Copy cell content with Cmd+C (Mac) or Ctrl+C (Windows)
+            if (e.key === 'c' && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+              e.preventDefault();
+              const content = cell.innerText;
+              navigator.clipboard.writeText(content).then(() => {
+                // Visual feedback
+                const originalBg = cell.style.backgroundColor;
+                cell.style.backgroundColor = '#d4edda';
+                setTimeout(() => {
+                  cell.style.backgroundColor = originalBg;
+                }, 200);
+              }).catch(err => {
+                console.error('Failed to copy:', err);
+              });
+              return;
+            }
+
+            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+              return;
+            }
+
+            e.preventDefault();
+
+            const currentRow = cell.closest('tr');
+            const currentCellIndex = Array.from(currentRow.children).indexOf(cell);
+            let targetCell = null;
+
+            switch(e.key) {
+              case 'ArrowLeft':
+                // Move to previous cell in same row
+                targetCell = cell.previousElementSibling;
+                break;
+              
+              case 'ArrowRight':
+                // Move to next cell in same row
+                targetCell = cell.nextElementSibling;
+                break;
+              
+              case 'ArrowUp':
+                // Move to cell in previous row (same column)
+                const prevRow = currentRow.previousElementSibling;
+                if (prevRow) {
+                  targetCell = prevRow.children[currentCellIndex];
+                } else {
+                  // If in tbody, try to move to thead
+                  const tbody = currentRow.closest('tbody');
+                  if (tbody) {
+                    const thead = tbody.previousElementSibling;
+                    if (thead?.tagName === 'THEAD') {
+                      const headerRow = thead.querySelector('tr');
+                      if (headerRow) {
+                        targetCell = headerRow.children[currentCellIndex];
+                      }
+                    }
+                  }
+                }
+                break;
+              
+              case 'ArrowDown':
+                // Move to cell in next row (same column)
+                const nextRow = currentRow.nextElementSibling;
+                if (nextRow) {
+                  targetCell = nextRow.children[currentCellIndex];
+                } else {
+                  // If in thead, try to move to tbody
+                  const thead = currentRow.closest('thead');
+                  if (thead) {
+                    const tbody = thead.nextElementSibling;
+                    if (tbody?.tagName === 'TBODY') {
+                      const firstRow = tbody.querySelector('tr');
+                      if (firstRow) {
+                        targetCell = firstRow.children[currentCellIndex];
+                      }
+                    }
+                  }
+                }
+                break;
+            }
+
+            if (targetCell) {
+              targetCell.focus();
+              
+              // Check if we need to scroll considering the sticky header
+              const wrapper = resultsTable.closest('.results-table-wrapper');
+              if (wrapper) {
+                const cellRect = targetCell.getBoundingClientRect();
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const header = resultsTable.querySelector('thead');
+                const headerHeight = header ? header.offsetHeight : 0;
+                
+                // Check if cell is hidden behind sticky header or outside viewport
+                if (cellRect.top < wrapperRect.top + headerHeight) {
+                  // Cell is above visible area or behind header - scroll up
+                  targetCell.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
+                  // Adjust for sticky header
+                  if (wrapper.scrollTop > 0) {
+                    wrapper.scrollTop -= headerHeight;
+                  }
+                } else if (cellRect.bottom > wrapperRect.bottom) {
+                  // Cell is below visible area - scroll down
+                  targetCell.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'smooth' });
+                }
+              } else {
+                targetCell.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+              }
+            }
+          });
+        });
+      }
+
+      // Run button click
+      runButton.addEventListener('click', runQuery);
+
+      // Keyboard shortcuts: Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          runQuery();
+        }
+      });
+
+      // Listen for copy events and inject the selected text into clipboardData
+      // This helps extensions that rely on copy events (like PigQuery's share link feature)
+      // Content scripts run in isolated context, so we need to intercept the actual copy event
+      document.addEventListener('copy', (e) => {
+        // Get the actual selected text from textarea
+        const activeEl = document.activeElement;
+        if (activeEl instanceof HTMLTextAreaElement || activeEl instanceof HTMLInputElement) {
+          const start = activeEl.selectionStart || 0;
+          const end = activeEl.selectionEnd || 0;
+          const selectedText = activeEl.value.substring(start, end);
+          
+          if (selectedText && e.clipboardData) {
+            // Set the selected text in clipboardData so extensions can read it
+            e.clipboardData.setData('text/plain', selectedText);
+          }
+        }
+      }, true); // Use capture phase to run before extension handlers
+
+      // Make tabs functional
+      const tabs = document.querySelectorAll('[role="tab"]');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Deselect all tabs
+          tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+          // Select clicked tab
+          tab.setAttribute('aria-selected', 'true');
+          // In a real app, this would switch between different panels
+          // For our test page, we only have one tab/panel
+        });
+      });
+
+      // Focus editor on page load
+      textarea.focus();
+    });
+  </script>
+</body>
+</html>

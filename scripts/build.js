@@ -118,8 +118,21 @@ async function build() {
     // Copy LICENSE
     copyFile('LICENSE.txt', `${buildDir}/LICENSE.txt`);
 
-    // Copy manifest
-    copyFile('manifest.json', `${buildDir}/manifest.json`);
+    // Copy and modify manifest
+    const manifestPath = `${buildDir}/manifest.json`;
+    copyFile('manifest.json', manifestPath);
+
+    // Remove file:/// permission for prod builds
+    if (isProd) {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      manifest.host_permissions = manifest.host_permissions.filter(perm => !perm.startsWith('file:///'));
+      // Remove file:/// from web_accessible_resources
+      manifest.web_accessible_resources.forEach(resource => {
+        resource.matches = resource.matches.filter(match => !match.startsWith('file:///'));
+      });
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+      console.log('✓ Removed file:/// permissions for prod build');
+    }
 
     // Save commit hash for production builds
     if (isProd) {

@@ -92,7 +92,11 @@ async function updateErrorBadge() {
 async function reinjectContentScript(force) {
   logger.log(`Checking tabs for reinjection, force: ${force}`);
   try {
-    const tabs = await chrome.tabs.query({ url: 'https://console.cloud.google.com/*' });
+    const urlPatterns = ['https://console.cloud.google.com/*'];
+    if (process.env.NODE_ENV === 'dev') {
+      urlPatterns.push('file:///*bigquery.html');
+    }
+    const tabs = await chrome.tabs.query({ url: urlPatterns });
     logger.log(`${tabs.length} BigQuery tab${tabs.length === 1 ? '' : 's'} found`);
     if (tabs.length === 0) return;
 
@@ -147,7 +151,10 @@ if (chrome?.runtime?.id) {
 
   // Inject content script when tab navigates to BigQuery
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url?.startsWith('https://console.cloud.google.com/')) {
+    const isBigQueryUrl =
+      tab.url?.startsWith('https://console.cloud.google.com/') ||
+      (process.env.NODE_ENV === 'dev' && tab.url?.startsWith('file:///') && tab.url?.includes('bigquery.html'));
+    if (changeInfo.status === 'complete' && isBigQueryUrl) {
       logger.log(`Tab ${tab.id} navigated to BigQuery`);
       injectContentScript(tab, false);
     }

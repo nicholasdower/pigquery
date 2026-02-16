@@ -18,7 +18,15 @@ let page = null;
  * @param {string} url - Initial URL to open
  * @returns {Promise<{browser: import('playwright').Browser, page: import('playwright').Page, chromeProcess: import('child_process').ChildProcess}>}
  */
-export async function startChrome(url = 'https://console.cloud.google.com/bigquery') {
+export async function startChrome(url) {
+  // Use local bigquery.html if USE_LOCAL_BIGQUERY is set
+  if (!url && process.env.USE_LOCAL_BIGQUERY === 'true') {
+    const localPath = path.join(__dirname, 'bigquery.html');
+    url = `file://${localPath}`;
+  } else if (!url) {
+    url = 'https://console.cloud.google.com/bigquery';
+  }
+
   const profileDir = path.join(__dirname, '..', '..', '..', 'profile');
 
   chromeProcess = spawn(
@@ -71,7 +79,7 @@ export async function stopChrome() {
  * @param {number} timeout
  */
 export async function waitForBigQueryEditor(page, timeout = 30000) {
-  await page.waitForSelector('.view-lines', { timeout });
+  await page.waitForSelector('cfc-code-editor', { timeout });
   await page.waitForTimeout(1000);
 }
 

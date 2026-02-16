@@ -54,10 +54,15 @@ describeIntegration('Share Query Integration', () => {
       await page.waitForTimeout(1000);
 
       // Wait for the clipboard to contain a BigQuery URL
-      const shareUrl = await waitForClipboard(/https:\/\/console\.cloud\.google\.com\/bigquery/, 10000, 200);
+      // Match both real BigQuery URL and local file URL
+      const urlPattern =
+        process.env.USE_LOCAL_BIGQUERY === 'true'
+          ? /file:\/\/.*bigquery\.html/
+          : /https:\/\/console\.cloud\.google\.com\/bigquery/;
+      const shareUrl = await waitForClipboard(urlPattern, 10000, 200);
 
       // Verify URL contains the query parameter
-      expect(shareUrl).toMatch(/https:\/\/console\.cloud\.google\.com\/bigquery/);
+      expect(shareUrl).toMatch(urlPattern);
       expect(shareUrl).toContain('?');
       expect(shareUrl).toContain('pig=');
 
@@ -75,7 +80,7 @@ describeIntegration('Share Query Integration', () => {
       while (!editorHasText && attempts < maxAttempts) {
         try {
           const editorText = await page.evaluate(() => {
-            const editor = document.querySelector('.view-lines');
+            const editor = document.querySelector('cfc-code-editor .view-lines');
             return editor ? editor.textContent : '';
           });
 
