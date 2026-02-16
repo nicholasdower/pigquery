@@ -34,7 +34,6 @@ class Uninstaller {
     const functionName = name || `uninstall-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
     this.uninstallFunctions.set(functionName, uninstallFn);
-    logger.debug(`[${this.name}] registered: ${functionName}${group ? ` (group: ${group})` : ''}`);
 
     // Add to group if specified
     if (group) {
@@ -51,8 +50,6 @@ class Uninstaller {
    * @throws Will propagate any error thrown by the uninstall function
    */
   uninstall(name) {
-    logger.debug(`[${this.name}] uninstalling: ${name}`);
-
     const uninstallFn = this.uninstallFunctions.get(name);
     if (!uninstallFn) {
       return; // Silently ignore if not found
@@ -72,8 +69,6 @@ class Uninstaller {
    * @param {string} group - Name of the group to uninstall
    */
   uninstallGroup(group) {
-    logger.debug(`[${this.name}] uninstalling group: ${group}`);
-
     const names = this.groups.get(group);
     if (!names || names.size === 0) {
       return; // Silently ignore if group not found or empty
@@ -87,7 +82,6 @@ class Uninstaller {
 
     // Uninstall in reverse order, catching and ignoring errors
     for (const name of nameArray.reverse()) {
-      logger.debug(`[${this.name}] uninstalling: ${name}`);
       const uninstallFn = this.uninstallFunctions.get(name);
       if (uninstallFn) {
         this.uninstallFunctions.delete(name);
@@ -95,7 +89,7 @@ class Uninstaller {
         try {
           uninstallFn();
         } catch (error) {
-          // Silently ignore errors during uninstallGroup
+          logger.error(`[${this.name}] error uninstalling ${name}:`, error);
         }
       }
     }
@@ -121,8 +115,6 @@ class Uninstaller {
    * Executes uninstall functions in reverse order (LIFO - last registered, first uninstalled)
    */
   uninstallAll() {
-    logger.debug(`[${this.name}] uninstalling all`);
-
     // Create array of entries to iterate over
     const entries = Array.from(this.uninstallFunctions.entries());
 
@@ -133,11 +125,9 @@ class Uninstaller {
     // Execute all uninstall functions in reverse order, catching and ignoring errors
     for (const [name, uninstallFn] of entries.reverse()) {
       try {
-        logger.debug(`[${this.name}] uninstalling: ${name}`);
         uninstallFn();
       } catch (error) {
-        // Silently ignore errors during uninstallAll
-        logger.debug(`[${this.name}] error uninstalling ${name}:`, error);
+        logger.error(`[${this.name}] error uninstalling ${name}:`, error);
       }
     }
   }
