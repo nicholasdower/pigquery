@@ -174,16 +174,13 @@ if (query && query.length > 0) {
     return true;
   };
 
+  uninstaller.setTimeout(() => cleanup(false), 10_000, 'query-insert-timeout', 'query-insert');
+
   // Try immediately in case editor already exists
   if (!tryInsertQuery()) {
     // If not found, observe for DOM changes
     uninstaller.observe(
-      () => {
-        if (tryInsertQuery()) {
-          // Successfully inserted, stop observing
-          uninstaller.uninstall('query-insert-observer');
-        }
-      },
+      () => tryInsertQuery(),
       document.body,
       {
         childList: true,
@@ -193,8 +190,6 @@ if (query && query.length > 0) {
       'query-insert'
     );
   }
-
-  uninstaller.setTimeout(() => cleanup(false), 10_000, 'query-insert-timeout', 'query-insert');
 }
 
 uninstaller.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: modalStyles }));
@@ -293,7 +288,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       // Get all focusable elements in the modal dynamically
       const allFocusable = Array.from(
         modalEl.querySelectorAll('input, button:not([tabindex="-1"]), [tabindex="0"]')
-      ).filter(el => el.offsetParent !== null); // Filter out hidden elements
+      ).filter(el => el.checkVisibility?.()); // Filter out hidden elements
 
       if (allFocusable.length === 0) return;
 
@@ -786,11 +781,16 @@ uninstaller.addEventListener(
 
       if (isInEditor) {
         // Focus table
-        const table = document.querySelector('bq-results-table-optimized');
-        if (!table) {
+        const tables = Array.from(document.querySelectorAll('bq-results-table-optimized')).filter(el =>
+          el.checkVisibility?.()
+        ); // Filter out hidden elements
+
+        if (tables.length === 0) {
           showToast(i18n.getMessage('tableNotFound', LOCALE));
           return;
         }
+
+        const table = tables[0];
 
         const cell = table.querySelector('[role="cell"]');
         const header = table.querySelector('[role="columnheader"]');

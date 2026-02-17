@@ -28,6 +28,104 @@
       padding: 0 16px;
       font-size: 18px;
       font-weight: 500;
+      gap: 12px;
+    }
+
+    cfc-switcher-button {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+      transition: background 0.2s;
+    }
+
+    cfc-switcher-button:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .project-popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .project-popup.active {
+      display: flex;
+    }
+
+    .project-popup-content {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      min-width: 400px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .project-popup-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: #202124;
+    }
+
+    .project-popup-input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .project-popup-input:focus {
+      border-color: #1a73e8;
+    }
+
+    .project-popup-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .project-popup-button {
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+
+    .project-popup-button.cancel {
+      background: transparent;
+      color: #5f6368;
+    }
+
+    .project-popup-button.cancel:hover {
+      background: #f8f9fa;
+    }
+
+    .project-popup-button.confirm {
+      background: #1a73e8;
+      color: white;
+    }
+
+    .project-popup-button.confirm:hover {
+      background: #1557b0;
     }
 
     .main {
@@ -46,6 +144,43 @@
       padding: 0 12px;
     }
 
+    .tabs-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+    }
+
+    .tabs-container.loaded {
+      opacity: 1;
+    }
+
+    .tabs-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #5f6368;
+      font-size: 14px;
+    }
+
+    .tabs-loading.hidden {
+      display: none;
+    }
+
+    .loading-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e8eaed;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     [role="tab"] {
       padding: 12px 16px;
       cursor: pointer;
@@ -53,6 +188,9 @@
       color: #5f6368;
       border-bottom: 2px solid transparent;
       user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     [role="tab"]:hover:not([aria-selected="true"]) {
@@ -63,6 +201,123 @@
       color: #1a73e8;
       border-bottom-color: #1a73e8;
       font-weight: 500;
+    }
+
+    .tab-close {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      font-size: 12px;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    [role="tab"]:hover .tab-close {
+      opacity: 1;
+    }
+
+    .tab-close:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    [role="tab"][aria-selected="true"] .tab-close {
+      opacity: 0.7;
+    }
+
+    [role="tab"][aria-selected="true"] .tab-close:hover {
+      opacity: 1;
+      background: rgba(26, 115, 232, 0.1);
+    }
+
+    .add-tab-button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      color: #5f6368;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+
+    .add-tab-button:hover {
+      background: #f8f9fa;
+      color: #1a73e8;
+    }
+
+    .home-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+    }
+
+    .home-view {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      padding: 40px;
+    }
+
+    .home-view.active {
+      display: flex;
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #1a73e8;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+
+    .home-link:hover {
+      background: #1557b0;
+    }
+
+    .home-checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #5f6368;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .home-checkbox-container input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .query-view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .query-view.active {
+      display: flex;
     }
 
     cfc-code-editor {
@@ -143,13 +398,25 @@
     .results-table-wrapper {
       flex: 1;
       overflow: auto;
-      padding: 0 12px 12px 12px;
+      padding: 0;
+    }
+
+    .results-error {
+      padding: 12px;
+      color: #c5221f;
+      font-size: 13px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+    }
+
+    table th:first-child,
+    table td:first-child {
+      width: 1%;
+      white-space: nowrap;
     }
 
     th {
@@ -202,54 +469,277 @@
 <body>
   <div class="header">
     BigQuery
+    <cfc-switcher-button id="project-switcher">
+      <span id="project-name">PigQuery</span>
+    </cfc-switcher-button>
+  </div>
+
+  <div class="project-popup" id="project-popup">
+    <div class="project-popup-content">
+      <div class="project-popup-title">Change Project</div>
+      <input type="text" class="project-popup-input" id="project-input" placeholder="Enter project name">
+      <div class="project-popup-buttons">
+        <button class="project-popup-button cancel" id="popup-cancel">Cancel</button>
+        <button class="project-popup-button confirm" id="popup-confirm">OK</button>
+      </div>
+    </div>
   </div>
 
   <div class="main">
     <cfc-panel-sub-header>
-      <div role="tab" aria-selected="true">Query</div>
+      <div class="tabs-loading" id="tabs-loading">
+        <div class="loading-spinner"></div>
+        <span>Loading tabs...</span>
+      </div>
+      <div class="tabs-container" id="tabs-container">
+      </div>
+      <button class="add-tab-button" id="add-tab-button" title="New query" style="display: none;">+</button>
     </cfc-panel-sub-header>
 
-    <div class="editor-container">
-      <div class="editor-header">
-        <button class="run-button">Run</button>
-      </div>
-      <cfc-code-editor>
-        <div class="view-lines" style="display: none;"></div>
-        <textarea class="editor inputarea" placeholder="Enter your SQL query here..." spellcheck="false" autocomplete="off"></textarea>
-      </cfc-code-editor>
+    <div class="home-view" id="home-view" style="display: none;">
+      <button class="home-link" id="home-new-tab-button">
+        <span>+ New Query</span>
+      </button>
+      <label class="home-checkbox-container">
+        <input type="checkbox" id="show-home-checkbox">
+        <span>Show this tab on startup</span>
+      </label>
     </div>
 
-    <div class="results-container">
-      <div class="results-header">
-        Query results
+    <div class="query-view" id="query-view" style="display: none;">
+      <div class="editor-container">
+        <div class="editor-header">
+          <button class="run-button">Run</button>
+        </div>
+        <cfc-code-editor>
+          <div class="view-lines" style="display: none;"></div>
+          <textarea class="editor inputarea" placeholder="" spellcheck="false" autocomplete="off"></textarea>
+        </cfc-code-editor>
       </div>
-      <div class="results-table-wrapper" id="results-wrapper">
+
+      <div class="results-container">
+        <div class="results-header">
+          Query results
+        </div>
+        <div class="results-table-wrapper" id="results-wrapper">
+        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // Tab management
+    let tabs = [];
+    let activeTabId = 1;
+    let nextTabId = 2;
+    let editorDirty = false; // Track if editor has unsaved changes
+
     // Make textarea work with insertIntoEditor function
     document.addEventListener('DOMContentLoaded', () => {
       const textarea = document.querySelector('textarea.inputarea');
       const runButton = document.querySelector('.run-button');
       const resultsWrapper = document.getElementById('results-wrapper');
-      if (!textarea || !runButton || !resultsWrapper) return;
+      const tabsContainer = document.getElementById('tabs-container');
+      const addTabButton = document.getElementById('add-tab-button');
+      const homeView = document.getElementById('home-view');
+      const queryView = document.getElementById('query-view');
+      const homeNewTabButton = document.getElementById('home-new-tab-button');
+      const tabsLoading = document.getElementById('tabs-loading');
+      const showHomeCheckbox = document.getElementById('show-home-checkbox');
+      const projectSwitcher = document.getElementById('project-switcher');
+      const projectName = document.getElementById('project-name');
+      const projectPopup = document.getElementById('project-popup');
+      const projectInput = document.getElementById('project-input');
+      const popupCancel = document.getElementById('popup-cancel');
+      const popupConfirm = document.getElementById('popup-confirm');
+      if (!textarea || !runButton || !resultsWrapper || !tabsContainer || !addTabButton || !homeView || !queryView || !homeNewTabButton || !tabsLoading || !showHomeCheckbox || !projectSwitcher || !projectName || !projectPopup || !projectInput || !popupCancel || !popupConfirm) return;
 
-      // Ensure paste events work correctly
-      textarea.addEventListener('paste', (e) => {
-        if (e.clipboardData) {
-          const text = e.clipboardData.getData('text/plain');
-          if (text) {
-            e.preventDefault();
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const value = textarea.value;
-            textarea.value = value.slice(0, start) + text + value.slice(end);
-            textarea.selectionStart = textarea.selectionEnd = start + text.length;
-            textarea.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' }));
-          }
+      // Get project from query parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      let currentProject = urlParams.get('project') || 'PigQuery';
+      projectName.textContent = currentProject;
+
+      // Update URL if project parameter is missing
+      if (!urlParams.has('project')) {
+        urlParams.set('project', currentProject);
+        const newUrl = window.location.pathname + '?' + urlParams.toString();
+        window.history.replaceState({}, '', newUrl);
+      }
+
+      // Project switcher functionality
+      projectSwitcher.addEventListener('click', () => {
+        projectInput.value = currentProject;
+        projectPopup.classList.add('active');
+        projectInput.focus();
+        projectInput.select();
+      });
+
+      // Close popup on cancel
+      popupCancel.addEventListener('click', () => {
+        projectPopup.classList.remove('active');
+      });
+
+      // Close popup on background click
+      projectPopup.addEventListener('click', (e) => {
+        if (e.target === projectPopup) {
+          projectPopup.classList.remove('active');
         }
+      });
+
+      // Confirm project change
+      popupConfirm.addEventListener('click', () => {
+        const newProject = projectInput.value.trim();
+        if (newProject && newProject !== currentProject) {
+          // Update URL parameter without reloading
+          const newParams = new URLSearchParams(window.location.search);
+          newParams.set('project', newProject);
+          const newUrl = window.location.pathname + '?' + newParams.toString();
+          window.history.pushState({}, '', newUrl);
+          
+          // Update UI
+          currentProject = newProject;
+          projectName.textContent = newProject;
+          projectPopup.classList.remove('active');
+          
+          // Reset application state
+          // 1. Remove all query tabs except the first one from DOM
+          const allTabElements = tabsContainer.querySelectorAll('[role="tab"]');
+          allTabElements.forEach(tabElement => {
+            const tabId = tabElement.getAttribute('data-tab-id');
+            if (tabId !== 'home' && tabId !== '1') {
+              tabElement.remove();
+            }
+          });
+          
+          // 2. Reset tabs array - keep only home and first query tab
+          const homeTab = tabs.find(t => t.id === 'home');
+          const firstQueryTab = tabs.find(t => t.id === 1);
+          if (firstQueryTab) {
+            firstQueryTab.editorContent = '';
+            firstQueryTab.resultsHtml = '';
+            firstQueryTab.resultsError = null;
+          }
+          tabs = [homeTab, firstQueryTab].filter(Boolean);
+          nextTabId = 2;
+          
+          // 3. Clear editor and results
+          textarea.value = '';
+          syncViewLines();
+          const resultsTable = resultsWrapper.querySelector('bq-results-table-optimized');
+          const resultsErrorEl = document.getElementById('results-error');
+          if (resultsTable) resultsTable.remove();
+          if (resultsErrorEl) resultsErrorEl.remove();
+          
+          // 4. Switch to appropriate tab based on show_home preference
+          const targetTabId = showHome ? 'home' : 1;
+          switchToTab(targetTabId);
+        } else {
+          projectPopup.classList.remove('active');
+        }
+      });
+
+      // Handle Enter key in input
+      projectInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          popupConfirm.click();
+        } else if (e.key === 'Escape') {
+          projectPopup.classList.remove('active');
+        }
+      });
+
+      // Check localStorage for show_home preference
+      const showHome = localStorage.getItem('show_home') === 'true';
+
+      // Function to load tabs asynchronously
+      async function loadTabsAsync() {
+        // Simulate async loading with a delay (300-800ms to mimic real loading)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Initialize tabs data
+        tabs.push({
+          id: 'home',
+          name: 'Home',
+          editorContent: '',
+          resultsHtml: '',
+          isHome: true
+        });
+        tabs.push({
+          id: 1,
+          name: 'Query 1',
+          editorContent: '',
+          resultsHtml: '',
+          resultsError: null
+        });
+
+        // Set active tab based on URL parameter
+        activeTabId = showHome ? 'home' : 1;
+
+        // Create tab elements
+        const homeTab = document.createElement('div');
+        homeTab.setAttribute('role', 'tab');
+        homeTab.setAttribute('aria-selected', activeTabId === 'home' ? 'true' : 'false');
+        homeTab.setAttribute('data-tab-id', 'home');
+        homeTab.innerHTML = `
+          <svg class="home-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        `;
+
+        const queryTab = document.createElement('div');
+        queryTab.setAttribute('role', 'tab');
+        queryTab.setAttribute('aria-selected', activeTabId === 1 ? 'true' : 'false');
+        queryTab.setAttribute('data-tab-id', '1');
+        queryTab.innerHTML = `
+          <span class="tab-name">Query 1</span>
+          <span class="tab-close">×</span>
+        `;
+
+        tabsContainer.appendChild(homeTab);
+        tabsContainer.appendChild(queryTab);
+
+        // Attach event listeners to tabs
+        attachTabEventListeners(homeTab);
+        attachTabEventListeners(queryTab);
+
+        // Hide loading indicator and show tabs
+        tabsLoading.classList.add('hidden');
+        tabsContainer.classList.add('loaded');
+        addTabButton.style.display = 'flex';
+
+        // Load initial tab state (this will show the appropriate view and focus)
+        loadTabState(activeTabId);
+
+        // Set checkbox state based on cookie
+        showHomeCheckbox.checked = showHome;
+
+        // Focus editor if not in home tab
+        if (activeTabId !== 'home') {
+          textarea.focus();
+        }
+      }
+
+      // Start async tab loading
+      loadTabsAsync();
+
+      // Handle checkbox change
+      showHomeCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        localStorage.setItem('show_home', isChecked ? 'true' : 'false');
+      });
+
+      // Paste handler: only intercepts synthetic paste events (e.g. from insertIntoEditor).
+      // Real paste events (isTrusted) are handled natively by the browser so undo is preserved.
+      textarea.addEventListener('paste', (e) => {
+        if (e.isTrusted) return;
+        if (!e.clipboardData) return;
+        const text = e.clipboardData.getData('text/plain');
+        if (!text) return;
+        e.preventDefault();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' }));
       });
 
       // Ensure focus works
@@ -263,144 +753,293 @@
       // Initial sync
       syncViewLines();
       // Sync on input
-      textarea.addEventListener('input', syncViewLines);
+      textarea.addEventListener('input', () => {
+        syncViewLines();
+        editorDirty = true; // Mark editor as dirty when content changes
+      });
 
-      // Random data generators
-      const firstNames = ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
-      const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
-      const domains = ['example.com', 'test.com', 'demo.com', 'sample.org', 'mail.net'];
-      const statuses = ['active', 'pending', 'inactive', 'suspended', 'verified', 'unverified'];
-      const categories = ['electronics', 'clothing', 'food', 'books', 'toys', 'sports', 'home', 'garden'];
-      const countries = ['USA', 'Canada', 'UK', 'Germany', 'France', 'Spain', 'Italy', 'Japan', 'Australia', 'Brazil'];
-
-      function randomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-      }
-
-      function randomItem(arr) {
-        return arr[randomInt(0, arr.length - 1)];
-      }
-
-      function randomDate() {
-        const year = randomInt(2020, 2026);
-        const month = String(randomInt(1, 12)).padStart(2, '0');
-        const day = String(randomInt(1, 28)).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      }
-
-      function randomTimestamp() {
-        const date = randomDate();
-        const hour = String(randomInt(0, 23)).padStart(2, '0');
-        const minute = String(randomInt(0, 59)).padStart(2, '0');
-        const second = String(randomInt(0, 59)).padStart(2, '0');
-        return `${date} ${hour}:${minute}:${second}`;
-      }
-
-      function randomJson() {
-        const templates = [
-          () => ({ id: randomInt(1, 1000), active: Math.random() > 0.5 }),
-          () => ({ name: `${randomItem(firstNames)} ${randomItem(lastNames)}`, age: randomInt(18, 80) }),
-          () => ({ category: randomItem(categories), price: (Math.random() * 1000).toFixed(2) }),
-          () => ({ country: randomItem(countries), population: randomInt(1000000, 500000000) }),
-        ];
-        return JSON.stringify(randomItem(templates)());
-      }
-
-      function generateRandomTable() {
-        const numCols = randomInt(4, 6);
-        const numRows = randomInt(5, 15);
-
-        // Define column types
-        const columnTypes = ['id', 'name', 'email', 'date', 'timestamp', 'status', 'json', 'number', 'category', 'country'];
-        const selectedTypes = [];
-        const columnNames = [];
-
-        // Always include ID as first column
-        selectedTypes.push('id');
-        columnNames.push('id');
-
-        // Pick random other columns
-        for (let i = 1; i < numCols; i++) {
-          const type = randomItem(columnTypes.filter(t => t !== 'id'));
-          selectedTypes.push(type);
-          columnNames.push(type === 'json' ? 'metadata' : type);
+      // Fake SQL: parse SELECT "lit1", "lit2" [ UNION ALL SELECT ... ] (no FROM)
+      function parseQuotedStrings(selectList) {
+        const quoted = [];
+        let i = 0;
+        while (i < selectList.length) {
+          const rest = selectList.slice(i);
+          const dq = rest.match(/^"([^"]*)"/);
+          const sq = rest.match(/^'([^']*)'/);
+          if (dq) {
+            quoted.push(dq[1]);
+            i += dq[0].length;
+          } else if (sq) {
+            quoted.push(sq[1]);
+            i += sq[0].length;
+          } else {
+            const next = rest.search(/["']/);
+            if (next === -1) break;
+            i += next;
+          }
         }
+        return quoted;
+      }
 
-        // Build table HTML
-        let html = '<table role="grid"><thead><tr>';
-
-        // Headers
-        columnNames.forEach(name => {
-          html += `<th tabindex="-1">${name}</th>`;
+      function parseSelectLiterals(sql) {
+        const trimmed = sql.trim().replace(/;\s*$/, '');
+        const parts = trimmed.split(/\s+union\s+all\s+/i).map((p) => {
+          // Strip leading SELECT and optional trailing FROM <anything>
+          return p
+            .replace(/^\s*select\s+/i, '')
+            .replace(/\s+from\s+(`[^`]*`|\S+)\s*$/i, '')
+            .trim();
         });
-        html += '</tr></thead><tbody>';
+        if (parts.length === 0) return null;
+        const allRows = [];
+        let numCols = null;
+        for (let i = 0; i < parts.length; i++) {
+          const literals = parseQuotedStrings(parts[i]);
+          if (literals.length === 0) return null;
+          if (numCols === null) numCols = literals.length;
+          else if (literals.length !== numCols) return null;
+          const row = { Row: i + 1 };
+          literals.forEach((val, idx) => { row['f' + idx + '_'] = val; });
+          allRows.push(row);
+        }
+        const columns = ['Row'].concat(Array.from({ length: numCols }, (_, i) => 'f' + i + '_'));
+        return { columns, rows: allRows };
+      }
 
-        // Rows
-        let isFirstCell = true;
-        for (let row = 0; row < numRows; row++) {
+      function escapeHtml(str) {
+        if (str == null) return '';
+        const s = String(str);
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function buildTableHtmlFromResult(data) {
+        const { columns, rows } = data;
+        let html = '<table role="grid"><thead><tr>';
+        columns.forEach((col) => { html += `<th tabindex="-1">${escapeHtml(col)}</th>`; });
+        html += '</tr></thead><tbody>';
+        rows.forEach((row, rowIdx) => {
           html += '<tr>';
-          selectedTypes.forEach((type, colIdx) => {
-            let value;
-            switch(type) {
-              case 'id':
-                value = row + 1;
-                break;
-              case 'name':
-                value = `${randomItem(firstNames)} ${randomItem(lastNames)}`;
-                break;
-              case 'email':
-                const fname = randomItem(firstNames).toLowerCase();
-                const lname = randomItem(lastNames).toLowerCase();
-                value = `${fname}.${lname}@${randomItem(domains)}`;
-                break;
-              case 'date':
-                value = randomDate();
-                break;
-              case 'timestamp':
-                value = randomTimestamp();
-                break;
-              case 'status':
-                value = randomItem(statuses);
-                break;
-              case 'json':
-                value = randomJson();
-                break;
-              case 'number':
-                value = (Math.random() * 10000).toFixed(2);
-                break;
-              case 'category':
-                value = randomItem(categories);
-                break;
-              case 'country':
-                value = randomItem(countries);
-                break;
-              default:
-                value = 'N/A';
-            }
-            // Mark the first cell with role="cell" so it can be found
-            const roleAttr = isFirstCell ? ' role="cell"' : '';
-            html += `<td tabindex="-1"${roleAttr}>${value}</td>`;
-            isFirstCell = false;
+          columns.forEach((col, colIdx) => {
+            const roleAttr = rowIdx === 0 && colIdx === 0 ? ' role="cell"' : '';
+            html += `<td tabindex="-1"${roleAttr}>${escapeHtml(row[col])}</td>`;
           });
           html += '</tr>';
-        }
-
+        });
         html += '</tbody></table>';
         return html;
       }
 
-      function runQuery() {
-        // Create the table element if it doesn't exist
-        let resultsTable = document.querySelector('bq-results-table-optimized');
+      // Tab management functions
+      function saveCurrentTabState() {
+        const currentTab = tabs.find(t => t.id === activeTabId);
+        if (currentTab && !currentTab.isHome) {
+          currentTab.editorContent = textarea.value;
+          const resultsErrorEl = document.getElementById('results-error');
+          const resultsTable = resultsWrapper.querySelector('bq-results-table-optimized');
+          if (resultsErrorEl) {
+            currentTab.resultsError = resultsErrorEl.textContent;
+            currentTab.resultsHtml = '';
+          } else {
+            currentTab.resultsError = null;
+            currentTab.resultsHtml = resultsTable ? resultsTable.innerHTML : '';
+          }
+        }
+      }
+
+      function loadTabState(tabId) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+
+        activeTabId = tabId;
+
+        // Switch between home view and query view
+        if (tab.isHome) {
+          homeView.style.display = 'flex';
+          homeView.classList.add('active');
+          queryView.style.display = 'none';
+          queryView.classList.remove('active');
+        } else {
+          homeView.style.display = 'none';
+          homeView.classList.remove('active');
+          queryView.style.display = 'flex';
+          queryView.classList.add('active');
+
+          textarea.value = tab.editorContent;
+          syncViewLines();
+
+          if (tab.resultsError) {
+            showResultsError(tab.resultsError);
+          } else {
+            showResultsTable(tab.resultsHtml || '');
+          }
+        }
+      }
+
+      function createTab() {
+        const tabId = nextTabId++;
+        const tabName = `Query ${tabId}`;
+
+        tabs.push({
+          id: tabId,
+          name: tabName,
+          editorContent: '',
+          resultsHtml: '',
+          resultsError: null
+        });
+
+        const tabElement = document.createElement('div');
+        tabElement.setAttribute('role', 'tab');
+        tabElement.setAttribute('aria-selected', 'false');
+        tabElement.setAttribute('data-tab-id', tabId);
+        tabElement.innerHTML = `
+          <span class="tab-name">${tabName}</span>
+          <span class="tab-close">×</span>
+        `;
+
+        tabsContainer.appendChild(tabElement);
+        attachTabEventListeners(tabElement);
+        switchToTab(tabId);
+      }
+
+      function switchToTab(tabId) {
+        // Save current tab state
+        saveCurrentTabState();
+
+        // Update UI
+        const allTabs = tabsContainer.querySelectorAll('[role="tab"]');
+        allTabs.forEach(tab => {
+          const tabIdAttr = tab.getAttribute('data-tab-id');
+          const id = tabIdAttr === 'home' ? 'home' : parseInt(tabIdAttr);
+          tab.setAttribute('aria-selected', id === tabId ? 'true' : 'false');
+        });
+
+        // Load new tab state
+        loadTabState(tabId);
+
+        // Only focus textarea if not in home tab
+        if (tabId !== 'home') {
+          textarea.focus();
+        }
+      }
+
+      function closeTab(tabId) {
+        // Don't close the home tab
+        if (tabId === 'home') return;
+
+        // Don't close if it's the last query tab (keeping home + 1 query tab minimum)
+        const queryTabs = tabs.filter(t => !t.isHome);
+        if (queryTabs.length <= 1) return;
+
+        const tabIndex = tabs.findIndex(t => t.id === tabId);
+        if (tabIndex === -1) return;
+
+        // Remove from data
+        tabs.splice(tabIndex, 1);
+
+        // Remove from UI
+        const tabElement = tabsContainer.querySelector(`[data-tab-id="${tabId}"]`);
+        if (tabElement) {
+          tabElement.remove();
+        }
+
+        // If we closed the active tab, switch to another one
+        if (tabId === activeTabId) {
+          // Switch to the previous tab, or the first query tab if we closed the first query tab
+          const newActiveTab = tabs[Math.max(0, tabIndex - 1)];
+          switchToTab(newActiveTab.id);
+        }
+      }
+
+      function attachTabEventListeners(tabElement) {
+        const tabIdAttr = tabElement.getAttribute('data-tab-id');
+        const tabId = tabIdAttr === 'home' ? 'home' : parseInt(tabIdAttr);
+        const closeButton = tabElement.querySelector('.tab-close');
+
+        tabElement.addEventListener('click', (e) => {
+          // Don't switch tab if clicking close button
+          if (closeButton && e.target === closeButton) {
+            return;
+          }
+          switchToTab(tabId);
+        });
+
+        if (closeButton) {
+          closeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeTab(tabId);
+          });
+        }
+      }
+
+      function showResultsError(message) {
+        const table = resultsWrapper.querySelector('bq-results-table-optimized');
+        if (table) table.remove();
+        let errEl = document.getElementById('results-error');
+        if (!errEl) {
+          errEl = document.createElement('div');
+          errEl.id = 'results-error';
+          errEl.className = 'results-error';
+          resultsWrapper.appendChild(errEl);
+        }
+        errEl.textContent = message;
+      }
+
+      function ensureRoleCellSet(resultsTable) {
+        if (!resultsTable) return;
+        if (!resultsTable.querySelector('[role="cell"]')) {
+          const firstCell = resultsTable.querySelector('td');
+          if (firstCell) firstCell.setAttribute('role', 'cell');
+        }
+      }
+
+      function showResultsTable(html) {
+        const errEl = document.getElementById('results-error');
+        if (errEl) errEl.remove();
+        if (!html) {
+          const existing = resultsWrapper.querySelector('bq-results-table-optimized');
+          if (existing) existing.remove();
+          return;
+        }
+        let resultsTable = resultsWrapper.querySelector('bq-results-table-optimized');
         if (!resultsTable) {
           resultsTable = document.createElement('bq-results-table-optimized');
           resultsTable.id = 'results-table';
           resultsTable.tabIndex = 0;
           resultsWrapper.appendChild(resultsTable);
         }
-        
-        resultsTable.innerHTML = generateRandomTable();
+        resultsTable.innerHTML = html;
+        ensureRoleCellSet(resultsTable);
         setupTableNavigation();
+      }
+
+      function runQuery() {
+        const sql = textarea.value.trim();
+        const currentTab = tabs.find(t => t.id === activeTabId);
+
+        if (!sql) {
+          showResultsError('Bitte eine Abfrage eingeben (z.B. select "foo", "bar" union all select "moo", "bob").');
+          if (currentTab) {
+            currentTab.resultsHtml = '';
+            currentTab.resultsError = 'Bitte eine Abfrage eingeben (z.B. select "foo", "bar" union all select "moo", "bob").';
+          }
+          return;
+        }
+
+        const parsed = parseSelectLiterals(sql);
+        if (parsed) {
+          showResultsTable(buildTableHtmlFromResult(parsed));
+          if (currentTab) {
+            const resultsTable = resultsWrapper.querySelector('bq-results-table-optimized');
+            currentTab.resultsHtml = resultsTable ? resultsTable.innerHTML : '';
+            currentTab.resultsError = null;
+          }
+        } else {
+          showResultsError('Nur select "...", ... [ union all select ... ] wird unterstützt (kein from).');
+          if (currentTab) {
+            currentTab.resultsHtml = '';
+            currentTab.resultsError = 'Nur select "...", ... [ union all select ... ] wird unterstützt (kein from).';
+          }
+        }
       }
 
       function setupTableNavigation() {
@@ -422,9 +1061,12 @@
             cell.setAttribute('role', 'cell');
           });
 
-          // Blur handler - remove role when losing focus
+          // Blur handler - only remove role="cell" if another cell already has it
           cell.addEventListener('blur', () => {
-            cell.removeAttribute('role');
+            const resultsTable = resultsWrapper.querySelector('bq-results-table-optimized');
+            if (!resultsTable) return;
+            const other = resultsTable.querySelector('[role="cell"]:not(:focus)');
+            if (other && other !== cell) cell.removeAttribute('role');
           });
 
           cell.addEventListener('keydown', (e) => {
@@ -567,21 +1209,24 @@
         }
       }, true); // Use capture phase to run before extension handlers
 
-      // Make tabs functional
-      const tabs = document.querySelectorAll('[role="tab"]');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          // Deselect all tabs
-          tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
-          // Select clicked tab
-          tab.setAttribute('aria-selected', 'true');
-          // In a real app, this would switch between different panels
-          // For our test page, we only have one tab/panel
-        });
+      // Add tab button
+      addTabButton.addEventListener('click', () => {
+        createTab();
       });
 
-      // Focus editor on page load
-      textarea.focus();
+      // Home new tab button
+      homeNewTabButton.addEventListener('click', () => {
+        createTab();
+      });
+
+      window.addEventListener('beforeunload', (e) => {        
+        // Show confirmation dialog if editor has unsaved changes
+        if (editorDirty) {
+          e.preventDefault();
+          e.returnValue = ''; // Chrome requires returnValue to be set
+          return ''; // For older browsers
+        }
+      });
     });
   </script>
 </body>

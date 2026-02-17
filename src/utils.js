@@ -170,11 +170,7 @@ export function insertIntoEditor(editor, text) {
 export function getVisibleOrActiveEditor() {
   const editors = document.querySelectorAll('cfc-code-editor');
 
-  const visibleEditors = Array.from(editors).filter(el =>
-    el.checkVisibility
-      ? el.checkVisibility()
-      : el.offsetWidth > 0 && el.offsetHeight > 0 && getComputedStyle(el).visibility !== 'hidden'
-  );
+  const visibleEditors = Array.from(editors).filter(el => el.checkVisibility());
 
   if (visibleEditors.length === 1) {
     return visibleEditors[0];
@@ -184,7 +180,7 @@ export function getVisibleOrActiveEditor() {
     const activeEl = document.activeElement;
     if (!activeEl) return null;
     const activeEditor = activeEl.closest('cfc-code-editor');
-    if (activeEditor && activeEditor.checkVisibility()) {
+    if (activeEditor?.checkVisibility()) {
       return activeEditor;
     }
   }
