@@ -1,10 +1,7 @@
 import { chromium } from 'playwright';
-import { spawn, exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-const execPromise = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,28 +93,85 @@ export async function goToBigQueryEditor(page, timeout = 30000) {
   return await waitForBigQueryEditor(page, timeout);
 }
 
+const CLIPBOARD_INPUT_ID = '__pigquery_clipboard_helper__';
+const MOD = process.platform === 'darwin' ? 'Meta' : 'Control';
+
 /**
- * Get clipboard content using pbpaste (macOS)
- * @returns {Promise<string>}
+ * Selects all content in the currently focused element (Cmd+A / Ctrl+A).
+ * @param {import('playwright').Page} page
  */
-export async function getClipboard() {
-  const { stdout } = await execPromise('pbpaste');
-  return stdout;
+export async function selectAll(page) {
+  await page.keyboard.press(`${MOD}+KeyA`);
 }
 
 /**
- * Wait for clipboard to contain a specific pattern
+ * Copies the current selection to the clipboard (Cmd+C / Ctrl+C).
+ * @param {import('playwright').Page} page
+ */
+export async function copy(page) {
+  await page.keyboard.press(`${MOD}+KeyC`);
+}
+
+/**
+ * Pastes clipboard content into the currently focused element (Cmd+V / Ctrl+V).
+ * @param {import('playwright').Page} page
+ */
+export async function paste(page) {
+  await page.keyboard.press(`${MOD}+KeyV`);
+}
+
+/**
+ * Returns the share link pattern depending on the environment.
+ * @returns {RegExp}
+ */
+export function getShareLinkPattern() {
+  return process.env.USE_LOCAL_BIGQUERY === 'true'
+    ? /file:\/\/.*bigquery\.html.*\?pig=/
+    : /https:\/\/console\.cloud\.google\.com\/bigquery.*\?pig=/;
+}
+
+/**
+ * Get clipboard content by pasting into a temporary input element in the browser.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<string>}
+ */
+export async function getClipboard(page) {
+  await page.evaluate(id => {
+    let input = document.getElementById(id);
+    if (!input) {
+      input = document.createElement('textarea');
+      input.id = id;
+      input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+      document.body.appendChild(input);
+    }
+    input.value = '';
+    input.focus();
+  }, CLIPBOARD_INPUT_ID);
+
+  await page.keyboard.press('Meta+v');
+
+  return await page.evaluate(id => {
+    const input = document.getElementById(id);
+    const value = input ? input.value : '';
+    input?.remove();
+    return value;
+  }, CLIPBOARD_INPUT_ID);
+}
+
+/**
+ * Wait for clipboard to contain a specific pattern.
+ * @param {import('playwright').Page} page
  * @param {RegExp|string} pattern - Pattern to match (string or regex)
  * @param {number} timeout - Timeout in milliseconds
  * @param {number} pollInterval - How often to check in milliseconds
  * @returns {Promise<string>} The clipboard content that matched
  */
-export async function waitForClipboard(pattern, timeout = 5000, pollInterval = 100) {
+export async function waitForClipboard(page, pattern, timeout = 5000, pollInterval = 100) {
   const startTime = Date.now();
   const isRegex = pattern instanceof RegExp;
 
   while (Date.now() - startTime < timeout) {
-    const clipboard = await getClipboard();
+    const clipboard = await getClipboard(page);
 
     if (isRegex ? pattern.test(clipboard) : clipboard.includes(pattern)) {
       return clipboard;

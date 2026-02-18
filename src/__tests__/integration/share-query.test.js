@@ -11,12 +11,13 @@ import {
   getClipboard,
   waitForClipboard,
   generateLongQuery,
+  getShareLinkPattern,
+  selectAll,
+  copy,
+  paste,
 } from './helpers.js';
 
-// Skip integration tests by default unless INTEGRATION_TESTS=true
-const describeIntegration = process.env.INTEGRATION_TESTS === 'true' ? describe : describe.skip;
-
-describeIntegration('Share Query Integration', () => {
+describe('Share Query Integration', () => {
   let page;
   const timeout = 60000; // 60 second timeout for integration tests
 
@@ -26,12 +27,6 @@ describeIntegration('Share Query Integration', () => {
   }, timeout);
 
   afterAll(async () => {
-    // Set up dialog handler to accept any "are you sure you want to close" alerts
-    if (page) {
-      page.on('dialog', async dialog => {
-        await dialog.accept();
-      });
-    }
     await stopChrome();
   }, timeout);
 
@@ -44,73 +39,27 @@ describeIntegration('Share Query Integration', () => {
       // Wait for BigQuery editor to be ready
       let editor = await goToBigQueryEditor(page);
 
-      // Copy the query to clipboard and paste it
+      // Paste the query into the editor
       await page.evaluate(query => navigator.clipboard.writeText(query), originalQuery);
-      await page.waitForTimeout(200);
       await editor.focus();
-      await page.waitForTimeout(200);
-      await page.keyboard.press('Meta+KeyV');
+      await paste(page);
+      await page.waitForTimeout(100);
+
+      // Select all text
+      await selectAll(page);
       await page.waitForTimeout(1000);
 
-      // Select all text with Command+A
-      await page.keyboard.press('Meta+KeyA');
-      await page.waitForTimeout(1000);
+      // Wait for the clipboard to contain a share link
+      const shareUrl = await waitForClipboard(page, getShareLinkPattern());
 
-      // Wait for the clipboard to contain a BigQuery URL
-      // Match both real BigQuery URL and local file URL
-      const urlPattern =
-        process.env.USE_LOCAL_BIGQUERY === 'true'
-          ? /file:\/\/.*bigquery\.html/
-          : /https:\/\/console\.cloud\.google\.com\/bigquery/;
-      const shareUrl = await waitForClipboard(urlPattern, 10000, 200);
-
-      // Verify URL contains the query parameter
-      expect(shareUrl).toMatch(urlPattern);
-      expect(shareUrl).toContain('?');
-      expect(shareUrl).toContain('pig=');
-
-      // Navigate to the URL in the current tab
+      // Navigate to the URL in the current tab and wait for BigQuery to load
       await page.goto(shareUrl);
-
-      // Wait for BigQuery to load again
       await waitForBigQueryEditor(page);
 
-      // Wait for the editor to contain text
-      let editorHasText = false;
-      const maxAttempts = 50;
-      let attempts = 0;
-
-      while (!editorHasText && attempts < maxAttempts) {
-        try {
-          const editorText = await page.evaluate(() => {
-            const editor = document.querySelector('cfc-code-editor .view-lines');
-            return editor ? editor.textContent : '';
-          });
-
-          if (editorText && editorText.trim().length > 100) {
-            editorHasText = true;
-          } else {
-            await page.waitForTimeout(200);
-            attempts++;
-          }
-        } catch (err) {
-          await page.waitForTimeout(200);
-          attempts++;
-        }
-      }
-
-      expect(editorHasText).toBe(true);
-
-      // Select all with Command+A
-      await page.keyboard.press('Meta+KeyA');
-
-      // Copy with Command+C
-      await page.keyboard.press('Meta+KeyC');
-      await page.waitForTimeout(1000);
-
-      // Get the clipboard content
-      const clipboardContent = await getClipboard();
-      expect(clipboardContent).toBe(originalQuery);
+      // Select all, copy and verify query
+      await selectAll(page);
+      await copy(page);
+      expect(await getClipboard(page)).toBe(originalQuery);
     },
     timeout
   );
