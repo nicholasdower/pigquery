@@ -6,6 +6,7 @@ import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 import {
   startChrome,
   stopChrome,
+  goToBigQueryEditor,
   waitForBigQueryEditor,
   getClipboard,
   waitForClipboard,
@@ -41,10 +42,12 @@ describeIntegration('Share Query Integration', () => {
       const originalQuery = generateLongQuery(5000);
 
       // Wait for BigQuery editor to be ready
-      await waitForBigQueryEditor(page);
+      let editor = await goToBigQueryEditor(page);
 
       // Copy the query to clipboard and paste it
       await page.evaluate(query => navigator.clipboard.writeText(query), originalQuery);
+      await page.waitForTimeout(200);
+      await editor.focus();
       await page.waitForTimeout(200);
       await page.keyboard.press('Meta+KeyV');
       await page.waitForTimeout(1000);

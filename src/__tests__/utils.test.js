@@ -419,18 +419,16 @@ describe('Editor Utilities', () => {
 
     it('should return the single visible editor', () => {
       const editor = document.createElement('cfc-code-editor');
-      Object.defineProperty(editor, 'offsetWidth', { value: 100, configurable: true });
-      Object.defineProperty(editor, 'offsetHeight', { value: 100, configurable: true });
+      editor.checkVisibility = () => true;
       document.body.appendChild(editor);
 
       const result = getVisibleOrActiveEditor();
       expect(result).toBe(editor);
     });
 
-    it('should return null if editor is hidden (zero dimensions)', () => {
+    it('should return null if editor is hidden', () => {
       const editor = document.createElement('cfc-code-editor');
-      Object.defineProperty(editor, 'offsetWidth', { value: 0, configurable: true });
-      Object.defineProperty(editor, 'offsetHeight', { value: 0, configurable: true });
+      editor.checkVisibility = () => false;
       document.body.appendChild(editor);
 
       const result = getVisibleOrActiveEditor();

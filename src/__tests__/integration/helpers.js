@@ -74,13 +74,26 @@ export async function stopChrome() {
 }
 
 /**
- * Wait for BigQuery editor to be ready
+ * Waits for the BigQuery code editor textarea to be visible.
  * @param {import('playwright').Page} page
  * @param {number} timeout
+ * @returns {Promise<import('playwright').ElementHandle>}
  */
 export async function waitForBigQueryEditor(page, timeout = 30000) {
-  await page.waitForSelector('cfc-code-editor', { timeout });
-  await page.waitForTimeout(1000);
+  return await page.waitForSelector('cfc-code-editor textarea', { state: 'visible', timeout });
+}
+
+/**
+ * Navigates to and focuses the BigQuery editor.
+ * @param {import('playwright').Page} page
+ * @param {number} timeout
+ * @returns {Promise<import('playwright').ElementHandle>}
+ */
+export async function goToBigQueryEditor(page, timeout = 30000) {
+  await page.waitForSelector('cfc-panel-sub-header [role="tab"]', { timeout });
+  const tabs = await page.$$('cfc-panel-sub-header [role="tab"]');
+  await tabs[tabs.length - 1].click();
+  return await waitForBigQueryEditor(page, timeout);
 }
 
 /**
