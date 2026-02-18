@@ -121,6 +121,17 @@ export async function paste(page) {
 }
 
 /**
+ * Returns the base BigQuery URL depending on the environment.
+ * @returns {string}
+ */
+export function getBaseUrl() {
+  if (process.env.USE_LOCAL_BIGQUERY === 'true') {
+    return `file://${path.join(__dirname, 'bigquery.html')}`;
+  }
+  return 'https://console.cloud.google.com/bigquery';
+}
+
+/**
  * Returns the share link pattern depending on the environment.
  * @returns {RegExp}
  */

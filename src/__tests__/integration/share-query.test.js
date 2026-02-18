@@ -12,6 +12,7 @@ import {
   waitForClipboard,
   generateLongQuery,
   getShareLinkPattern,
+  getBaseUrl,
   selectAll,
   copy,
   paste,
@@ -60,6 +61,18 @@ describe('Share Query Integration', () => {
       await selectAll(page);
       await copy(page);
       expect(await getClipboard(page)).toBe(originalQuery);
+    },
+    timeout
+  );
+
+  test(
+    'should decompress a known share URL',
+    async () => {
+      await page.goto(`${getBaseUrl()}?pig=H4sIAAAAAAAAAytOzUlNLlFQSsvPV7IGABB_kz0NAAAA&project=PigQuery`);
+      await waitForBigQueryEditor(page);
+      await selectAll(page);
+      await copy(page);
+      expect(await getClipboard(page)).toBe('select "foo";');
     },
     timeout
   );
