@@ -12,11 +12,13 @@ const execPromise = promisify(exec);
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const result = { action: null, lang: 'en' };
+  const result = { action: null, lang: 'en', local: false };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--lang' && args[i + 1]) {
       result.lang = args[++i];
+    } else if (args[i] === '--local') {
+      result.local = true;
     } else if (!args[i].startsWith('-')) {
       result.action = args[i];
     }
@@ -28,6 +30,11 @@ function parseArgs() {
 function getBigQueryUrl(lang) {
   const base = 'https://console.cloud.google.com/bigquery';
   return lang ? `${base}?hl=${lang}` : base;
+}
+
+function getLocalUrl() {
+  const htmlPath = path.join(__dirname, '..', 'src', '__tests__', 'integration', 'bigquery.html');
+  return `file://${htmlPath}`;
 }
 
 async function startChrome(url) {
@@ -91,8 +98,9 @@ async function stopVideoRecording(screencaptureProcess) {
   await new Promise(resolve => screencaptureProcess.on('close', resolve));
 }
 
-async function openAction(lang) {
-  await startChrome(getBigQueryUrl(lang));
+async function openAction(lang, local) {
+  const url = local ? getLocalUrl() : getBigQueryUrl(lang);
+  await startChrome(url);
   await connectToChrome();
 }
 
@@ -335,11 +343,11 @@ async function recordAction(lang) {
 }
 
 async function main() {
-  const { action, lang } = parseArgs();
+  const { action, lang, local } = parseArgs();
 
   switch (action) {
     case 'open':
-      await openAction(lang);
+      await openAction(lang, local);
       break;
     case 'record':
       await recordAction(lang);
