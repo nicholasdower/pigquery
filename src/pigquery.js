@@ -1002,4 +1002,14 @@ uninstaller.addEventListener(
   false
 );
 
+uninstaller.addEventListener(
+  document,
+  'pigquery-remove-all-sources',
+  () => {
+    if (!chrome.runtime?.id) return;
+    chrome.runtime.sendMessage({ action: 'removeAllSources' });
+  },
+  false
+);
+
 logger.debug('installed');

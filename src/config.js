@@ -374,6 +374,27 @@ async function doRemoveSource(url) {
 }
 
 /**
+ * Removes all remote sources, keeping only the local source.
+ */
+export async function removeAllSources() {
+  if (operationPromise) return;
+
+  operationPromise = doRemoveAllSources();
+  try {
+    await operationPromise;
+  } finally {
+    operationPromise = null;
+    await setBusyState(null);
+  }
+}
+
+async function doRemoveAllSources() {
+  await setBusyState('removing');
+
+  await saveSources([]);
+}
+
+/**
  * Loads keyboard shortcuts from storage.
  * Returns merged defaults with user overrides.
  */

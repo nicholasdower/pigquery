@@ -129,6 +129,12 @@ if (chrome?.runtime?.id) {
       });
       return true;
     }
+    if (message.action === 'removeAllSources') {
+      config.removeAllSources().then(() => {
+        sendResponse({ ok: true });
+      });
+      return true;
+    }
     if (message.action === 'saveLocalSource') {
       config.saveLocalSource(message.yaml).then(result => {
         sendResponse(result);
