@@ -126,12 +126,14 @@ async function build() {
     if (isProd) {
       const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
       manifest.host_permissions = manifest.host_permissions.filter(perm => !perm.startsWith('file:///'));
-      // Remove file:/// from web_accessible_resources
+      // Remove file:/// and raw.githubusercontent.com from web_accessible_resources
       manifest.web_accessible_resources.forEach(resource => {
-        resource.matches = resource.matches.filter(match => !match.startsWith('file:///'));
+        resource.matches = resource.matches.filter(
+          match => !match.startsWith('file:///') && match !== 'https://raw.githubusercontent.com/*'
+        );
       });
       fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-      console.log('✓ Removed file:/// permissions for prod build');
+      console.log('✓ Removed file:/// and raw.githubusercontent.com permissions for prod build');
     }
 
     // Save commit hash for production builds
