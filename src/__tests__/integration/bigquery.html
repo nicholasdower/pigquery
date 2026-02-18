@@ -1185,6 +1185,18 @@
 
       // Keyboard shortcuts: Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
       textarea.addEventListener('keydown', (e) => {
+        const isMacPlatform = navigator.userAgentData?.platform === 'macOS';
+        // Explicit Cmd+A / Ctrl+A select-all: Playwright on file:// pages does not reliably
+        // trigger the browser's native select-all for textareas, so we handle it explicitly.
+        if (
+          !e.isComposing && !e.repeat &&
+          e.key.toLowerCase() === 'a' && !e.shiftKey && !e.altKey &&
+          (isMacPlatform ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
+        ) {
+          e.preventDefault();
+          textarea.setSelectionRange(0, textarea.value.length);
+          return;
+        }
         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
           runQuery();

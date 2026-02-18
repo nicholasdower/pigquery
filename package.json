@@ -6,7 +6,7 @@
     "build:prod": "NODE_ENV=prod node scripts/build.js",
     "build:all": "npm run build:dev && npm run build:prod",
     "browser": "node scripts/bot.js open",
-    "browser:local": "node scripts/bot.js open --local",
+    "browser:ci": "CI=true node scripts/bot.js open",
     "record": "node scripts/bot.js record",
     "watch": "npm run watch:dev",
     "watch:dev": "node scripts/watch.js \"npm run build:dev\"",
@@ -21,7 +21,7 @@
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch --testPathIgnorePatterns=/__tests__/integration/",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --testPathIgnorePatterns=/__tests__/integration/",
     "test:integration": "INTEGRATION_TESTS=true node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
-    "test:integration:local": "INTEGRATION_TESTS=true USE_LOCAL_BIGQUERY=true node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
+    "test:integration:ci": "CI=true INTEGRATION_TESTS=true node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
     "verify": "npm run build && npm run format:check && npm run lint && npm run test && npm run test:integration"
   },
   "devDependencies": {

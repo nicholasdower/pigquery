@@ -1,9 +1,9 @@
-import { chromium } from 'playwright';
 import { spawn, exec } from 'child_process';
 import path from 'path';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { startChrome } from '../src/__tests__/integration/helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,13 +12,11 @@ const execPromise = promisify(exec);
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const result = { action: null, lang: 'en', local: false };
+  const result = { action: null, lang: 'en' };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--lang' && args[i + 1]) {
       result.lang = args[++i];
-    } else if (args[i] === '--local') {
-      result.local = true;
     } else if (!args[i].startsWith('-')) {
       result.action = args[i];
     }
@@ -35,33 +33,6 @@ function getBigQueryUrl(lang) {
 function getLocalUrl() {
   const htmlPath = path.join(__dirname, '..', 'src', '__tests__', 'integration', 'bigquery.html');
   return `file://${htmlPath}`;
-}
-
-async function startChrome(url) {
-  console.log('Starting Chrome with remote debugging...');
-  const profileDir = path.join(__dirname, '..', 'profile');
-  const chromeProcess = spawn(
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    ['--remote-debugging-port=9222', `--user-data-dir=${profileDir}`, '--window-size=1280,800', url],
-    {
-      detached: false,
-      stdio: 'ignore',
-    }
-  );
-
-  console.log('Waiting for Chrome to start...');
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  chromeProcess.on('exit', () => process.exit(0));
-
-  return chromeProcess;
-}
-
-async function connectToChrome() {
-  console.log('Connecting to Chrome...');
-  const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
-  const defaultContext = browser.contexts()[0];
-  const page = defaultContext.pages()[0];
-  return [browser, page];
 }
 
 async function screenshot(filename) {
@@ -98,46 +69,24 @@ async function stopVideoRecording(screencaptureProcess) {
   await new Promise(resolve => screencaptureProcess.on('close', resolve));
 }
 
-async function openAction(lang, local) {
-  const url = local ? getLocalUrl() : getBigQueryUrl(lang);
+async function openAction(lang) {
+  const isCI = process.env.CI === 'true';
+  const url = isCI ? getLocalUrl() : getBigQueryUrl(lang);
   await startChrome(url);
-  await connectToChrome();
 }
 
 async function recordAction(lang) {
-  const chromeProcess = await startChrome(getBigQueryUrl(lang));
-  const [browser, page] = await connectToChrome();
+  const { browser, page, chromeProcess } = await startChrome(getBigQueryUrl(lang));
 
   await page.waitForSelector('.view-lines', { timeout: 30000 });
   await page.waitForTimeout(1000);
   await page.click('.view-lines');
-  await page.keyboard.press('Control+Shift+KeyY');
-  await page.waitForSelector('.pig-modal', { timeout: 5000 });
-  await page.waitForTimeout(1000);
 
-  // Click settings icon to open options page
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(1000);
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(2000);
-
-  // Get the new options tab
-  const context = browser.contexts()[0];
-  let pages = context.pages();
-  let optionsPage = pages[pages.length - 1];
-
-  // Remove all existing sources
-  await optionsPage.waitForSelector('#urlInput', { timeout: 5000 });
-  while (await optionsPage.$('.remove-btn')) {
-    await optionsPage.click('.remove-btn');
-    await optionsPage.waitForTimeout(1000);
-  }
-
-  // Close options and dismiss modal before recording
-  await optionsPage.close();
-  await page.waitForTimeout(500);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(500);
+  // Send a JS event to remove all sources
+  await page.evaluate(() => {
+    // eslint-disable-next-line no-undef
+    document.dispatchEvent(new Event('pigquery-remove-all-sources'));
+  });
 
   // Start video recording
   console.log('Starting video recording...');
@@ -164,8 +113,9 @@ async function recordAction(lang) {
   await page.waitForTimeout(2000);
 
   // Get the new options tab
-  pages = context.pages();
-  optionsPage = pages[pages.length - 1];
+  const context = browser.contexts()[0];
+  let pages = context.pages();
+  let optionsPage = pages[pages.length - 1];
 
   // Take a screenshot of empty options
   await optionsPage.waitForSelector('#urlInput', { timeout: 5000 });
@@ -343,11 +293,11 @@ async function recordAction(lang) {
 }
 
 async function main() {
-  const { action, lang, local } = parseArgs();
+  const { action, lang } = parseArgs();
 
   switch (action) {
     case 'open':
-      await openAction(lang, local);
+      await openAction(lang);
       break;
     case 'record':
       await recordAction(lang);

@@ -1,43 +1,166 @@
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
 import path from 'path';
+import os from 'os';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function getChromeBin() {
+  if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
+  if (process.env.CI === 'true') return chromium.executablePath();
+  // test:integration (real BigQuery): lokales Chrome mit User-Profil und Google-Session
+  if (process.platform === 'darwin') return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  return 'google-chrome-stable';
+}
+
+async function waitForCDP(url, timeout = 15000, getError = () => null) {
+  const deadline = Date.now() + timeout;
+  let lastError;
+  while (Date.now() < deadline) {
+    const spawnError = getError();
+    if (spawnError) throw new Error(`Chrome failed to start: ${spawnError.message}`);
+    try {
+      return await chromium.connectOverCDP(url);
+    } catch (err) {
+      lastError = err;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+  }
+  throw new Error(`CDP not available at ${url} after ${timeout}ms: ${lastError?.message}`);
+}
 
 let chromeProcess = null;
 let browser = null;
 let page = null;
 
 /**
- * Start Chrome with remote debugging and connect via CDP
+ * Start Chrome and connect.
+ * CI: uses chromium.launchPersistentContext (extension loading without developer mode).
+ * Non-CI: spawns system Chrome and connects via CDP.
  * @param {string} url - Initial URL to open
- * @returns {Promise<{browser: import('playwright').Browser, page: import('playwright').Page, chromeProcess: import('child_process').ChildProcess}>}
+ * @returns {Promise<{browser: import('playwright').BrowserContext|import('playwright').Browser, page: import('playwright').Page, chromeProcess: import('child_process').ChildProcess|null}>}
  */
 export async function startChrome(url) {
-  // Use local bigquery.html if USE_LOCAL_BIGQUERY is set
-  if (!url && process.env.USE_LOCAL_BIGQUERY === 'true') {
+  const isCI = process.env.CI === 'true';
+
+  if (!url && isCI) {
     const localPath = path.join(__dirname, 'bigquery.html');
     url = `file://${localPath}`;
   } else if (!url) {
     url = 'https://console.cloud.google.com/bigquery';
   }
 
-  const profileDir = path.join(__dirname, '..', '..', '..', 'profile');
+  const profileDir = isCI
+    ? path.join(os.tmpdir(), `pigquery-test-profile-${process.pid}`)
+    : path.join(__dirname, '..', '..', '..', 'profile');
 
-  chromeProcess = spawn(
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    ['--remote-debugging-port=9222', `--user-data-dir=${profileDir}`, '--window-size=1280,800', url],
-    {
-      detached: false,
-      stdio: 'ignore',
+  const extensionDir = path.join(__dirname, '..', '..', '..', 'build', 'dev');
+
+  if (isCI) {
+    fs.mkdirSync(path.join(profileDir, 'Default'), { recursive: true });
+    fs.writeFileSync(
+      path.join(profileDir, 'Default', 'Preferences'),
+      JSON.stringify({ translate: { enabled: false } })
+    );
+
+    const context = await chromium.launchPersistentContext(profileDir, {
+      headless: false,
+      args: [
+        `--disable-extensions-except=${extensionDir}`,
+        `--load-extension=${extensionDir}`,
+        '--window-size=1280,800',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-sync',
+        '--disable-features=IdentityConsistency',
+        '--no-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+      ],
+    });
+
+    // Chrome 122+ blocks unpacked extensions unless developer mode is enabled.
+    // Navigate to chrome://extensions and toggle developer mode on before
+    // opening the target page so content scripts are injected correctly.
+    const extPage = await context.newPage();
+    await extPage.goto('chrome://extensions/');
+    await extPage.waitForLoadState('domcontentloaded');
+    try {
+      const toggle = extPage.locator('#devMode');
+      const isEnabled = await toggle.isChecked();
+      if (!isEnabled) {
+        await toggle.click();
+        await extPage.waitForTimeout(500);
+      }
+    } catch {
+      // Toggle not found or not interactable – continue and hope for the best.
     }
-  );
+    try {
+      await extPage.evaluate(
+        () =>
+          new Promise(resolve => {
+            // eslint-disable-next-line no-undef
+            chrome.developerPrivate.getExtensionsInfo({}, extensions => {
+              const ext = extensions.find(e => e.location === 'UNPACKED');
+              if (!ext) return resolve();
+              // eslint-disable-next-line no-undef
+              chrome.developerPrivate.updateExtensionConfiguration(
+                { extensionId: ext.id, pinnedToToolbar: true },
+                resolve
+              );
+            });
+          })
+      );
+    } catch {
+      // API not accessible – extension stays unpinned.
+    }
+    await extPage.close();
 
-  await new Promise(resolve => setTimeout(resolve, 3000));
+    const pages = context.pages();
+    page = pages.length > 0 ? pages[0] : await context.newPage();
+    await page.goto(url);
+    await page.bringToFront();
+    await page.evaluate(() => window.focus());
+    browser = context;
+    chromeProcess = null;
 
-  browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
+    return { browser: context, page, chromeProcess: null };
+  }
+
+  // Non-CI: spawn system Chrome and connect via CDP
+  const chromeArgs = [
+    '--remote-debugging-port=9222',
+    `--user-data-dir=${profileDir}`,
+    '--window-size=1280,800',
+    `--load-extension=${extensionDir}`,
+    '--enable-extensions',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-sync',
+    '--disable-features=IdentityConsistency',
+    url,
+  ];
+
+  chromeProcess = spawn(getChromeBin(), chromeArgs, {
+    detached: false,
+    stdio: ['ignore', 'ignore', 'pipe'],
+  });
+
+  let spawnError = null;
+  chromeProcess.on('error', err => {
+    spawnError = err;
+  });
+  chromeProcess.stderr.on('data', data => {
+    const msg = data.toString();
+    if ((msg.includes('ERROR') || msg.includes('FATAL')) && !msg.includes('DEPRECATED_ENDPOINT')) {
+      console.error('[Chrome stderr]', msg.trim());
+    }
+  });
+
+  browser = await waitForCDP('http://127.0.0.1:9222', 15000, () => spawnError);
   const defaultContext = browser.contexts()[0];
   page = defaultContext.pages()[0];
 
@@ -125,7 +248,7 @@ export async function paste(page) {
  * @returns {string}
  */
 export function getBaseUrl() {
-  if (process.env.USE_LOCAL_BIGQUERY === 'true') {
+  if (process.env.CI === 'true') {
     return `file://${path.join(__dirname, 'bigquery.html')}`;
   }
   return 'https://console.cloud.google.com/bigquery';
@@ -136,7 +259,7 @@ export function getBaseUrl() {
  * @returns {RegExp}
  */
 export function getShareLinkPattern() {
-  return process.env.USE_LOCAL_BIGQUERY === 'true'
+  return process.env.CI === 'true'
     ? /file:\/\/.*bigquery\.html.*\?pig=/
     : /https:\/\/console\.cloud\.google\.com\/bigquery.*\?pig=/;
 }
@@ -159,7 +282,7 @@ export async function getClipboard(page) {
     input.focus();
   }, CLIPBOARD_INPUT_ID);
 
-  await page.keyboard.press('Meta+v');
+  await page.keyboard.press(`${MOD}+v`);
 
   return await page.evaluate(id => {
     const input = document.getElementById(id);
@@ -180,18 +303,24 @@ export async function getClipboard(page) {
 export async function waitForClipboard(page, pattern, timeout = 5000, pollInterval = 100) {
   const startTime = Date.now();
   const isRegex = pattern instanceof RegExp;
+  let lastClipboard = '';
 
   while (Date.now() - startTime < timeout) {
-    const clipboard = await getClipboard(page);
+    lastClipboard = await getClipboard(page);
 
-    if (isRegex ? pattern.test(clipboard) : clipboard.includes(pattern)) {
-      return clipboard;
+    if (isRegex ? pattern.test(lastClipboard) : lastClipboard.includes(pattern)) {
+      return lastClipboard;
     }
 
     await new Promise(resolve => setTimeout(resolve, pollInterval));
   }
 
-  throw new Error(`Clipboard did not match pattern within ${timeout}ms`);
+  const preview = lastClipboard.length > 200 ? lastClipboard.slice(0, 200) + '…' : lastClipboard;
+  throw new Error(
+    `Clipboard did not match pattern within ${timeout}ms\n` +
+      `  Expected: ${pattern}\n` +
+      `  Received: ${JSON.stringify(preview)}`
+  );
 }
 
 /**
