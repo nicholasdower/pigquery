@@ -8,12 +8,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CONSOLE_METHODS = { log: 'log', warning: 'warn', error: 'error', debug: 'debug' };
+const ANSI = { reset: '\x1b[0m', gray: '\x1b[90m', yellow: '\x1b[33m', red: '\x1b[31m', cyan: '\x1b[36m' };
+const CONSOLE_COLORS = { warning: ANSI.yellow, error: ANSI.red, debug: ANSI.gray };
 
 function forwardConsoleLogs(p) {
   p.on('console', msg => {
-    const fn = CONSOLE_METHODS[msg.type()] ?? 'log';
-    console[fn]('[Browser]', msg.text());
+    const color = CONSOLE_COLORS[msg.type()] ?? ANSI.cyan;
+    process.stdout.write(`${color}[Browser] ${msg.text()}${ANSI.reset}\n`);
   });
 }
 
@@ -162,10 +163,11 @@ export async function startChrome(url) {
   chromeProcess.on('error', err => {
     spawnError = err;
   });
+  const CHROME_STDERR_NOISE = ['DEPRECATED_ENDPOINT', 'registration_request', 'QUOTA_EXCEEDED'];
   chromeProcess.stderr.on('data', data => {
     const msg = data.toString();
-    if ((msg.includes('ERROR') || msg.includes('FATAL')) && !msg.includes('DEPRECATED_ENDPOINT')) {
-      console.error('[Chrome stderr]', msg.trim());
+    if ((msg.includes('ERROR') || msg.includes('FATAL')) && !CHROME_STDERR_NOISE.some(s => msg.includes(s))) {
+      process.stderr.write(`${ANSI.red}[Chrome stderr] ${msg.trim()}${ANSI.reset}\n`);
     }
   });
 

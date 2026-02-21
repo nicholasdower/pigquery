@@ -1023,4 +1023,4 @@ uninstaller.addEventListener(
   false
 );
 
-logger.debug('installed');
+logger.debug('loaded');
