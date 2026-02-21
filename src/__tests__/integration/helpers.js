@@ -8,6 +8,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const CONSOLE_METHODS = { log: 'log', warning: 'warn', error: 'error', debug: 'debug' };
+
+function forwardConsoleLogs(p) {
+  p.on('console', msg => {
+    const fn = CONSOLE_METHODS[msg.type()] ?? 'log';
+    console[fn]('[Browser]', msg.text());
+  });
+}
+
 function getChromeBin() {
   if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
   if (process.env.CI === 'true') return chromium.executablePath();
@@ -121,6 +130,7 @@ export async function startChrome(url) {
 
     const pages = context.pages();
     page = pages.length > 0 ? pages[0] : await context.newPage();
+    forwardConsoleLogs(page);
     await page.goto(url);
     await page.bringToFront();
     await page.evaluate(() => window.focus());
@@ -163,6 +173,7 @@ export async function startChrome(url) {
   browser = await waitForCDP('http://127.0.0.1:9222', 15000, () => spawnError);
   const defaultContext = browser.contexts()[0];
   page = defaultContext.pages()[0];
+  forwardConsoleLogs(page);
 
   return { browser, page, chromeProcess };
 }
