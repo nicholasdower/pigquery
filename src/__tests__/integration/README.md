@@ -14,27 +14,17 @@ Integration tests for PigQuery that run against a real Chrome instance with the 
 ### Run all integration tests
 
 ```bash
-npm run test:integration
+npm run integration
+```
+
+### Run in CI mode (uses local BigQuery HTML fixture instead of real BigQuery)
+
+```bash
+npm run integration:ci
 ```
 
 ### Run a specific integration test file
 
 ```bash
-INTEGRATION_TESTS=true npm test -- src/__tests__/integration/share-query.test.js
+npm run integration -- src/__tests__/integration/share-query.test.js
 ```
-
-### Run with verbose output
-
-```bash
-INTEGRATION_TESTS=true npm test -- --verbose src/__tests__/integration/
-```
-
-### Skip integration tests during normal test runs
-
-Integration tests are automatically skipped when running:
-
-```bash
-npm test
-```
-
-They only run when `INTEGRATION_TESTS=true` is set.

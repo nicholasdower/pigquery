@@ -56,8 +56,8 @@ npm run build
 # Production build (minified, no sourcemaps)
 npm run build:prod
 
-# Watch mode (auto-rebuild on file changes) - coming soon
-# npm run watch
+# Watch mode (auto-rebuild on file changes)
+npm run watch
 ```
 
 ### Code quality
@@ -82,11 +82,17 @@ npm run format
 # Run unit tests
 npm test
 
-# Run tests in watch mode
+# Run tests in watch mode (auto-rerun on file changes)
 npm run test:watch
 
 # Run tests with coverage report
 npm run test:coverage
+
+# Run integration tests
+npm run integration
+
+# Run integration tests in CI mode
+npm run integration:ci
 ```
 
 ### Build for distribution

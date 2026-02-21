@@ -17,11 +17,11 @@
     "lint:fix": "eslint src/ scripts/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathIgnorePatterns=/__tests__/integration/",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch --testPathIgnorePatterns=/__tests__/integration/",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --testPathIgnorePatterns=/__tests__/integration/",
-    "test:integration": "INTEGRATION_TESTS=true node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
-    "test:integration:ci": "CI=true INTEGRATION_TESTS=true node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=integration",
+    "test": "node scripts/test.js",
+    "test:watch": "node scripts/watch.js \"npm test\"",
+    "test:coverage": "node scripts/test.js --coverage",
+    "integration": "node scripts/integration-test.js",
+    "integration:ci": "node scripts/integration-test.js --ci",
     "verify": "npm run build && npm run format:check && npm run lint && npm run test && npm run test:integration"
   },
   "devDependencies": {
