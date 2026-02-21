@@ -79,12 +79,23 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: Run integration tests (Linux)
+        id: integration-linux
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum npm run integration:ci
 
       - name: Run integration tests (macOS/Windows)
+        id: integration-other
         if: runner.os != 'Linux'
         run: npm run integration:ci
 
       - name: Build extension (production)
         run: npm run build:prod
+
+      - name: Upload test videos
+        if: steps.integration-linux.outcome == 'failure' || steps.integration-other.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-videos
+          path: test-videos/
+          if-no-files-found: ignore
+          retention-days: 1

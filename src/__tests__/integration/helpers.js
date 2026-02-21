@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const VIDEOS_DIR = path.join(process.cwd(), 'test-videos');
+
 const ANSI = { reset: '\x1b[0m', gray: '\x1b[90m', yellow: '\x1b[33m', red: '\x1b[31m', cyan: '\x1b[36m' };
 const CONSOLE_COLORS = { warning: ANSI.yellow, error: ANSI.red, debug: ANSI.gray };
 
@@ -75,8 +77,14 @@ export async function startChrome(url) {
       JSON.stringify({ translate: { enabled: false } })
     );
 
+    fs.mkdirSync(VIDEOS_DIR, { recursive: true });
+
     const context = await chromium.launchPersistentContext(profileDir, {
       headless: false,
+      recordVideo: {
+        dir: VIDEOS_DIR,
+        size: { width: 1280, height: 800 },
+      },
       args: [
         `--disable-extensions-except=${extensionDir}`,
         `--load-extension=${extensionDir}`,
