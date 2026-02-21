@@ -46,6 +46,58 @@ async function waitForCDP(url, timeout = 15000, getError = () => null) {
 let chromeProcess = null;
 let browser = null;
 let page = null;
+let swLogPollingInterval = null;
+
+async function injectWorkerLogCapture(worker) {
+  try {
+    await worker.evaluate(() => {
+      if (self.__pw_log_capture_installed) return;
+      self.__pw_log_capture_installed = true;
+      self.__pw_logs = [];
+      const capture =
+        type =>
+        (...args) =>
+          self.__pw_logs.push({
+            type,
+            text: args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '),
+          });
+      console.log = capture('log');
+      console.warn = capture('warn');
+      console.error = capture('error');
+      console.debug = capture('debug');
+    });
+  } catch {
+    // Worker may not be accessible yet
+  }
+}
+
+function forwardServiceWorkerLogs(context) {
+  const attachWorker = worker => {
+    process.stdout.write(`${ANSI.gray}[Worker] Service worker registered: ${worker.url()}${ANSI.reset}\n`);
+    injectWorkerLogCapture(worker);
+  };
+
+  context.serviceWorkers().forEach(attachWorker);
+  context.on('serviceworker', attachWorker);
+
+  swLogPollingInterval = setInterval(async () => {
+    for (const worker of context.serviceWorkers()) {
+      try {
+        const logs = await worker.evaluate(() => {
+          const captured = self.__pw_logs ?? [];
+          self.__pw_logs = [];
+          return captured;
+        });
+        for (const { type, text } of logs) {
+          const color = type === 'error' ? ANSI.red : type === 'warn' ? ANSI.yellow : ANSI.gray;
+          process.stdout.write(`${color}[Worker] ${text}${ANSI.reset}\n`);
+        }
+      } catch {
+        // Worker may be dormant or inaccessible
+      }
+    }
+  }, 500);
+}
 
 /**
  * Start Chrome and connect.
@@ -104,18 +156,19 @@ export async function startChrome(url) {
     // opening the target page so content scripts are injected correctly.
     const extPage = await context.newPage();
     await extPage.goto('chrome://extensions/');
-    await extPage.waitForLoadState('domcontentloaded');
     await extPage.waitForTimeout(1000);
-    try {
-      const toggle = extPage.locator('#devMode');
-      const isEnabled = await toggle.isChecked();
-      if (!isEnabled) {
-        await toggle.click();
-        await extPage.waitForTimeout(500);
+    const toggle = extPage.locator('#devMode');
+    await toggle.waitFor({ state: 'visible', timeout: 5000 });
+    const isEnabled = await toggle.evaluate(el => el.checked);
+    if (!isEnabled) {
+      await toggle.click();
+      await extPage.waitForTimeout(1000);
+      const isNowEnabled = await toggle.evaluate(el => el.checked);
+      if (!isNowEnabled) {
+        throw new Error('Developer mode toggle did not become checked after click');
       }
-    } catch {
-      // Toggle not found or not interactable – continue and hope for the best.
     }
+    await extPage.waitForTimeout(1000);
     try {
       await extPage.evaluate(
         () =>
@@ -135,20 +188,19 @@ export async function startChrome(url) {
     } catch {
       // API not accessible – extension stays unpinned.
     }
-    const extVideo = extPage.video();
     await extPage.close();
-    if (extVideo) {
-      fs.renameSync(await extVideo.path(), path.join(VIDEOS_DIR, 'extensions.webm'));
-    }
 
     const pages = context.pages();
     page = pages.length > 0 ? pages[0] : await context.newPage();
     forwardConsoleLogs(page);
     await page.goto(url);
+    await page.waitForTimeout(1000);
     await page.bringToFront();
     await page.evaluate(() => window.focus());
     browser = context;
     chromeProcess = null;
+
+    forwardServiceWorkerLogs(context);
 
     return { browser: context, page, chromeProcess: null };
   }
@@ -188,6 +240,7 @@ export async function startChrome(url) {
   const defaultContext = browser.contexts()[0];
   page = defaultContext.pages()[0];
   forwardConsoleLogs(page);
+  forwardServiceWorkerLogs(defaultContext);
 
   return { browser, page, chromeProcess };
 }
@@ -196,6 +249,11 @@ export async function startChrome(url) {
  * Stop Chrome and clean up
  */
 export async function stopChrome() {
+  if (swLogPollingInterval) {
+    clearInterval(swLogPollingInterval);
+    swLogPollingInterval = null;
+  }
+
   if (chromeProcess) {
     // Kill the Chrome process directly to avoid any close dialogs
     chromeProcess.kill('SIGTERM');
@@ -207,19 +265,11 @@ export async function stopChrome() {
   }
 
   if (browser) {
-    const mainVideo = page?.video();
     try {
       await browser.close();
     } catch (err) {
       // Ignore errors during cleanup since we already killed the process
       console.warn('Error closing browser (expected after process kill):', err.message);
-    }
-    if (mainVideo) {
-      try {
-        fs.renameSync(await mainVideo.path(), path.join(VIDEOS_DIR, 'bigquery.webm'));
-      } catch {
-        // Video may not exist if recording was not active
-      }
     }
     browser = null;
     page = null;
@@ -345,6 +395,7 @@ export async function waitForClipboard(page, pattern, timeout = 5000, pollInterv
       return lastClipboard;
     }
 
+    console.log(`${new Date().toISOString()} - Clipboard contents not found`);
     await new Promise(resolve => setTimeout(resolve, pollInterval));
   }
 

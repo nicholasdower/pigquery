@@ -59,7 +59,8 @@ describe('Share Query Integration', () => {
 
       // Select all, copy and verify query
       await selectAll(page);
-      await copy(page);
+      await page.waitForTimeout(2000); // Wait for the copy link to be copied to the clipboard
+      await copy(page); // Overwrite the clipboard with the original query
       expect(await getClipboard(page)).toBe(originalQuery);
     },
     timeout
