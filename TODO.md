@@ -119,11 +119,8 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] Allow specifying cursor position for snippets. Think function with params.
 - [ ] Custom formatters.
 - [ ] Allow expansion of formatted content so that it takes up the entire modal.
-- [ ] Register uninstall callbacks instead of keeping a bunch of globals. Move uninstall to module.
 - [ ] Add country code formatter, show country name, time, currency, etc.
 - [ ] Allow sites and snippets to have a project filter. Maybe an array of regex.
-- [ ] Stop minifying
-- [ ] Write tests for utils, maybe bigquery-specific utils
 - [ ] Add LOGLEVEL to build. Hide debug logs in packed build.
 
 ---
