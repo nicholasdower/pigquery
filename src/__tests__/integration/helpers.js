@@ -97,6 +97,7 @@ export async function startChrome(url) {
     const extPage = await context.newPage();
     await extPage.goto('chrome://extensions/');
     await extPage.waitForLoadState('domcontentloaded');
+    await extPage.waitForTimeout(1000);
     try {
       const toggle = extPage.locator('#devMode');
       const isEnabled = await toggle.isChecked();
