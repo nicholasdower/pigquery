@@ -135,7 +135,11 @@ export async function startChrome(url) {
     } catch {
       // API not accessible – extension stays unpinned.
     }
+    const extVideo = extPage.video();
     await extPage.close();
+    if (extVideo) {
+      fs.renameSync(await extVideo.path(), path.join(VIDEOS_DIR, 'extensions.webm'));
+    }
 
     const pages = context.pages();
     page = pages.length > 0 ? pages[0] : await context.newPage();
@@ -203,11 +207,19 @@ export async function stopChrome() {
   }
 
   if (browser) {
+    const mainVideo = page?.video();
     try {
       await browser.close();
     } catch (err) {
       // Ignore errors during cleanup since we already killed the process
       console.warn('Error closing browser (expected after process kill):', err.message);
+    }
+    if (mainVideo) {
+      try {
+        fs.renameSync(await mainVideo.path(), path.join(VIDEOS_DIR, 'bigquery.webm'));
+      } catch {
+        // Video may not exist if recording was not active
+      }
     }
     browser = null;
     page = null;
