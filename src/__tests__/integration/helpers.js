@@ -20,7 +20,6 @@ function forwardConsoleLogs(p) {
 function getChromeBin() {
   if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
   if (process.env.CI === 'true') return chromium.executablePath();
-  // test:integration (real BigQuery): lokales Chrome mit User-Profil und Google-Session
   if (process.platform === 'darwin') return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   return 'google-chrome-stable';
 }

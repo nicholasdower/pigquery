@@ -22,7 +22,7 @@
     "test:coverage": "node scripts/test.js --coverage",
     "integration": "node scripts/integration-test.js",
     "integration:ci": "node scripts/integration-test.js --ci",
-    "verify": "npm run build && npm run format:check && npm run lint && npm run test && npm run test:integration"
+    "verify": "npm run build && npm run format:check && npm run lint && npm run test && npm run integration"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
