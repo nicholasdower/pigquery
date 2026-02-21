@@ -761,6 +761,7 @@ uninstaller.addEventListener(
       !e.altKey &&
       (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey)
     ) {
+      logger.debug('Received select all shortcut');
       if (!e.target.closest('cfc-code-editor')) {
         showToast(i18n.getMessage('editorNotFocused', LOCALE));
         return;
@@ -772,6 +773,7 @@ uninstaller.addEventListener(
     }
 
     if (!e.isComposing && !e.repeat && matchesShortcut(e, shortcuts.focusTable)) {
+      logger.debug('Received focus table/editor shortcut');
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -786,6 +788,7 @@ uninstaller.addEventListener(
         ); // Filter out hidden elements
 
         if (tables.length === 0) {
+          logger.debug('No tables found');
           showToast(i18n.getMessage('tableNotFound', LOCALE));
           return;
         }
@@ -795,12 +798,15 @@ uninstaller.addEventListener(
         const cell = table.querySelector('[role="cell"]');
         const header = table.querySelector('[role="columnheader"]');
         if (cell) {
+          logger.debug('Focusing cell');
           cell.focus();
           cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else if (header) {
+          logger.debug('Focusing header');
           header.focus();
           header.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else {
+          logger.debug('Focusing table');
           table.focus();
           table.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
@@ -808,15 +814,18 @@ uninstaller.addEventListener(
         // Focus editor
         const editor = getVisibleOrActiveEditor();
         if (!editor) {
+          logger.debug('No editor found');
           showToast(i18n.getMessage('editorNotFound', LOCALE));
           return;
         }
 
         const ta = findEditorTextArea(editor);
         if (ta) {
+          logger.debug('Focusing text area');
           ta.focus();
           editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else {
+          logger.debug('Focusing editor');
           editor.focus();
           editor.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
@@ -826,6 +835,7 @@ uninstaller.addEventListener(
 
     //
     if (e.key === 'Alt') {
+      logger.debug('Received alt down event');
       uninstaller.addClass(document.documentElement, 'alt-down', 'alt-down-class');
     }
   },
@@ -934,11 +944,13 @@ uninstaller.addEventListener(
 function copyShareLink() {
   // Set up a one-time copy event handler to intercept Monaco's copy
   const handler = e => {
+    logger.debug('Copy event handler called');
     document.removeEventListener('copy', handler, false);
 
     // Get the selected text - Monaco should have prepared the selection
     const selection = e.clipboardData?.getData('text/plain') || '';
     if (!selection.trim()) {
+      logger.debug('No selection found');
       // Let normal copy proceed if no selection
       return;
     }
@@ -954,6 +966,7 @@ function copyShareLink() {
     if (project) url.searchParams.set('project', project);
     const shareLink = url.toString();
 
+    logger.debug(`Copying share link: ${shareLink}`);
     e.clipboardData.setData('text/plain', shareLink);
     e.preventDefault();
     showToast(i18n.getMessage('linkCopied', LOCALE));
@@ -961,6 +974,7 @@ function copyShareLink() {
 
   uninstaller.setTimeout(
     () => {
+      logger.debug('Firing copy event');
       document.addEventListener('copy', handler, false);
       document.execCommand('copy');
       // Clean up handler if copy didn't fire (e.g., no selection)
@@ -970,13 +984,6 @@ function copyShareLink() {
     'copy-share-link-timeout'
   );
 }
-
-// Listen for health check from background script
-uninstaller.addChromeMessageListener((message, sender, sendResponse) => {
-  if (message.action === 'ping') {
-    sendResponse({ ok: true });
-  }
-});
 
 // Listen for uninstall event
 uninstaller.addEventListener(
@@ -1006,8 +1013,12 @@ uninstaller.addEventListener(
   document,
   'pigquery-remove-all-sources',
   () => {
-    if (!chrome.runtime?.id) return;
+    if (!chrome.runtime?.id) {
+      logger.debug('Not removing all sources because runtime is not available');
+      return;
+    }
     chrome.runtime.sendMessage({ action: 'removeAllSources' });
+    logger.debug('Removed all sources');
   },
   false
 );
