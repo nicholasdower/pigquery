@@ -94,7 +94,7 @@ jobs:
         run: npm run build:prod
 
       - name: Upload test videos
-        if: steps.integration-linux.outcome == 'failure' || steps.integration-other.outcome == 'failure'
+        if: always() && (steps.integration-linux.outcome == 'failure' || steps.integration-other.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: test-videos
