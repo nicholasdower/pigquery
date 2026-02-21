@@ -7,7 +7,11 @@ on:
 jobs:
   master:
     name: Build, Lint & Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout code
@@ -34,7 +38,8 @@ jobs:
       - name: Build extension
         run: npm run build
 
-      - name: Install system dependencies
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends xvfb
@@ -42,8 +47,13 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run integration tests
-        run: xvfb-run --auto-servernum npm run test:integration:ci
+      - name: Run integration tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npm run integration:ci
+
+      - name: Run integration tests (Windows)
+        if: runner.os == 'Windows'
+        run: npm run integration:ci
 
       - name: Build extension (production)
         run: npm run build:prod
