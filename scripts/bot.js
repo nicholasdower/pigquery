@@ -72,11 +72,11 @@ async function stopVideoRecording(screencaptureProcess) {
 async function openAction(lang) {
   const isCI = process.env.CI === 'true';
   const url = isCI ? getLocalUrl() : getBigQueryUrl(lang);
-  await startChrome(url);
+  await startChrome(url, { recordVideo: false });
 }
 
 async function recordAction(lang) {
-  const { browser, page, chromeProcess } = await startChrome(getBigQueryUrl(lang));
+  const { browser, page, chromeProcess } = await startChrome(getBigQueryUrl(lang), { recordVideo: false });
 
   await page.waitForSelector('.view-lines', { timeout: 30000 });
   await page.waitForTimeout(1000);

@@ -106,7 +106,7 @@ function forwardServiceWorkerLogs(context) {
  * @param {string} url - Initial URL to open
  * @returns {Promise<{browser: import('playwright').BrowserContext|import('playwright').Browser, page: import('playwright').Page, chromeProcess: import('child_process').ChildProcess|null}>}
  */
-export async function startChrome(url) {
+export async function startChrome(url, { recordVideo = true } = {}) {
   const isCI = process.env.CI === 'true';
 
   if (!url && isCI) {
@@ -129,15 +129,19 @@ export async function startChrome(url) {
       JSON.stringify({ translate: { enabled: false } })
     );
 
-    fs.rmSync(VIDEOS_DIR, { recursive: true, force: true });
-    fs.mkdirSync(VIDEOS_DIR, { recursive: true });
+    if (recordVideo) {
+      fs.rmSync(VIDEOS_DIR, { recursive: true, force: true });
+      fs.mkdirSync(VIDEOS_DIR, { recursive: true });
+    }
 
     const context = await chromium.launchPersistentContext(profileDir, {
       headless: false,
-      recordVideo: {
-        dir: VIDEOS_DIR,
-        size: { width: 1280, height: 800 },
-      },
+      ...(recordVideo && {
+        recordVideo: {
+          dir: VIDEOS_DIR,
+          size: { width: 1280, height: 800 },
+        },
+      }),
       args: [
         `--disable-extensions-except=${extensionDir}`,
         `--load-extension=${extensionDir}`,
