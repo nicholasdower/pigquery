@@ -2,20 +2,18 @@
  * @jest-environment node
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, beforeAll, afterAll } from '@jest/globals';
 import {
   startChrome,
   stopChrome,
   goToBigQueryEditor,
-  waitForBigQueryEditor,
-  getClipboard,
   waitForClipboard,
   generateLongQuery,
   getShareLinkPattern,
   getBaseUrl,
   selectAll,
-  copy,
   paste,
+  assertEditorContent,
 } from './helpers.js';
 
 describe('Share Query Integration', () => {
@@ -40,28 +38,19 @@ describe('Share Query Integration', () => {
       // Wait for BigQuery editor to be ready
       let editor = await goToBigQueryEditor(page);
 
-      // Paste the query into the editor
+      // Paste the query into the editor and select all
       await page.evaluate(query => navigator.clipboard.writeText(query), originalQuery);
       await editor.focus();
       await paste(page);
-      await page.waitForTimeout(100);
-
-      // Select all text
       await selectAll(page);
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(1000); // Wait for the contents to be copied. We are going to steal focus in waitForClipboard.
 
       // Wait for the clipboard to contain a share link
       const shareUrl = await waitForClipboard(page, getShareLinkPattern());
 
       // Navigate to the URL in the current tab and wait for BigQuery to load
       await page.goto(shareUrl);
-      await waitForBigQueryEditor(page);
-
-      // Select all, copy and verify query
-      await selectAll(page);
-      await page.waitForTimeout(2000); // Wait for the copy link to be copied to the clipboard
-      await copy(page); // Overwrite the clipboard with the original query
-      expect(await getClipboard(page)).toBe(originalQuery);
+      await assertEditorContent(page, originalQuery);
     },
     timeout
   );
@@ -70,10 +59,7 @@ describe('Share Query Integration', () => {
     'should decompress a known share URL',
     async () => {
       await page.goto(`${getBaseUrl()}?pig=H4sIAAAAAAAAAytOzUlNLlFQSsvPV7IGABB_kz0NAAAA&project=PigQuery`);
-      await waitForBigQueryEditor(page);
-      await selectAll(page);
-      await copy(page);
-      expect(await getClipboard(page)).toBe('select "foo";');
+      await assertEditorContent(page, 'select "foo";');
     },
     timeout
   );

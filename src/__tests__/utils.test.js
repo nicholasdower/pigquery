@@ -70,20 +70,14 @@ describe('DOM Utilities', () => {
   });
 
   describe('showToast', () => {
-    let originalRequestAnimationFrame;
-
     beforeEach(() => {
       document.body.innerHTML = '';
       jest.useFakeTimers();
-      // Mock requestAnimationFrame to execute callback immediately
-      originalRequestAnimationFrame = global.requestAnimationFrame;
-      global.requestAnimationFrame = cb => setTimeout(cb, 0);
     });
 
     afterEach(() => {
       jest.runOnlyPendingTimers();
       jest.useRealTimers();
-      global.requestAnimationFrame = originalRequestAnimationFrame;
     });
 
     it('should create and append a toast element', () => {
@@ -94,13 +88,12 @@ describe('DOM Utilities', () => {
       expect(toast.textContent).toBe('Test message');
     });
 
-    it('should add "show" class after requestAnimationFrame', () => {
+    it('should add "show" class after setTimeout', () => {
       showToast('Test message');
       const toast = document.querySelector('.pig-toast');
 
       expect(toast.classList.contains('show')).toBe(false);
 
-      // Trigger requestAnimationFrame callbacks
       jest.advanceTimersByTime(0);
 
       expect(toast.classList.contains('show')).toBe(true);
@@ -110,7 +103,7 @@ describe('DOM Utilities', () => {
       showToast('Test message');
       const toast = document.querySelector('.pig-toast');
 
-      jest.advanceTimersByTime(0); // requestAnimationFrame
+      jest.advanceTimersByTime(0);
       expect(toast.classList.contains('show')).toBe(true);
 
       jest.advanceTimersByTime(2000); // default duration
@@ -121,7 +114,7 @@ describe('DOM Utilities', () => {
       showToast('Test message');
       const toast = document.querySelector('.pig-toast');
 
-      jest.advanceTimersByTime(0); // requestAnimationFrame
+      jest.advanceTimersByTime(0);
       jest.advanceTimersByTime(2000); // duration
       expect(toast.parentNode).toBeTruthy();
 
@@ -133,7 +126,7 @@ describe('DOM Utilities', () => {
       showToast('Test message', 5000);
       const toast = document.querySelector('.pig-toast');
 
-      jest.advanceTimersByTime(0); // requestAnimationFrame
+      jest.advanceTimersByTime(0);
       expect(toast.classList.contains('show')).toBe(true);
 
       jest.advanceTimersByTime(4999);
