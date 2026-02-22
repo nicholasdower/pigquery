@@ -20,9 +20,9 @@ export function showToast(message, duration = 2000) {
   const toast = makeEl('div', { className: 'pig-toast', text: message });
   document.body.appendChild(toast);
 
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     toast.classList.add('show');
-  });
+  }, 0);
 
   setTimeout(() => {
     toast.classList.remove('show');

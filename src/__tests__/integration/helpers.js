@@ -283,7 +283,9 @@ export async function stopChrome() {
  * @returns {Promise<import('playwright').ElementHandle>}
  */
 export async function waitForBigQueryEditor(page, timeout = 30000) {
-  return await page.waitForSelector('cfc-code-editor textarea', { state: 'visible', timeout });
+  const editor = await page.waitForSelector('cfc-code-editor textarea', { state: 'visible', timeout });
+  await page.waitForFunction(() => !!document.getElementById('pig-highlight-style'), { timeout });
+  return editor;
 }
 
 /**
@@ -324,6 +326,39 @@ export async function copy(page) {
  */
 export async function paste(page) {
   await page.keyboard.press(`${MOD}+KeyV`);
+}
+
+/**
+ * Asserts that the current editor content matches the expected value,
+ * retrying until the content matches or the timeout is reached.
+ * @param {import('playwright').Page} page
+ * @param {string|RegExp} expected
+ * @param {number} timeout - Timeout in milliseconds
+ * @param {number} pollInterval - How often to retry in milliseconds
+ */
+export async function assertEditorContent(page, expected, timeout = 5000, pollInterval = 500) {
+  const editor = await waitForBigQueryEditor(page);
+  const startTime = Date.now();
+  const matches = content => (expected instanceof RegExp ? expected.test(content) : content === expected);
+  let lastContent = '';
+
+  while (Date.now() - startTime < timeout) {
+    await editor.focus();
+    await selectAll(page);
+    await copy(page);
+    lastContent = await getClipboard(page);
+
+    if (matches(lastContent)) return;
+
+    await page.waitForTimeout(pollInterval);
+  }
+
+  const preview = lastContent.length > 200 ? lastContent.slice(0, 200) + '…' : lastContent;
+  throw new Error(
+    `Editor content did not match within ${timeout}ms\n` +
+      `  Expected: ${expected}\n` +
+      `  Received: ${JSON.stringify(preview)}`
+  );
 }
 
 /**
@@ -395,7 +430,6 @@ export async function waitForClipboard(page, pattern, timeout = 5000, pollInterv
       return lastClipboard;
     }
 
-    console.log(`${new Date().toISOString()} - Clipboard contents not found`);
     await new Promise(resolve => setTimeout(resolve, pollInterval));
   }
 
