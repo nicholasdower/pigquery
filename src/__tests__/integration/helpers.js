@@ -129,6 +129,7 @@ export async function startChrome(url) {
       JSON.stringify({ translate: { enabled: false } })
     );
 
+    fs.rmSync(VIDEOS_DIR, { recursive: true, force: true });
     fs.mkdirSync(VIDEOS_DIR, { recursive: true });
 
     const context = await chromium.launchPersistentContext(profileDir, {
