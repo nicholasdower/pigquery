@@ -16,7 +16,7 @@ A Chrome Extension offering some BigQuery enhancements.
 
 ## Screenshots
 
-<img src="store/en/pigquery-1.jpg" width="300"> <img src="store/en/pigquery-2.jpg" width="300"> <img src="store/en/pigquery-3.jpg" width="300">
+<img src="store/en/pigquery-1.png" width="300"> <img src="store/en/pigquery-2.png" width="300"> <img src="store/en/pigquery-3.png" width="300">
 
 ## Development
 
