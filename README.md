@@ -143,7 +143,7 @@ You can test the production build by loading the `build/prod/` directory unpacke
      - Log in to BigQuery
      - Go to chrome://extensions
      - Enable "Developer mode"
-     - Click "Load unpacked" and select the project root directory
+     - Click "Load unpacked" and select the `build/dev` directory
    - Close Chrome
 
 **Note:** The profile is saved locally in the `profile/` directory.
