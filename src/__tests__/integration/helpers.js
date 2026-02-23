@@ -27,6 +27,30 @@ function getChromeBin() {
   return 'google-chrome-stable';
 }
 
+async function measureViewportSize(windowWidth, windowHeight) {
+  const tmpDir = path.join(os.tmpdir(), `pigquery-vp-${process.pid}`);
+  fs.mkdirSync(tmpDir, { recursive: true });
+  try {
+    const ctx = await chromium.launchPersistentContext(tmpDir, {
+      headless: false,
+      viewport: null,
+      args: [
+        `--window-size=${windowWidth},${windowHeight}`,
+        '--no-first-run',
+        '--no-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+      ],
+    });
+    const pg = await ctx.newPage();
+    const size = await pg.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+    await ctx.close();
+    return size;
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
 async function waitForCDP(url, timeout = 15000, getError = () => null) {
   const deadline = Date.now() + timeout;
   let lastError;
@@ -129,6 +153,8 @@ export async function startChrome(url, { recordVideo = true } = {}) {
       JSON.stringify({ translate: { enabled: false } })
     );
 
+    const videoSize = recordVideo ? await measureViewportSize(1280, 800) : null;
+
     if (recordVideo) {
       fs.rmSync(VIDEOS_DIR, { recursive: true, force: true });
       fs.mkdirSync(VIDEOS_DIR, { recursive: true });
@@ -136,10 +162,11 @@ export async function startChrome(url, { recordVideo = true } = {}) {
 
     const context = await chromium.launchPersistentContext(profileDir, {
       headless: false,
+      viewport: null,
       ...(recordVideo && {
         recordVideo: {
           dir: VIDEOS_DIR,
-          size: { width: 1280, height: 800 },
+          size: videoSize,
         },
       }),
       args: [
