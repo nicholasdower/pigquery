@@ -231,9 +231,12 @@ async function resetShortcut(shortcutKey) {
 }
 
 function formatTimestamp(ts) {
-  if (!ts) return 'Never';
+  if (!ts) return ['—', '—'];
   const date = new Date(ts);
-  return date.toLocaleString();
+  return [
+    date.toLocaleDateString(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    date.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' }),
+  ];
 }
 
 /**
@@ -278,7 +281,7 @@ async function load() {
     .map(source => {
       const metaClass = source.error ? 'source-meta error' : 'source-meta';
       const metaText = source.error
-        ? t('optionsLastUpdatedError', [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+        ? t('optionsLastUpdatedError', [...formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
         : t('optionsLastUpdated', formatTimestamp(source.timestamp));
       return `
       <div class="source-card" data-url="${escapeHtml(source.url)}">
@@ -328,7 +331,7 @@ function applyBusyState() {
     } else {
       const metaClass = source.error ? 'source-meta error' : 'source-meta';
       const metaText = source.error
-        ? t('optionsLastUpdatedError', [formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
+        ? t('optionsLastUpdatedError', [...formatTimestamp(source.timestamp), t(source.error.key, source.error.subs)])
         : t('optionsLastUpdated', formatTimestamp(source.timestamp));
       meta.className = metaClass;
       meta.textContent = metaText;

@@ -18,6 +18,11 @@ document.getElementById('options-link').addEventListener('click', e => {
   chrome.runtime.openOptionsPage();
 });
 
+const buildDate = new Date(__BUILD_DATE__);
+const buildDatePart = buildDate.toLocaleDateString(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' });
+const buildTimePart = buildDate.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+document.getElementById('version-text').textContent = `v${__BUILD_VERSION__} \u2013 ${buildDatePart} ${buildTimePart}`;
+
 const statusEl = document.getElementById('status');
 const statusTextEl = document.getElementById('status-text');
 const statusErrorEl = document.getElementById('status-error');
@@ -49,7 +54,7 @@ async function load() {
 
   // Update busy state
   refreshBtn.disabled = !!busy;
-  refreshBtn.textContent = busy === 'refreshing' ? t('popupRefreshing') : t('popupRefresh');
+  refreshBtn.title = busy === 'refreshing' ? t('popupRefreshing') : t('popupRefresh');
 
   // Update status display
   if (busy === 'refreshing') {
@@ -76,7 +81,9 @@ async function load() {
   const hasErrors = remote.some(s => s.error);
 
   statusEl.style.display = '';
-  statusTextEl.textContent = t('popupLastUpdated', date.toLocaleString());
+  const datePart = date.toLocaleDateString(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timePart = date.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+  statusTextEl.textContent = t('popupLastUpdated', [datePart, timePart]);
   statusErrorEl.textContent = hasErrors ? t('popupHasErrors') : '';
   statusErrorEl.style.display = hasErrors ? '' : 'none';
 }

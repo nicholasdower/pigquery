@@ -25,6 +25,8 @@ const cssTextPlugin = {
   },
 };
 
+const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+
 // Clean and create build directory
 if (fs.existsSync(buildDir)) {
   fs.rmSync(buildDir, { recursive: true });
@@ -41,6 +43,8 @@ const buildOptions = {
   logLevel: 'info',
   define: {
     'process.env.NODE_ENV': JSON.stringify(nodeEnv),
+    '__BUILD_DATE__': JSON.stringify(new Date().toISOString()),
+    '__BUILD_VERSION__': JSON.stringify(manifest.version),
   },
 };
 
@@ -124,7 +128,6 @@ async function build() {
 
     // Remove file:/// permission for prod builds
     if (isProd) {
-      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
       manifest.host_permissions = manifest.host_permissions.filter(perm => !perm.startsWith('file:///'));
       // Remove file:/// and raw.githubusercontent.com from web_accessible_resources
       manifest.web_accessible_resources.forEach(resource => {

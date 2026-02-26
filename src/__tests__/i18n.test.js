@@ -178,15 +178,15 @@ describe('i18n', () => {
     });
 
     test('should substitute multiple placeholders', () => {
-      const result = getMessage('optionsLastUpdatedError', 'en', ['10:00:00', 'Network error']);
+      const result = getMessage('optionsLastUpdatedError', 'en', ['02/25/2026', '6:53 PM', 'Network error']);
 
-      expect(result).toBe('Last updated at 10:00:00 — Network error');
+      expect(result).toBe('Last updated on 02/25/2026 at 6:53 PM — Network error');
     });
 
     test('should substitute multiple placeholders in German', () => {
-      const result = getMessage('optionsLastUpdatedError', 'de', ['10:00:00', 'Netzwerkfehler']);
+      const result = getMessage('optionsLastUpdatedError', 'de', ['25.02.2026', '18:53', 'Netzwerkfehler']);
 
-      expect(result).toBe('Zuletzt aktualisiert um 10:00:00 — Netzwerkfehler');
+      expect(result).toBe('Zuletzt aktualisiert am 25.02.2026 um 18:53 Uhr — Netzwerkfehler');
     });
 
     test('should handle array with single substitution', () => {

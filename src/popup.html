@@ -29,7 +29,7 @@
       h2 {
         font-size: 13px;
         font-weight: 500;
-        margin: 0 0 8px 0;
+        margin: 0 0 8px;
         color: #999;
       }
       .shortcuts {
@@ -54,10 +54,12 @@
         font-size: 12px;
         white-space: nowrap;
       }
-      .footer {
-        margin-top: 16px;
-        padding-top: 12px;
+      .footer, .extension {
         border-top: 1px solid #444;
+      }
+      .footer {
+        margin-top: 8px;
+        padding-top: 12px;
         text-align: center;
       }
       .footer a {
@@ -74,53 +76,45 @@
         margin: 0 8px;
       }
       .status {
-        margin-top: 16px;
+        margin-top: 8px;
         padding-top: 12px;
-        border-top: 1px solid #444;
         font-size: 12px;
         color: #888;
-        text-align: center;
       }
       .status-error {
         color: #f48771;
         margin-top: 4px;
       }
-      .status-row {
-        margin-top: 8px;
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
       }
-      .refresh-btn {
-        padding: 2px 8px;
-        background: #3c3c3c;
-        color: #e0e0e0;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
+      .section-header h2 {
+        margin: 0;
       }
-      .refresh-btn:hover {
-        background: #505050;
-      }
-      .refresh-btn:disabled {
+      .refresh-btn:disabled, .update-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
-      .dev-section {
-        margin-top: 16px;
+      .extension {
+        margin-top: 8px;
         padding-top: 12px;
-        border-top: 1px solid #444;
+        font-size: 12px;
+        color: #888;
       }
-      .update-btn {
-        width: 100%;
-        padding: 8px;
-        background: #0e639c;
-        color: #e0e0e0;
+      .update-btn, .refresh-btn {
+        display: flex;
+        align-items: center;
+        background: none;
+        color: #888;
         border: none;
-        border-radius: 4px;
+        padding: 0;
         cursor: pointer;
-        font-size: 13px;
       }
-      .update-btn:hover {
-        background: #1177bb;
+      .update-btn:hover, .refresh-btn:hover {
+        color: #e0e0e0;
       }
     </style>
   </head>
@@ -155,16 +149,24 @@
     </div>
 
     <div class="status" id="status">
+      <div class="section-header">
+        <h2 data-i18n="popupSources">Sources</h2>
+        <button class="refresh-btn" id="refresh-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+      </div>
       <span id="status-text"></span>
       <div class="status-error" id="status-error"></div>
-      <div class="status-row">
-        <button class="refresh-btn" id="refresh-btn"></button>
-      </div>
     </div>
 
-    <div class="dev-section" id="dev-section">
-      <h2>Developer</h2>
-      <button class="update-btn" id="update-btn">Reload Extension</button>
+    <div class="extension">
+      <div class="section-header">
+        <h2 data-i18n="popupExtension">Extension</h2>
+        <button class="update-btn" id="update-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+      </div>
+      <span id="version-text"></span>
     </div>
 
     <div class="footer">
