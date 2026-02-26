@@ -121,6 +121,7 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] Allow expansion of formatted content so that it takes up the entire modal.
 - [ ] Add country code formatter, show country name, time, currency, etc.
 - [ ] Allow sites and snippets to have a project filter. Maybe an array of regex.
+- [ ] Sites, formatters and lookups (API calls) are all one thing. They can optionally have a value for the right pannel (format, API call result). They can optionally be opened in a new site (Maps, Wiki, etc.). For formatters where no site makes sense, maybe open in an extension site that simply shows the data formatted and full screen.
 
 ---
 
