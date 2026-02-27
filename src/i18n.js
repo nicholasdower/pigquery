@@ -1,4 +1,9 @@
 const TRANSLATIONS = {
+  // background.js: Toast when PigQuery has been updated
+  pigQueryUpdated: {
+    en: 'PigQuery updated',
+    de: 'PigQuery wurde aktualisiert',
+  },
   // popup.html: Header title
   keyboardShortcuts: {
     en: 'Keyboard Shortcuts',

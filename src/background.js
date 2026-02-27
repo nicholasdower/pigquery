@@ -12,6 +12,7 @@ async function injectContentScript(tab, force) {
         try {
           const MARKER_ID = 'pigquery-extension-marker';
 
+          let uninstalled = false;
           let marker = document.getElementById(MARKER_ID);
           if (marker) {
             log(`Found ${marker.dataset.environment} content script in tab ${tabId}`);
@@ -20,6 +21,7 @@ async function injectContentScript(tab, force) {
           if (force) {
             log('Force mode: uninstalling existing content script');
             document.dispatchEvent(new CustomEvent('pigquery-uninstall'));
+            uninstalled = true;
             marker = document.getElementById(MARKER_ID);
           } else {
             if (marker) {
@@ -27,6 +29,7 @@ async function injectContentScript(tab, force) {
               document.dispatchEvent(new CustomEvent('pigquery-uninstall-if-dead'));
               marker = document.getElementById(MARKER_ID);
               if (!marker) {
+                uninstalled = true;
                 log(`Uninstalled dead ${oldEnv} content script in tab ${tabId}`);
               }
             }
@@ -53,16 +56,16 @@ async function injectContentScript(tab, force) {
           marker.setAttribute('data-environment', process.env.NODE_ENV);
           document.head.appendChild(marker);
 
-          return { inject: true, logs };
+          return { inject: true, uninstalled, logs };
         } catch (error) {
           log(`Skipping injection for tab ${tabId} because of error: ${error.message}`);
-          return { inject: false, logs };
+          return { inject: false, uninstalled: false, logs };
         }
       },
       args: [force, tab.id],
     });
 
-    const { inject, logs } = result[0].result;
+    const { inject, uninstalled, logs } = result[0].result;
     logs.forEach(msg => logger.log(msg));
 
     if (!inject) return;
@@ -73,6 +76,9 @@ async function injectContentScript(tab, force) {
       files: ['dist/pigquery.js'],
     });
     logger.log(`Injected content script into tab ${tab.id}`);
+    if (uninstalled) {
+      chrome.tabs.sendMessage(tab.id, { action: 'showToast', data: 'pigQueryUpdated' });
+    }
   } catch (err) {
     logger.error(`Error while injecting content script into tab ${tab.id}:`, err);
   }

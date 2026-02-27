@@ -1009,4 +1009,10 @@ uninstaller.addEventListener(
   false
 );
 
+uninstaller.addChromeMessageListener(message => {
+  if (message.action === 'showToast') {
+    showToast(i18n.getMessage(message.data, LOCALE), 5000);
+  }
+});
+
 logger.debug('loaded');
