@@ -182,7 +182,7 @@ if (query && query.length > 0) {
 
 uninstaller.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: modalStyles }));
 
-function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) {
+function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
   let options = getOptions();
@@ -259,6 +259,10 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     active.scrollIntoView({ block: 'nearest' });
   }
 
+  function focusInput() {
+    document.querySelector('.pig-modal-input').focus();
+  }
+
   function updateActiveStyles() {
     const items = listEl.querySelectorAll('.pig-modal-item');
     items.forEach((el, i) => {
@@ -311,6 +315,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       e.stopPropagation();
       if (filtered.length) {
         activeIndex = (activeIndex + 1) % filtered.length;
+        focusInput();
         updateActiveStyles();
         updateContentPanel();
         ignoreMouseTemporarily();
@@ -323,6 +328,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
       e.stopPropagation();
       if (filtered.length) {
         activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
+        focusInput();
         updateActiveStyles();
         updateContentPanel();
         ignoreMouseTemporarily();
@@ -394,6 +400,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
         if (ignoreMouseTimeout) return;
         if (activeIndex !== idx) {
           activeIndex = idx;
+          focusInput();
           updateActiveStyles();
           updateContentPanel();
         }
@@ -575,87 +582,61 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   const contentPanel = makeEl('div', { className: 'pig-modal-content-panel' });
   bodyEl.appendChild(contentPanel);
 
-  const isDynamicContent = typeof contentOrGetter === 'function';
-  let isContentPanelInitialized = false;
-
   function updateContentPanel() {
-    // Skip updates if content is static and already initialized
-    if (!isDynamicContent && isContentPanelInitialized) return;
-
+    contentPanel.innerHTML = '';
     const selectedItem = filtered[activeIndex];
-    if (isDynamicContent && !selectedItem) {
-      contentPanel.innerHTML = '';
+    if (!selectedItem) {
       contentPanel.style.display = '';
-      isContentPanelInitialized = false;
       return;
     }
 
-    isContentPanelInitialized = true;
-
-    const contentInfo = isDynamicContent ? contentOrGetter(selectedItem) : contentOrGetter;
-
-    // Reuse existing items if possible so that there isn't a flicker in the case that keyboard focus is in the content panel
-    const existingItems = Array.from(contentPanel.querySelectorAll('.pig-format-item'));
+    const contentInfo = getContent(selectedItem);
 
     contentInfo.forEach((item, index) => {
-      let itemEl = existingItems[index];
-      let headerEl, labelEl, copyBtn, valueEl;
+      const itemEl = makeEl('div', { className: 'pig-format-item' });
 
-      if (itemEl) {
-        // Reuse existing item - find its children
-        headerEl = itemEl.querySelector('.pig-format-item-header');
-        labelEl = headerEl.querySelector('.pig-format-item-label');
-        copyBtn = headerEl.querySelector('.pig-format-item-copy');
-        valueEl = itemEl.querySelector('.pig-format-item-value');
-      } else {
-        // Create new item
-        itemEl = makeEl('div', { className: 'pig-format-item' });
-
-        headerEl = makeEl('div', { className: 'pig-format-item-header' });
-        labelEl = makeEl('div', { className: 'pig-format-item-label' });
-        headerEl.appendChild(labelEl);
-
-        copyBtn = makeEl('button', { className: 'pig-format-item-copy' });
-        copyBtn.innerHTML =
-          '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
-        copyBtn.title = 'Copy';
-        copyBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          const currentValue = valueEl.textContent;
-          navigator.clipboard.writeText(currentValue);
-          showToast(i18n.getMessage('contentCopied', LOCALE));
-          inputEl.focus();
-        });
-        copyBtn.addEventListener('focus', () => {
-          // Only scroll on keyboard focus, not mouse click
-          if (!copyBtn.matches(':focus-visible')) return;
-          if (index === 0) {
-            contentPanel.scrollTop = 0;
-          } else {
-            itemEl.scrollIntoView({ block: 'nearest' });
-          }
-        });
-        headerEl.appendChild(copyBtn);
-
-        itemEl.appendChild(headerEl);
-
-        valueEl = makeEl('div', { className: 'pig-format-item-value' });
-
-        // Select text on right-click so browser shows "Copy" in context menu
-        valueEl.addEventListener('contextmenu', () => {
-          const selection = window.getSelection();
-          const range = document.createRange();
-          range.selectNodeContents(valueEl);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        });
-
-        itemEl.appendChild(valueEl);
-        contentPanel.appendChild(itemEl);
-      }
-
-      // Update content
+      const headerEl = makeEl('div', { className: 'pig-format-item-header' });
+      const labelEl = makeEl('div', { className: 'pig-format-item-label' });
       labelEl.textContent = item.label;
+      headerEl.appendChild(labelEl);
+
+      const copyBtn = makeEl('button', { className: 'pig-format-item-copy' });
+      copyBtn.innerHTML =
+        '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
+      copyBtn.title = 'Copy';
+      copyBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const currentValue = valueEl.textContent;
+        navigator.clipboard.writeText(currentValue);
+        showToast(i18n.getMessage('contentCopied', LOCALE));
+        inputEl.focus();
+      });
+      copyBtn.addEventListener('focus', () => {
+        // Only scroll on keyboard focus, not mouse click
+        if (!copyBtn.matches(':focus-visible')) return;
+        if (index === 0) {
+          contentPanel.scrollTop = 0;
+        } else {
+          itemEl.scrollIntoView({ block: 'nearest' });
+        }
+      });
+      headerEl.appendChild(copyBtn);
+
+      itemEl.appendChild(headerEl);
+
+      const valueEl = makeEl('div', { className: 'pig-format-item-value' });
+
+      // Select text on right-click so browser shows "Copy" in context menu
+      valueEl.addEventListener('contextmenu', () => {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(valueEl);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+
+      itemEl.appendChild(valueEl);
+      contentPanel.appendChild(itemEl);
 
       if (['json', 'xml', 'yaml', 'sql'].includes(item.type)) {
         const highlighted = hljs.highlight(item.value, { language: item.type });
@@ -670,11 +651,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
     });
 
     contentPanel.style.display = '';
-
-    // Only reset scroll position for dynamic content
-    if (isDynamicContent) {
-      contentPanel.scrollTop = 0;
-    }
+    contentPanel.scrollTop = 0;
   }
 
   modalEl.appendChild(bodyEl);
@@ -857,7 +834,7 @@ function handleTableCellOpenPopup(cell) {
       window.open(option.url, '_blank', 'noopener,noreferrer');
     },
     () => configuration.hasErrors,
-    contentInfo
+    () => contentInfo
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
