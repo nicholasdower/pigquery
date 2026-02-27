@@ -100,7 +100,7 @@ async function reinjectContentScript(force) {
   try {
     const urlPatterns = ['https://console.cloud.google.com/*'];
     if (process.env.NODE_ENV === 'dev') {
-      urlPatterns.push('file:///*bigquery.html');
+      urlPatterns.push('file:///*bigquery.html*');
     }
     const tabs = await chrome.tabs.query({ url: urlPatterns });
     logger.log(`${tabs.length} BigQuery tab${tabs.length === 1 ? '' : 's'} found`);
