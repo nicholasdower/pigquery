@@ -172,7 +172,7 @@ const TRANSLATIONS = {
   // options.js: Remote sources last updated timestamp. $1 = formatted date
   optionsLastUpdated: {
     en: 'Last updated on $1 at $2.',
-    de: 'Zuletzt aktualisiert am $1 um $2 Uhr.',
+    de: 'Zuletzt aktualisiert am $1 um $2 Uhr',
   },
   // options.js: Remote sources last updated with error. $1 = formatted date, $2 = formatted time, $3 = error message
   optionsLastUpdatedError: {
@@ -246,8 +246,8 @@ const TRANSLATIONS = {
   },
   // popup.js: Remote sources last updated timestamp. $1 = formatted date, $2 = formatted time
   popupLastUpdated: {
-    en: 'Last updated on $1 at $2.',
-    de: 'Zuletzt aktualisiert am $1 um $2 Uhr.',
+    en: 'Last updated on $1 at $2',
+    de: 'Zuletzt aktualisiert am $1 um $2 Uhr',
   },
   // popup.js: Error indicator when there were one or more errors refreshing remote YAML sources
   popupHasErrors: {

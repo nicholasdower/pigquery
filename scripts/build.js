@@ -45,6 +45,7 @@ const buildOptions = {
     'process.env.NODE_ENV': JSON.stringify(nodeEnv),
     '__BUILD_DATE__': JSON.stringify(new Date().toISOString()),
     '__BUILD_VERSION__': JSON.stringify(manifest.version),
+    '__BUILD_COMMIT__': JSON.stringify(execSync('git rev-parse HEAD').toString().trim()),
   },
 };
 
@@ -137,13 +138,6 @@ async function build() {
       });
       fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
       console.log('✓ Removed file:/// and raw.githubusercontent.com permissions for prod build');
-    }
-
-    // Save commit hash for production builds
-    if (isProd) {
-      const commit = execSync('git rev-parse HEAD').toString().trim();
-      fs.writeFileSync(`${buildDir}/commit.txt`, commit);
-      console.log(`✓ Saved commit: ${commit.substring(0, 7)}`);
     }
 
     console.log(`✓ Build completed successfully: ${buildDir}`);
