@@ -174,6 +174,47 @@ if (chrome?.runtime?.id) {
     }
   });
 
+  // Dev-only: check for new builds and auto-reload if detected
+  if (process.env.NODE_ENV === 'dev') {
+    const RELOAD_ALARM = 'checkForReload';
+    const RELOAD_INTERVAL_MINS = 5 / 60;
+
+    const RELOAD_SLOW_ALARM = 'checkForReloadSlow';
+    const RELOAD_SLOW_INTERVAL_MINS = 30 / 60;
+
+    chrome.alarms.create(RELOAD_ALARM, { periodInMinutes: RELOAD_INTERVAL_MINS });
+
+    chrome.alarms.onAlarm.addListener(async alarm => {
+      if (alarm.name !== RELOAD_ALARM && alarm.name !== RELOAD_SLOW_ALARM) return;
+      try {
+        const res = await fetch(`http://localhost:9090/?previous_build_date=${__BUILD_DATE__}`);
+        if (res.status !== 200) {
+          logger.log(`Reload server returned status ${res.status}`);
+          return;
+        }
+        if (alarm.name === RELOAD_SLOW_ALARM) {
+          chrome.alarms.clear(RELOAD_SLOW_ALARM);
+          chrome.alarms.create(RELOAD_ALARM, { periodInMinutes: RELOAD_INTERVAL_MINS });
+        }
+        const { buildId } = await res.json();
+        if (buildId !== __BUILD_DATE__) {
+          logger.log(`New build detected: ${buildId} → ${__BUILD_DATE__}`);
+          const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          const reopenOptionsPage = activeTab?.url?.includes('options.html') ?? false;
+          await chrome.storage.local.set({ reloadState: { reopenOptionsPage } });
+          chrome.runtime.reload();
+        }
+      } catch {
+        // Server not running — slow down to avoid unnecessary requests
+        logger.log('Reload server not running');
+        if (alarm.name === RELOAD_ALARM) {
+          chrome.alarms.clear(RELOAD_ALARM);
+          chrome.alarms.create(RELOAD_SLOW_ALARM, { periodInMinutes: RELOAD_SLOW_INTERVAL_MINS });
+        }
+      }
+    });
+  }
+
   // Check on startup
   updateErrorBadge();
   config.clearStaleBusy();
@@ -181,7 +222,7 @@ if (chrome?.runtime?.id) {
   chrome.storage.local.get('reloadState').then(({ reloadState }) => {
     if (reloadState) {
       //
-      logger.log('Reload triggered by user');
+      logger.log('Reload triggered by build update');
       reinjectContentScript(true); // force reinject since the user requested it
       chrome.storage.local.remove('reloadState');
       const { reopenOptionsPage } = reloadState;

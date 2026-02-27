@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import { startReloadServer } from './reload-server-lib.js';
 
 // Get command from arguments
 const command = process.argv.slice(2).join(' ');
@@ -121,6 +122,8 @@ function watchFile(file) {
     console.error(`⚠️  Could not watch ${file}:`, error.message);
   }
 }
+
+startReloadServer();
 
 // Start watching
 console.log('🚀 Starting file watcher...');

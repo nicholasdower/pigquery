@@ -40,6 +40,8 @@ const svgTextPlugin = {
 };
 
 const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+const buildDate = new Date().toISOString();
+const buildCommit = execSync('git rev-parse HEAD').toString().trim();
 
 // Clean and create build directory
 if (fs.existsSync(buildDir)) {
@@ -57,9 +59,9 @@ const buildOptions = {
   logLevel: 'info',
   define: {
     'process.env.NODE_ENV': JSON.stringify(nodeEnv),
-    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    __BUILD_DATE__: JSON.stringify(buildDate),
     __BUILD_VERSION__: JSON.stringify(manifest.version),
-    __BUILD_COMMIT__: JSON.stringify(execSync('git rev-parse HEAD').toString().trim()),
+    __BUILD_COMMIT__: JSON.stringify(buildCommit),
   },
 };
 
@@ -143,17 +145,19 @@ async function build() {
     const manifestPath = `${buildDir}/manifest.json`;
     copyFile('manifest.json', manifestPath);
 
-    // Remove file:/// permission for prod builds
-    if (isProd) {
-      manifest.host_permissions = manifest.host_permissions.filter(perm => !perm.startsWith('file:///'));
-      // Remove file:/// and raw.githubusercontent.com from web_accessible_resources
-      manifest.web_accessible_resources.forEach(resource => {
-        resource.matches = resource.matches.filter(
-          match => !match.startsWith('file:///') && match !== 'https://raw.githubusercontent.com/*'
-        );
+    if (!isProd) {
+      // Add dev-only permissions to the copied manifest
+      const devManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      devManifest.host_permissions.push('file:///*', 'https://raw.githubusercontent.com/*', 'http://localhost:9090/*');
+      devManifest.permissions.push('alarms');
+      devManifest.web_accessible_resources.forEach(resource => {
+        resource.matches.push('file:///*');
       });
-      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-      console.log('✓ Removed file:/// and raw.githubusercontent.com permissions for prod build');
+      fs.writeFileSync(manifestPath, JSON.stringify(devManifest, null, 2) + '\n');
+      console.log('✓ Added dev permissions (file:///, raw.githubusercontent.com, localhost:9090)');
+
+      fs.writeFileSync(`${buildDir}/.build_date`, buildDate);
+      console.log('✓ Wrote build date for reload server');
     }
 
     console.log(`✓ Build completed successfully: ${buildDir}`);
