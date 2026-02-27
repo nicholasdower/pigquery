@@ -21,7 +21,10 @@
   },
   "globals": {
     "chrome": "readonly",
-    "process": "readonly"
+    "process": "readonly",
+    "__BUILD_DATE__": "readonly",
+    "__BUILD_VERSION__": "readonly",
+    "__BUILD_COMMIT__": "readonly"
   },
   "overrides": [
     {

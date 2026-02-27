@@ -25,6 +25,20 @@ const cssTextPlugin = {
   },
 };
 
+// Plugin to import SVG as string
+const svgTextPlugin = {
+  name: 'svg-text',
+  setup(build) {
+    build.onLoad({ filter: /\.svg$/ }, async args => {
+      const svg = await fs.promises.readFile(args.path, 'utf8');
+      return {
+        contents: `export default ${JSON.stringify(svg.trim())}`,
+        loader: 'js',
+      };
+    });
+  },
+};
+
 const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
 
 // Clean and create build directory
@@ -43,9 +57,9 @@ const buildOptions = {
   logLevel: 'info',
   define: {
     'process.env.NODE_ENV': JSON.stringify(nodeEnv),
-    '__BUILD_DATE__': JSON.stringify(new Date().toISOString()),
-    '__BUILD_VERSION__': JSON.stringify(manifest.version),
-    '__BUILD_COMMIT__': JSON.stringify(execSync('git rev-parse HEAD').toString().trim()),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    __BUILD_VERSION__: JSON.stringify(manifest.version),
+    __BUILD_COMMIT__: JSON.stringify(execSync('git rev-parse HEAD').toString().trim()),
   },
 };
 
@@ -82,7 +96,7 @@ async function build() {
       entryPoints: ['src/pigquery.js'],
       outfile: `${distDir}/pigquery.js`,
       external: ['chrome'],
-      plugins: [cssTextPlugin],
+      plugins: [cssTextPlugin, svgTextPlugin],
     });
 
     // Build popup script
@@ -91,6 +105,7 @@ async function build() {
       entryPoints: ['src/popup.js'],
       outfile: `${distDir}/popup.js`,
       external: ['chrome'],
+      plugins: [svgTextPlugin],
     });
 
     // Build options script
@@ -99,6 +114,7 @@ async function build() {
       entryPoints: ['src/options.js'],
       outfile: `${distDir}/options.js`,
       external: ['chrome'],
+      plugins: [svgTextPlugin],
     });
 
     // Build background service worker

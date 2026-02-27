@@ -1,5 +1,6 @@
 import * as i18n from './i18n.js';
 import * as config from './config.js';
+import refreshIconSvg from './refresh-icon.svg';
 
 const LOCALE = i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
@@ -21,13 +22,16 @@ document.getElementById('options-link').addEventListener('click', e => {
 const buildDate = new Date(__BUILD_DATE__);
 const buildDatePart = buildDate.toLocaleDateString(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' });
 const buildTimePart = buildDate.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-document.getElementById('version-text').textContent = `v${__BUILD_VERSION__} \u2013 ${__BUILD_COMMIT__.slice(0, 7)} \u2013 ${buildDatePart} ${buildTimePart}`;
+document.getElementById('version-text').textContent =
+  `v${__BUILD_VERSION__} \u2013 ${__BUILD_COMMIT__.slice(0, 7)} \u2013 ${buildDatePart} ${buildTimePart}`;
 
 const statusEl = document.getElementById('status');
 const statusTextEl = document.getElementById('status-text');
 const statusErrorEl = document.getElementById('status-error');
 const refreshBtn = document.getElementById('refresh-btn');
 const updateBtn = document.getElementById('update-btn');
+refreshBtn.innerHTML = refreshIconSvg;
+updateBtn.innerHTML = refreshIconSvg;
 
 refreshBtn.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'refreshRemoteSources' });

@@ -1,5 +1,9 @@
 import * as config from './config.js';
 import * as i18n from './i18n.js';
+import refreshIconSvg from './refresh-icon.svg';
+import settingsIconSvg from './settings-icon.svg';
+import iconSvg from '../icons/icon.svg';
+import iconErrorSvg from '../icons/icon-badge-error.svg';
 import * as search from './search.js';
 import * as formatters from './formatters.js';
 import { compressAndEncode, decodeAndDecompress } from './compression.js';
@@ -41,24 +45,8 @@ const LOCALE = i18n.getBigQueryLocale();
 i18n.applyI18n(LOCALE);
 
 // Load icons as data URLs at startup so they remain available even if extension context is invalidated
-let ICON_URL = '';
-let ICON_ERROR_URL = '';
-
-async function loadIconAsDataURL(path) {
-  const url = chrome.runtime.getURL(path);
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.readAsDataURL(blob);
-  });
-}
-
-(async () => {
-  ICON_URL = await loadIconAsDataURL('icons/icon.svg');
-  ICON_ERROR_URL = await loadIconAsDataURL('icons/icon-badge-error.svg');
-})();
+const ICON_URL = `data:image/svg+xml,${encodeURIComponent(iconSvg)}`;
+const ICON_ERROR_URL = `data:image/svg+xml,${encodeURIComponent(iconErrorSvg)}`;
 
 const isMac = navigator.userAgentData.platform === 'macOS';
 
@@ -489,8 +477,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   // Refresh button
   const refreshBtn = makeEl('button', { className: 'pig-modal-refresh' });
   refreshBtn.type = 'button';
-  refreshBtn.innerHTML =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
+  refreshBtn.innerHTML = refreshIconSvg;
   refreshBtn.title = 'Refresh';
 
   let isBusy = false;
@@ -564,8 +551,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, contentOrGetter) 
   // Settings button
   const settingsBtn = makeEl('button', { className: 'pig-modal-settings' });
   settingsBtn.type = 'button';
-  settingsBtn.innerHTML =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
+  settingsBtn.innerHTML = settingsIconSvg;
   settingsBtn.title = 'Settings';
   settingsBtn.addEventListener('click', e => {
     e.preventDefault();

@@ -111,7 +111,7 @@ async function reinjectContentScript(force) {
 // Guard against invalidated extension context
 if (chrome?.runtime?.id) {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    const senderName = sender.tab?.id ? `tab ${sender.tab.id}` : (sender.url ? new URL(sender.url).pathname : 'unknown');
+    const senderName = sender.tab?.id ? `tab ${sender.tab.id}` : sender.url ? new URL(sender.url).pathname : 'unknown';
     logger.log(`Received message from ${senderName}: ${message.action}`);
 
     if (message.action === 'refreshRemoteSources') {

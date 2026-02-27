@@ -1,5 +1,6 @@
 import * as config from './config.js';
 import * as i18n from './i18n.js';
+import resetIconSvg from './reset-icon.svg';
 
 const LOCALE = new URLSearchParams(window.location.search).get('hl') || i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
@@ -23,6 +24,8 @@ const shortcutInsertBtn = el('shortcut-insertSnippet');
 const shortcutFocusTableBtn = el('shortcut-focusTable');
 const resetInsertBtn = el('reset-insertSnippet');
 const resetFocusTableBtn = el('reset-focusTable');
+resetInsertBtn.innerHTML = resetIconSvg;
+resetFocusTableBtn.innerHTML = resetIconSvg;
 
 let sources = [];
 let busy = null; // Current operation: 'refreshing', 'adding', or null
