@@ -9,6 +9,8 @@ const t = (key, substitutions) => i18n.getMessage(key, LOCALE, substitutions);
 
 const el = id => document.getElementById(id);
 
+el('version').textContent = `v${__BUILD_VERSION__} · ${__BUILD_COMMIT__.slice(0, 7)} · ${__BUILD_DATE__}`;
+
 const textarea = el('payload');
 const saveBtn = el('save');
 const localStatusEl = el('localStatus');

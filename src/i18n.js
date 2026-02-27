@@ -36,13 +36,8 @@ const TRANSLATIONS = {
   },
   // popup.html: Footer link to extension options page
   extensionOptions: {
-    en: 'Configuration',
+    en: 'Config',
     de: 'Konfiguration',
-  },
-  // popup.html: Footer link to report a bug
-  reportBug: {
-    en: 'Report a Bug',
-    de: 'Fehler melden',
   },
   // options.html: Local configuration textarea placeholder
   optionsPlaceholder: {
@@ -172,12 +167,12 @@ const TRANSLATIONS = {
   // options.js: Remote sources last updated timestamp. $1 = formatted date
   optionsLastUpdated: {
     en: 'Last updated on $1 at $2.',
-    de: 'Zuletzt aktualisiert am $1 um $2 Uhr',
+    de: 'Aktualisiert am $1 um $2 Uhr',
   },
   // options.js: Remote sources last updated with error. $1 = formatted date, $2 = formatted time, $3 = error message
   optionsLastUpdatedError: {
     en: 'Last updated on $1 at $2 — $3',
-    de: 'Zuletzt aktualisiert am $1 um $2 Uhr — $3',
+    de: 'Aktualisiert am $1 um $2 Uhr — $3',
   },
   // options.js: Status while refreshing remote YAML source
   statusRefreshing: {
@@ -244,16 +239,6 @@ const TRANSLATIONS = {
     en: 'Example',
     de: 'Beispiel',
   },
-  // popup.js: Remote sources last updated timestamp. $1 = formatted date, $2 = formatted time
-  popupLastUpdated: {
-    en: 'Last updated on $1 at $2',
-    de: 'Zuletzt aktualisiert am $1 um $2 Uhr',
-  },
-  // popup.js: Error indicator when there were one or more errors refreshing remote YAML sources
-  popupHasErrors: {
-    en: 'Some sources have errors',
-    de: 'Einige Quellen haben Fehler',
-  },
   // popup.js: Refresh button used to refresh all remote YAML sources
   popupRefresh: {
     en: 'Refresh',
@@ -264,16 +249,7 @@ const TRANSLATIONS = {
     en: 'Refreshing…',
     de: 'Wird aktualisiert…',
   },
-  // popup.js: Extension section title
-  popupExtension: {
-    en: 'Extension',
-    de: 'Erweiterung',
-  },
-  // popup.js: Sources section title
-  popupSources: {
-    en: 'Sources',
-    de: 'Quellen',
-  },
+
   // content.js: Copy button in content panel
   copy: {
     en: 'Copy',
@@ -299,11 +275,6 @@ const TRANSLATIONS = {
     en: 'Press keys…',
     de: 'Tasten drücken…',
   },
-  // options.html: Footer link to BigQuery
-  footerBigQuery: {
-    en: 'BigQuery',
-    de: 'BigQuery',
-  },
   // options.html: Footer link to Chrome Web Store
   footerStore: {
     en: 'Store',
@@ -311,8 +282,8 @@ const TRANSLATIONS = {
   },
   // options.html: Footer link to source code
   footerSource: {
-    en: 'Source',
-    de: 'Quellcode',
+    en: 'GitHub',
+    de: 'GitHub',
   },
   // options.html: Footer link to report a bug
   footerBug: {

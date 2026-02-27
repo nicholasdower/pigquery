@@ -21,6 +21,24 @@
         width: 24px;
         height: 24px;
       }
+      .header-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .settings-btn {
+        display: flex;
+        align-items: center;
+        background: none;
+        color: #888;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+      }
+      .settings-btn:hover {
+        color: #e0e0e0;
+      }
       h1 {
         font-size: 16px;
         margin: 0;
@@ -54,57 +72,7 @@
         font-size: 12px;
         white-space: nowrap;
       }
-      .footer, .extension {
-        border-top: 1px solid #444;
-      }
-      .footer {
-        margin-top: 8px;
-        padding-top: 12px;
-        text-align: center;
-      }
-      .footer a {
-        color: #0e639c;
-        text-decoration: none;
-        font-size: 13px;
-      }
-      .footer a:hover {
-        color: #1177bb;
-        text-decoration: underline;
-      }
-      .footer .separator {
-        color: #666;
-        margin: 0 8px;
-      }
-      .status {
-        margin-top: 8px;
-        padding-top: 12px;
-        font-size: 12px;
-        color: #888;
-      }
-      .status-error {
-        color: #f48771;
-        margin-top: 4px;
-      }
-      .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
-      }
-      .section-header h2 {
-        margin: 0;
-      }
-      .refresh-btn:disabled, .update-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .extension {
-        margin-top: 8px;
-        padding-top: 12px;
-        font-size: 12px;
-        color: #888;
-      }
-      .update-btn, .refresh-btn {
+      .refresh-btn {
         display: flex;
         align-items: center;
         background: none;
@@ -113,7 +81,7 @@
         padding: 0;
         cursor: pointer;
       }
-      .update-btn:hover, .refresh-btn:hover {
+      .refresh-btn:hover {
         color: #e0e0e0;
       }
     </style>
@@ -122,9 +90,12 @@
     <div class="header">
       <img src="../icons/icon.svg" alt="PigQuery Logo" />
       <h1>PigQuery</h1>
+      <div class="header-right">
+        <button class="refresh-btn" id="header-refresh-btn"></button>
+        <button class="settings-btn" id="settings-btn"></button>
+      </div>
     </div>
 
-    <h2 data-i18n="keyboardShortcuts">Keyboard Shortcuts</h2>
     <div class="shortcuts">
       <div class="shortcut">
         <span class="shortcut-name" data-i18n="shortcutInsert">Insert</span>
@@ -146,29 +117,6 @@
         <span class="shortcut-name" data-i18n="shortcutCopyCell">Copy cell</span>
         <span class="shortcut-keys" id="shortcut-copy-cell"></span>
       </div>
-    </div>
-
-    <div class="status" id="status">
-      <div class="section-header">
-        <h2 data-i18n="popupSources">Sources</h2>
-        <button class="refresh-btn" id="refresh-btn"></button>
-      </div>
-      <span id="status-text"></span>
-      <div class="status-error" id="status-error"></div>
-    </div>
-
-    <div class="extension">
-      <div class="section-header">
-        <h2 data-i18n="popupExtension">Extension</h2>
-        <button class="update-btn" id="update-btn"></button>
-      </div>
-      <span id="version-text"></span>
-    </div>
-
-    <div class="footer">
-      <a href="#" id="options-link" data-i18n="extensionOptions">Extension Options</a>
-      <span class="separator">·</span>
-      <a href="https://github.com/nicholasdower/pigquery/issues/new/choose" target="_blank" data-i18n="reportBug">Report a Bug</a>
     </div>
 
     <script src="popup.js"></script>
