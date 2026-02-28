@@ -218,6 +218,11 @@ if (chrome?.runtime?.id) {
   if (process.env.NODE_ENV === 'dev') {
 
     chrome.alarms.onAlarm.addListener(async alarm => {
+      if (alarm.name === 'clearUpdateBadge') {
+        chrome.action.setBadgeText({ text: '' });
+        updateErrorBadge();
+        return;
+      }
       if (alarm.name !== 'checkForReload') return;
       const success = await checkForNewBuild();
       if (!success) {
@@ -228,13 +233,10 @@ if (chrome?.runtime?.id) {
     checkForNewBuild();
   }
 
-  // Check on startup
-  updateErrorBadge();
   config.clearStaleBusy();
 
   chrome.storage.local.get('reloadState').then(({ reloadState }) => {
     if (reloadState) {
-      //
       logger.log('Reload triggered by build update');
       reinjectContentScript(true); // force reinject since the user requested it
       chrome.storage.local.remove('reloadState');
@@ -243,9 +245,18 @@ if (chrome?.runtime?.id) {
         const optionsUrl = chrome.runtime.getURL('dist/options.html');
         chrome.tabs.create({ url: optionsUrl, active: true });
       }
+
+      if (process.env.NODE_ENV === 'dev') {
+        chrome.action.setBadgeText({ text: 'Oink' });
+        chrome.action.setBadgeBackgroundColor({ color: '#2563eb' });
+        chrome.alarms.create('clearUpdateBadge', { delayInMinutes: 5 / 60 });
+      } else {
+        updateErrorBadge();
+      }
     } else {
       logger.log('Updating stale tabs');
       reinjectContentScript(false); // only reinject if the content script is not already running
+      updateErrorBadge();
     }
   });
 }
