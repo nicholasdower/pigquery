@@ -77,6 +77,11 @@ function addRecentSnippetGroup(group) {
   recentSnippetGroups = [group, ...recentSnippetGroups.filter(g => g !== group)];
 }
 
+function registerUpdateListener(listener) {
+  onConfigurationChange = listener;
+  return configuration;
+}
+
 async function load() {
   const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(), config.loadShortcuts()]);
   configuration = {
@@ -86,7 +91,7 @@ async function load() {
   };
   shortcuts = loadedShortcuts;
   hasRemoteSources = loaded.hasRemoteSources;
-  onConfigurationChange?.();
+  onConfigurationChange?.(configuration);
 }
 
 load();
@@ -182,13 +187,12 @@ if (query && query.length > 0) {
 
 uninstaller.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: modalStyles }));
 
-function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
+function openPopup(getOptions, onOptionSelected, getContent, registerUpdateListener) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
   let options = getOptions();
   let filtered = options.slice();
   let activeIndex = 0;
-  let hasErrors = getHasErrors();
   let ignoreMouseTimeout = null;
 
   const overlayEl = makeEl('div', { className: 'pig-modal-overlay' });
@@ -200,13 +204,6 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
         el.focus()
     )(document.activeElement),
     'popup-focus-restore',
-    'popup'
-  );
-  uninstaller.register(
-    () => {
-      onConfigurationChange = null;
-    },
-    'popup-configuration-change-handler',
     'popup'
   );
 
@@ -453,7 +450,7 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     modalEl.classList.remove('input-focused');
   });
 
-  onConfigurationChange = () => {
+  function onUpdate(configuration) {
     // Save currently selected item to preserve selection if it still exists
     const currentItem = filtered[activeIndex];
 
@@ -474,10 +471,17 @@ function openPopup(getOptions, onOptionSelected, getHasErrors, getContent) {
     renderList();
     updateContentPanel();
 
-    hasErrors = getHasErrors();
+    hasErrors = configuration.hasErrors;
     updateErrorBadge();
     updateRefreshButtonVisibility();
-  };
+  }
+
+  let hasErrors = registerUpdateListener(onUpdate).hasErrors;
+  uninstaller.register(
+    () => registerUpdateListener(null),
+    'popup-configuration-change-handler',
+    'popup'
+  );
 
   header.appendChild(inputEl);
 
@@ -710,8 +714,8 @@ uninstaller.addEventListener(
           configuration.snippets = sortSnippets(configuration.snippets);
           insertIntoEditor(editor, option.value);
         },
-        () => configuration.hasErrors,
-        item => [{ label: 'SQL', value: item.value, type: 'sql' }]
+        item => [{ label: 'SQL', value: item.value, type: 'sql' }],
+        registerUpdateListener
       );
       return;
     }
@@ -833,8 +837,8 @@ function handleTableCellOpenPopup(cell) {
       configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
       window.open(option.url, '_blank', 'noopener,noreferrer');
     },
-    () => configuration.hasErrors,
-    () => contentInfo
+    () => contentInfo,
+    registerUpdateListener
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
