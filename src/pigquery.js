@@ -9,6 +9,7 @@ import * as formatters from './formatters.js';
 import { compressAndEncode, decodeAndDecompress } from './compression.js';
 import logger from './logger.js';
 import Uninstaller from './uninstaller.js';
+import Updatable from './updatable.js';
 import {
   makeEl,
   showToast,
@@ -51,8 +52,9 @@ const ICON_ERROR_URL = `data:image/svg+xml,${encodeURIComponent(iconErrorSvg)}`;
 const isMac = navigator.userAgentData.platform === 'macOS';
 
 let configuration;
+let snippets = new Updatable({ items: [], hasError: false });
+let sites = new Updatable({ items: [], hasError: false });
 let shortcuts = config.DEFAULT_SHORTCUTS;
-let onConfigurationChange = null;
 let recentSnippetGroups = [];
 let hasRemoteSources = false;
 
@@ -77,11 +79,6 @@ function addRecentSnippetGroup(group) {
   recentSnippetGroups = [group, ...recentSnippetGroups.filter(g => g !== group)];
 }
 
-function registerUpdateListener(listener) {
-  onConfigurationChange = listener;
-  return configuration;
-}
-
 async function load() {
   const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(), config.loadShortcuts()]);
   configuration = {
@@ -89,9 +86,10 @@ async function load() {
     sites: sortSites(loaded.sites, null),
     hasErrors: loaded.hasErrors,
   };
+  snippets.update({ items: configuration.snippets, hasError: configuration.hasErrors });
+  sites.update({ items: configuration.sites, hasError: configuration.hasErrors });
   shortcuts = loadedShortcuts;
   hasRemoteSources = loaded.hasRemoteSources;
-  onConfigurationChange?.(configuration);
 }
 
 load();
@@ -187,10 +185,10 @@ if (query && query.length > 0) {
 
 uninstaller.appendChild(document.head, makeEl('style', { id: 'pig-modal-style', text: modalStyles }));
 
-function openPopup(getOptions, onOptionSelected, getContent, registerUpdateListener) {
+function openPopup(updatable, onOptionSelected, getContent) {
   if (document.querySelector('.pig-modal-overlay')) return;
 
-  let options = getOptions();
+  let options = updatable.items;
   let filtered = options.slice();
   let activeIndex = 0;
   let ignoreMouseTimeout = null;
@@ -340,8 +338,8 @@ function openPopup(getOptions, onOptionSelected, getContent, registerUpdateListe
       }
       e.preventDefault();
       e.stopPropagation();
-      onOptionSelected(filtered[activeIndex]);
       uninstaller.uninstallGroup('popup');
+      onOptionSelected(filtered[activeIndex]);
       return;
     }
 
@@ -450,11 +448,13 @@ function openPopup(getOptions, onOptionSelected, getContent, registerUpdateListe
     modalEl.classList.remove('input-focused');
   });
 
-  function onUpdate(configuration) {
+  let hasErrors = updatable.hasErrors;
+
+  function onUpdate() {
     // Save currently selected item to preserve selection if it still exists
     const currentItem = filtered[activeIndex];
 
-    options = getOptions();
+    options = updatable.items;
     const query = (inputEl.value || '').trim().toLowerCase();
     filtered = search.filter(options, query);
 
@@ -471,14 +471,14 @@ function openPopup(getOptions, onOptionSelected, getContent, registerUpdateListe
     renderList();
     updateContentPanel();
 
-    hasErrors = configuration.hasErrors;
+    hasErrors = updatable.hasErrors;
     updateErrorBadge();
     updateRefreshButtonVisibility();
   }
 
-  let hasErrors = registerUpdateListener(onUpdate).hasErrors;
+  updatable.addListener(onUpdate);
   uninstaller.register(
-    () => registerUpdateListener(null),
+    () => updatable.removeListener(onUpdate),
     'popup-configuration-change-handler',
     'popup'
   );
@@ -708,14 +708,13 @@ uninstaller.addEventListener(
         return;
       }
       openPopup(
-        () => configuration.snippets,
+        snippets,
         option => {
           addRecentSnippetGroup(option.group);
-          configuration.snippets = sortSnippets(configuration.snippets);
+          snippets.update({ items: sortSnippets(snippets.items), hasError: snippets.hasError });
           insertIntoEditor(editor, option.value);
         },
-        item => [{ label: 'SQL', value: item.value, type: 'sql' }],
-        registerUpdateListener
+        item => [{ label: 'SQL', value: item.value, type: 'sql' }]
       );
       return;
     }
@@ -823,22 +822,27 @@ uninstaller.addEventListener(
 function handleTableCellOpenPopup(cell) {
   const content = cell.innerText;
 
-  const getMatchingOptions = () =>
-    configuration.sites
+  const filteredSites = new Updatable({ items: [], hasError: false });
+  const listener = () => {
+    const filtered = sites.items
       .filter(option => option.regex.test(content))
       .map(option => ({
         ...option,
         url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content)),
       }));
+    filteredSites.update({ items: filtered, hasError: sites.hasError});
+  };
+  listener();
+  sites.addListener(listener);
+  uninstaller.register(() => sites.removeListener(listener), 'popup-filtered-sites-change-handler', 'popup');
   const contentInfo = formatters.detectContentType(content);
   openPopup(
-    getMatchingOptions,
+    filteredSites,
     option => {
-      configuration.sites = sortSites(configuration.sites, { group: option.group, name: option.name, tag: option.tag });
+      sites.update({ items: sortSites(sites.items, { group: option.group, name: option.name, tag: option.tag }), hasError: sites.hasError});
       window.open(option.url, '_blank', 'noopener,noreferrer');
     },
-    () => contentInfo,
-    registerUpdateListener
+    () => contentInfo
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
