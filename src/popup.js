@@ -3,6 +3,8 @@ import * as config from './config.js';
 import refreshIconSvg from './refresh-icon.svg';
 import settingsIconSvg from './settings-icon.svg';
 
+chrome.runtime.sendMessage({ action: 'ping' })
+
 const LOCALE = i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
 

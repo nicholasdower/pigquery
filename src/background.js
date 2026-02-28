@@ -114,14 +114,48 @@ async function reinjectContentScript(force) {
   }
 }
 
+async function checkForNewBuild() {
+  let existingAlarm = await chrome.alarms.get('checkForReload')
+  if (!existingAlarm) {
+    logger.log('Creating reload alarm');
+    chrome.alarms.create('checkForReload', { periodInMinutes: 5 / 60 });
+  }
+  try {
+    const res = await fetch(`http://localhost:9090/?previous_build_date=${__BUILD_DATE__}`);
+    if (res.status !== 200) {
+      logger.log(`Reload server returned status ${res.status}`);
+      return true;
+    }
+    const { buildId } = await res.json();
+    if (buildId !== __BUILD_DATE__) {
+      logger.log(`New build detected: ${buildId} → ${__BUILD_DATE__}`);
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const reopenOptionsPage = activeTab?.url?.includes('options.html') ?? false;
+      await chrome.storage.local.set({ reloadState: { reopenOptionsPage } });
+      chrome.runtime.reload();
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Guard against invalidated extension context
 if (chrome?.runtime?.id) {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const senderName = sender.tab?.id ? `tab ${sender.tab.id}` : sender.url ? new URL(sender.url).pathname : 'unknown';
     logger.log(`Received message from ${senderName}: ${message.action}`);
 
+    if (message.action === 'ping') {
+      checkForNewBuild().then(() => {
+        sendResponse({ ok: true });
+      });
+      return true;
+    }
     if (message.action === 'refreshRemoteSources') {
-      config.refreshRemoteSources();
+      config.refreshRemoteSources().then(() => {
+        sendResponse({ ok: true });
+      });
       return true;
     }
     if (message.action === 'addSource') {
@@ -182,43 +216,16 @@ if (chrome?.runtime?.id) {
 
   // Dev-only: check for new builds and auto-reload if detected
   if (process.env.NODE_ENV === 'dev') {
-    const RELOAD_ALARM = 'checkForReload';
-    const RELOAD_INTERVAL_MINS = 5 / 60;
-
-    const RELOAD_SLOW_ALARM = 'checkForReloadSlow';
-    const RELOAD_SLOW_INTERVAL_MINS = 30 / 60;
-
-    chrome.alarms.create(RELOAD_ALARM, { periodInMinutes: RELOAD_INTERVAL_MINS });
 
     chrome.alarms.onAlarm.addListener(async alarm => {
-      if (alarm.name !== RELOAD_ALARM && alarm.name !== RELOAD_SLOW_ALARM) return;
-      try {
-        const res = await fetch(`http://localhost:9090/?previous_build_date=${__BUILD_DATE__}`);
-        if (res.status !== 200) {
-          logger.log(`Reload server returned status ${res.status}`);
-          return;
-        }
-        if (alarm.name === RELOAD_SLOW_ALARM) {
-          chrome.alarms.clear(RELOAD_SLOW_ALARM);
-          chrome.alarms.create(RELOAD_ALARM, { periodInMinutes: RELOAD_INTERVAL_MINS });
-        }
-        const { buildId } = await res.json();
-        if (buildId !== __BUILD_DATE__) {
-          logger.log(`New build detected: ${buildId} → ${__BUILD_DATE__}`);
-          const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          const reopenOptionsPage = activeTab?.url?.includes('options.html') ?? false;
-          await chrome.storage.local.set({ reloadState: { reopenOptionsPage } });
-          chrome.runtime.reload();
-        }
-      } catch {
-        // Server not running — slow down to avoid unnecessary requests
-        logger.log('Reload server not running');
-        if (alarm.name === RELOAD_ALARM) {
-          chrome.alarms.clear(RELOAD_ALARM);
-          chrome.alarms.create(RELOAD_SLOW_ALARM, { periodInMinutes: RELOAD_SLOW_INTERVAL_MINS });
-        }
+      if (alarm.name !== 'checkForReload') return;
+      const success = await checkForNewBuild();
+      if (!success) {
+        logger.log('Reload server not running. Stopping reload alarm.');
+        chrome.alarms.clear('checkForReload');
       }
     });
+    checkForNewBuild();
   }
 
   // Check on startup
