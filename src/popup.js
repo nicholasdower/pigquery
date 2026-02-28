@@ -3,7 +3,7 @@ import * as config from './config.js';
 import refreshIconSvg from './refresh-icon.svg';
 import settingsIconSvg from './settings-icon.svg';
 
-chrome.runtime.sendMessage({ action: 'ping' })
+chrome.runtime.sendMessage({ action: 'ping' });
 
 const LOCALE = i18n.getSystemLocale();
 i18n.applyI18n(LOCALE);
@@ -26,10 +26,7 @@ headerRefreshBtn.innerHTML = refreshIconSvg;
 headerRefreshBtn.addEventListener('click', () => chrome.runtime.sendMessage({ action: 'refreshRemoteSources' }));
 
 async function load() {
-  const [shortcuts, busy] = await Promise.all([
-    config.loadShortcuts(),
-    config.loadBusy(),
-  ]);
+  const [shortcuts, busy] = await Promise.all([config.loadShortcuts(), config.loadBusy()]);
 
   shortcutInsertEl.textContent = config.formatShortcut(shortcuts.insertSnippet);
   shortcutFocusTableEl.textContent = config.formatShortcut(shortcuts.focusTable);

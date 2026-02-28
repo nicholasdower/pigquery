@@ -477,11 +477,7 @@ function openPopup(updatable, onOptionSelected, getContent) {
   }
 
   updatable.addListener(onUpdate);
-  uninstaller.register(
-    () => updatable.removeListener(onUpdate),
-    'popup-configuration-change-handler',
-    'popup'
-  );
+  uninstaller.register(() => updatable.removeListener(onUpdate), 'popup-configuration-change-handler', 'popup');
 
   header.appendChild(inputEl);
 
@@ -830,7 +826,7 @@ function handleTableCellOpenPopup(cell) {
         ...option,
         url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content)),
       }));
-    filteredSites.update({ items: filtered, hasError: sites.hasError});
+    filteredSites.update({ items: filtered, hasError: sites.hasError });
   };
   listener();
   sites.addListener(listener);
@@ -839,7 +835,10 @@ function handleTableCellOpenPopup(cell) {
   openPopup(
     filteredSites,
     option => {
-      sites.update({ items: sortSites(sites.items, { group: option.group, name: option.name, tag: option.tag }), hasError: sites.hasError});
+      sites.update({
+        items: sortSites(sites.items, { group: option.group, name: option.name, tag: option.tag }),
+        hasError: sites.hasError,
+      });
       window.open(option.url, '_blank', 'noopener,noreferrer');
     },
     () => contentInfo

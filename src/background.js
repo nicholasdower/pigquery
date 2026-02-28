@@ -115,7 +115,7 @@ async function reinjectContentScript(force) {
 }
 
 async function checkForNewBuild() {
-  let existingAlarm = await chrome.alarms.get('checkForReload')
+  let existingAlarm = await chrome.alarms.get('checkForReload');
   if (!existingAlarm) {
     logger.log('Creating reload alarm');
     chrome.alarms.create('checkForReload', { periodInMinutes: 5 / 60 });
@@ -216,7 +216,6 @@ if (chrome?.runtime?.id) {
 
   // Dev-only: check for new builds and auto-reload if detected
   if (process.env.NODE_ENV === 'dev') {
-
     chrome.alarms.onAlarm.addListener(async alarm => {
       if (alarm.name === 'clearUpdateBadge') {
         chrome.action.setBadgeText({ text: '' });
