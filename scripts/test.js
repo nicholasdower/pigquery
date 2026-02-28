@@ -3,12 +3,15 @@ import { spawn } from 'child_process';
 
 const args = process.argv.slice(2);
 const coverage = args.includes('--coverage');
+const extraArgs = args.filter(a => a !== '--coverage');
 
 const jestArgs = ['--experimental-vm-modules', 'node_modules/jest/bin/jest.js'];
 
 if (coverage) {
   jestArgs.push('--coverage');
 }
+
+jestArgs.push(...extraArgs);
 
 const child = spawn('node', jestArgs, {
   stdio: 'inherit',

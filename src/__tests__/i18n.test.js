@@ -186,7 +186,7 @@ describe('i18n', () => {
     test('should substitute multiple placeholders in German', () => {
       const result = getMessage('optionsLastUpdatedError', 'de', ['25.02.2026', '18:53', 'Netzwerkfehler']);
 
-      expect(result).toBe('Zuletzt aktualisiert am 25.02.2026 um 18:53 Uhr — Netzwerkfehler');
+      expect(result).toBe('Aktualisiert am 25.02.2026 um 18:53 Uhr — Netzwerkfehler');
     });
 
     test('should handle array with single substitution', () => {
@@ -234,7 +234,7 @@ describe('i18n', () => {
     test('should preserve original text when no placeholders present', () => {
       const result = getMessage('extensionOptions', 'en');
 
-      expect(result).toBe('Configuration');
+      expect(result).toBe('Config');
     });
 
     test('should handle numeric substitutions', () => {
@@ -303,7 +303,7 @@ describe('i18n', () => {
 
       applyI18n('en');
 
-      expect(img.alt).toBe('Configuration');
+      expect(img.alt).toBe('Config');
     });
 
     test('should apply to multiple elements at once', () => {
@@ -366,7 +366,7 @@ describe('i18n', () => {
 
       applyI18n('en');
 
-      expect(inner.textContent).toBe('Configuration');
+      expect(inner.textContent).toBe('Config');
     });
 
     test('should handle empty container', () => {
