@@ -17,7 +17,10 @@ export class NumberFormat {
     return i18n.getMessage('typeNumber', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;

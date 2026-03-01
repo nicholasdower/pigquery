@@ -11,7 +11,10 @@ export class Url {
     return i18n.getMessage('typeUrl', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;

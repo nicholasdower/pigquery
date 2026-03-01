@@ -26,7 +26,10 @@ export class DateFormat {
     return i18n.getMessage('typeDate', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;

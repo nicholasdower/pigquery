@@ -13,7 +13,10 @@ export class Xml {
     return i18n.getMessage('typeXml', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;

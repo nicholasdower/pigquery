@@ -13,7 +13,10 @@ export class Uuid {
     return i18n.getMessage('typeUuid', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;

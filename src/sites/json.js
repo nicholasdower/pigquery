@@ -11,7 +11,10 @@ export class Json {
     return i18n.getMessage('typeJson', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;

@@ -13,7 +13,10 @@ export class Base64 {
     return i18n.getMessage('typeBase64', this.#locale);
   }
   get group() {
-    return 'Formatters';
+    return 'Default';
+  }
+  get tag() {
+    return 'formatter';
   }
   isDefault() {
     return true;
