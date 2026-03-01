@@ -7,8 +7,9 @@ export class Xml {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'XML'; }
+  get name() { return i18n.getMessage('typeXml', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     return value.startsWith('<') && TAG_REGEX.test(value);

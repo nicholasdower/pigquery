@@ -7,8 +7,9 @@ export class Base64 {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'Base64'; }
+  get name() { return i18n.getMessage('typeBase64', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     if (!BASE64_REGEX.test(value)) return false;

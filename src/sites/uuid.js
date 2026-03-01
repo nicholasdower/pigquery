@@ -7,8 +7,9 @@ export class Uuid {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'UUID'; }
+  get name() { return i18n.getMessage('typeUuid', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     return UUID_REGEX.test(value);

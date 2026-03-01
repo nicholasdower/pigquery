@@ -528,6 +528,9 @@
   </div>
 
   <script>
+    const hlParam = new URLSearchParams(window.location.search).get('hl');
+    if (hlParam) document.documentElement.lang = hlParam;
+
     // Tab management
     let tabs = [];
     let activeTabId = 1;
@@ -758,6 +761,19 @@
         editorDirty = true; // Mark editor as dirty when content changes
       });
 
+      function unescapeString(s) {
+        return s.replace(/\\(n|t|r|\\|"|')/g, (_, ch) => {
+          switch (ch) {
+            case 'n': return '\n';
+            case 't': return '\t';
+            case 'r': return '\r';
+            case '\\': return '\\';
+            case '"': return '"';
+            case "'": return "'";
+          }
+        });
+      }
+
       // Fake SQL: parse SELECT "lit1", "lit2" [ UNION ALL SELECT ... ] (no FROM)
       function parseQuotedStrings(selectList) {
         const quoted = [];
@@ -770,14 +786,14 @@
             i += skip[0].length;
             continue;
           }
-          const dq = rest.match(/^"([^"]*)"/);
-          const sq = rest.match(/^'([^']*)'/);
+          const dq = rest.match(/^"((?:[^"\\]|\\.)*)"/);
+          const sq = rest.match(/^'((?:[^'\\]|\\.)*)'/);
           const unquoted = rest.match(/^(-?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|true|false|null)\b/i);
           if (dq) {
-            quoted.push(dq[1]);
+            quoted.push(unescapeString(dq[1]));
             i += dq[0].length;
           } else if (sq) {
-            quoted.push(sq[1]);
+            quoted.push(unescapeString(sq[1]));
             i += sq[0].length;
           } else if (unquoted) {
             quoted.push(unquoted[1]);
@@ -820,7 +836,7 @@
       function escapeHtml(str) {
         if (str == null) return '';
         const s = String(str);
-        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br>');
       }
 
       function buildTableHtmlFromResult(data) {

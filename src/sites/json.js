@@ -5,8 +5,9 @@ export class Json {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'JSON'; }
+  get name() { return i18n.getMessage('typeJson', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     if (!value.startsWith('{') && !value.startsWith('[')) return false;

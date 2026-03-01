@@ -573,25 +573,23 @@
   name: formatter demo
   tag: query
   value: |-
-    select * from (
-      select 'json' as type, '{"user": {"name": "Alice", "age": 30, "active": true, "roles": ["admin", "editor"], "metadata": {"created": "2026-01-15", "lastLogin": null}}, "settings": {"theme": "dark", "notifications": {"email": true, "push": false}}}' as value
-      union all
-      select 'timestamp', '1770573986907'
-      union all
-      select 'date', '2026-02-08T18:06:26.907Z'
-      union all
-      select 'jwt', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-      union all
-      select 'xml', '<?xml version="1.0"?><root><item id="1">Hello</item></root>'
-      union all
-      select 'yaml', 'name: test\nitems:\n  - one\n  - two'
-      union all
-      select 'url', 'https://example.com/path?query=value&foo=bar'
-      union all
-      select 'base64', to_base64(b'Hello, World!')
-      union all
-      select 'uuid', generate_uuid()
-    );
+    select 'json' as type, '{"user": {"name": "Alice", "age": 30, "active": true, "roles": ["admin", "editor"], "metadata": {"created": "2026-01-15", "lastLogin": null}}, "settings": {"theme": "dark", "notifications": {"email": true, "push": false}}}' as value
+    union all
+    select 'timestamp', '1770573986907'
+    union all
+    select 'date', '2026-02-08T18:06:26.907Z'
+    union all
+    select 'jwt', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+    union all
+    select 'xml', '<?xml version="1.0"?><root><item id="1">Hello</item></root>'
+    union all
+    select 'yaml', 'name: test\nitems:\n  - one\n  - two'
+    union all
+    select 'url', 'https://example.com/path?query=value&foo=bar'
+    union all
+    select 'base64', 'SGVsbG8sIFdvcmxkIQ=='
+    union all
+    select 'uuid', '18aac5da-82dd-441b-b6eb-848aa83d38c4';
 
 # =============================================================================
 # URLS - External lookups for cell data

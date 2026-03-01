@@ -7,8 +7,9 @@ export class Hex {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'Hex'; }
+  get name() { return i18n.getMessage('typeHex', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     if (value.length < 20 || value.length % 2 !== 0) return false;

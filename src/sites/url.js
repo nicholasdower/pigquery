@@ -5,8 +5,9 @@ export class Url {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'URL'; }
+  get name() { return i18n.getMessage('typeUrl', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     if (!value.startsWith('http://') && !value.startsWith('https://')) return false;
@@ -18,7 +19,7 @@ export class Url {
     }
   }
 
-  url() { return null; }
+  url(content) { return content; }
 
   preview(content) {
     try {

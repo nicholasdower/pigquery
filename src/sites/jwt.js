@@ -13,8 +13,9 @@ export class Jwt {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'JWT'; }
+  get name() { return i18n.getMessage('typeJwt', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     const parts = value.split('.');

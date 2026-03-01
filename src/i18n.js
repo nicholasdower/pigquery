@@ -355,6 +355,11 @@ const TRANSLATIONS = {
     en: 'Hex',
     de: 'Hex',
   },
+  // sites: Type name for Open URL
+  typeOpenUrl: {
+    en: 'Open URL',
+    de: 'URL öffnen',
+  },
   // formatters.js: Label for original content
   original: {
     en: 'Original',

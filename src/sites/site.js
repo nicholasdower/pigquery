@@ -16,6 +16,7 @@ export class Site {
 
   get name() { return this.#name; }
   get group() { return this.#group; }
+  isDefault() { return false; }
   url(content) { return this.#url.replace('%s', this.#encode === false ? content : encodeURIComponent(content)); }
 
   preview(content) {

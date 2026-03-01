@@ -219,6 +219,9 @@ export function sortSites(items, prioritySite) {
       const bIsLast = b.group === prioritySite.group && b.name === prioritySite.name && b.tag === prioritySite.tag;
       if (aIsLast !== bIsLast) return aIsLast ? -1 : 1;
     }
+    const aDefault = a.isDefault?.() ?? false;
+    const bDefault = b.isDefault?.() ?? false;
+    if (aDefault !== bDefault) return aDefault ? -1 : 1;
     const groupCmp = a.group.localeCompare(b.group);
     if (groupCmp !== 0) return groupCmp;
     const tagCmp = (a.tag ?? '').localeCompare(b.tag ?? '');

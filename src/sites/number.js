@@ -13,8 +13,9 @@ export class NumberFormat {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'Number'; }
+  get name() { return i18n.getMessage('typeNumber', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     if (!NUMBER_REGEX.test(value)) return false;

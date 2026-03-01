@@ -10,7 +10,6 @@ import { Xml } from './xml.js';
 import { Yaml } from './yaml.js';
 import { Base64 } from './base64.js';
 import { Hex } from './hex.js';
-import { OpenUrl } from './open-url.js';
 
 export class Sites {
   static default(locale) {
@@ -27,7 +26,6 @@ export class Sites {
       new Yaml(locale),
       new Base64(locale),
       new Hex(locale),
-      new OpenUrl(locale),
     ];
   }
 }

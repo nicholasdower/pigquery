@@ -8,8 +8,9 @@ export class TimestampSeconds {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'Timestamp (s)'; }
+  get name() { return i18n.getMessage('typeTimestampSeconds', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     if (!NUMBER_REGEX.test(value)) return false;

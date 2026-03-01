@@ -20,8 +20,9 @@ export class DateFormat {
 
   constructor(locale) { this.#locale = locale; }
 
-  get name() { return 'Date'; }
+  get name() { return i18n.getMessage('typeDate', this.#locale); }
   get group() { return 'Formatters'; }
+  isDefault() { return true; }
 
   match(value) {
     const isDateOnly = DATE_ONLY.test(value);
