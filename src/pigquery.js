@@ -50,7 +50,6 @@ const ICON_ERROR_URL = `data:image/svg+xml,${encodeURIComponent(iconErrorSvg)}`;
 
 const isMac = navigator.userAgentData.platform === 'macOS';
 
-let configuration;
 let snippets = new Updatable({ items: [], hasError: false });
 let sites = new Updatable({ items: [], hasError: false });
 let shortcuts = config.DEFAULT_SHORTCUTS;
@@ -80,13 +79,8 @@ function addRecentSnippetGroup(group) {
 
 async function load() {
   const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(LOCALE), config.loadShortcuts()]);
-  configuration = {
-    snippets: sortSnippets(loaded.snippets),
-    sites: sortSites(loaded.sites),
-    hasErrors: loaded.hasErrors,
-  };
-  snippets.update({ items: configuration.snippets, hasError: configuration.hasErrors });
-  sites.update({ items: configuration.sites, hasError: configuration.hasErrors });
+  snippets.update({ items: sortSnippets(loaded.snippets), hasError: loaded.hasErrors });
+  sites.update({ items: sortSites(loaded.sites), hasError: loaded.hasErrors });
   shortcuts = loadedShortcuts;
   hasRemoteSources = loaded.hasRemoteSources;
 }
