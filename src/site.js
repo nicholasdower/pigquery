@@ -18,8 +18,10 @@ export class Site {
   get group() { return this.#group; }
   url(content) { return this.#url.replace('%s', this.#encode === false ? content : encodeURIComponent(content)); }
 
-  preview(content) {
-    return [{ label: 'Foo', value: content, type: 'text' }];
+  preview(content, locale) {
+    return [
+      { label: 'Site', value: this.url(content), type: 'text' }
+    ];
   }
 
   match(value) {

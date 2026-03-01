@@ -835,9 +835,11 @@ function handleTableCellOpenPopup(cell) {
         hasError: sites.hasError,
       });
       const url = option.url(content);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     },
-    (option) => option.preview(content)
+    (option) => option.preview(content, LOCALE)
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
