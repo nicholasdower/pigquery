@@ -3,11 +3,19 @@ import * as i18n from '../i18n.js';
 export class Json {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeJson', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeJson', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     if (!value.startsWith('{') && !value.startsWith('[')) return false;
@@ -19,7 +27,9 @@ export class Json {
     }
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     try {

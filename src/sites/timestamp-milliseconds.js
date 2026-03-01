@@ -6,11 +6,19 @@ const NUMBER_REGEX = /^-?\d+(\.\d+)?$/;
 export class TimestampMilliseconds {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeTimestampMilliseconds', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeTimestampMilliseconds', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     if (!NUMBER_REGEX.test(value)) return false;
@@ -21,7 +29,9 @@ export class TimestampMilliseconds {
     return num <= 10000000000000;
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     const num = parseFloat(content);

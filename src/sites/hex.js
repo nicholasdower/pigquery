@@ -5,18 +5,28 @@ const HEX_REGEX = /^[0-9a-fA-F]+$/;
 export class Hex {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeHex', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeHex', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     if (value.length < 20 || value.length % 2 !== 0) return false;
     return HEX_REGEX.test(value);
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     const bytes = [];

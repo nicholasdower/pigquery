@@ -18,11 +18,19 @@ function normalize(text) {
 export class DateFormat {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeDate', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeDate', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     const isDateOnly = DATE_ONLY.test(value);
@@ -37,7 +45,9 @@ export class DateFormat {
     return year >= 1900 && year <= 2200;
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     const date = new Date(normalize(content));

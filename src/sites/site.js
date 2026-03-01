@@ -14,15 +14,21 @@ export class Site {
     this.tag = tag;
   }
 
-  get name() { return this.#name; }
-  get group() { return this.#group; }
-  isDefault() { return false; }
-  url(content) { return this.#url.replace('%s', this.#encode === false ? content : encodeURIComponent(content)); }
+  get name() {
+    return this.#name;
+  }
+  get group() {
+    return this.#group;
+  }
+  isDefault() {
+    return false;
+  }
+  url(content) {
+    return this.#url.replace('%s', this.#encode === false ? content : encodeURIComponent(content));
+  }
 
   preview(content) {
-    return [
-      { label: 'Site', value: this.url(content), type: 'text' }
-    ];
+    return [{ label: 'Site', value: this.url(content), type: 'text' }];
   }
 
   match(value) {

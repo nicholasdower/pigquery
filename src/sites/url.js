@@ -3,11 +3,19 @@ import * as i18n from '../i18n.js';
 export class Url {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeUrl', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeUrl', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     if (!value.startsWith('http://') && !value.startsWith('https://')) return false;
@@ -19,7 +27,9 @@ export class Url {
     }
   }
 
-  url(content) { return content; }
+  url(content) {
+    return content;
+  }
 
   preview(content) {
     try {
@@ -32,8 +42,7 @@ export class Url {
         { label: `${typeName} – ${i18n.getMessage('host', locale)}`, value: parsed.host },
       ];
 
-      if (parsed.port)
-        items.push({ label: `${typeName} – ${i18n.getMessage('port', locale)}`, value: parsed.port });
+      if (parsed.port) items.push({ label: `${typeName} – ${i18n.getMessage('port', locale)}`, value: parsed.port });
       if (parsed.pathname !== '/')
         items.push({ label: `${typeName} – ${i18n.getMessage('path', locale)}`, value: parsed.pathname });
       if (parsed.hash)

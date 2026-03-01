@@ -5,17 +5,27 @@ const TAG_REGEX = /<[a-zA-Z][\w-]*[^>]*>/;
 export class Xml {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeXml', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeXml', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     return value.startsWith('<') && TAG_REGEX.test(value);
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     try {

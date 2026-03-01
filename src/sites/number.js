@@ -3,19 +3,25 @@ import * as i18n from '../i18n.js';
 const NUMBER_REGEX = /^-?\d+(\.\d+)?$/;
 
 function format(num, locale) {
-  return Number.isInteger(num)
-    ? num.toLocaleString(locale)
-    : num.toLocaleString(locale, { maximumFractionDigits: 10 });
+  return Number.isInteger(num) ? num.toLocaleString(locale) : num.toLocaleString(locale, { maximumFractionDigits: 10 });
 }
 
 export class NumberFormat {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeNumber', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeNumber', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     if (!NUMBER_REGEX.test(value)) return false;
@@ -25,7 +31,9 @@ export class NumberFormat {
     return format(num, this.#locale) !== value;
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     const num = parseFloat(content);

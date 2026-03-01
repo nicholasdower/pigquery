@@ -833,7 +833,7 @@ function handleTableCellOpenPopup(cell) {
         window.open(url, '_blank', 'noopener,noreferrer');
       }
     },
-    (option) => option.preview(content)
+    option => option.preview(content)
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.

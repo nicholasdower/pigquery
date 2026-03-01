@@ -5,11 +5,19 @@ const BASE64_REGEX = /^[A-Za-z0-9+/_-]+=*$/;
 export class Base64 {
   #locale;
 
-  constructor(locale) { this.#locale = locale; }
+  constructor(locale) {
+    this.#locale = locale;
+  }
 
-  get name() { return i18n.getMessage('typeBase64', this.#locale); }
-  get group() { return 'Formatters'; }
-  isDefault() { return true; }
+  get name() {
+    return i18n.getMessage('typeBase64', this.#locale);
+  }
+  get group() {
+    return 'Formatters';
+  }
+  isDefault() {
+    return true;
+  }
 
   match(value) {
     if (!BASE64_REGEX.test(value)) return false;
@@ -29,7 +37,9 @@ export class Base64 {
     }
   }
 
-  url() { return null; }
+  url() {
+    return null;
+  }
 
   preview(content) {
     try {
