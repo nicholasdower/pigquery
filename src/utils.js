@@ -212,13 +212,8 @@ export function matchesShortcut(e, shortcut) {
 /**
  * Sorts sites by priority, then by group, tag, and name.
  */
-export function sortSites(items, prioritySite) {
+export function sortSites(items) {
   return items.slice().sort((a, b) => {
-    if (prioritySite) {
-      const aIsLast = a.group === prioritySite.group && a.name === prioritySite.name && a.tag === prioritySite.tag;
-      const bIsLast = b.group === prioritySite.group && b.name === prioritySite.name && b.tag === prioritySite.tag;
-      if (aIsLast !== bIsLast) return aIsLast ? -1 : 1;
-    }
     const aDefault = a.isDefault?.() ?? false;
     const bDefault = b.isDefault?.() ?? false;
     if (aDefault !== bDefault) return aDefault ? -1 : 1;

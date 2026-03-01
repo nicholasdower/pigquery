@@ -644,19 +644,6 @@ describe('Sorting Utilities', () => {
       expect(sorted[2].name).toBe('Zebra');
     });
 
-    it('should prioritize a specific site when provided', () => {
-      const sites = [
-        { group: 'B', tag: 'tag1', name: 'Site 1' },
-        { group: 'A', tag: 'tag2', name: 'Site 2' },
-        { group: 'C', tag: 'tag3', name: 'Site 3' },
-      ];
-
-      const prioritySite = { group: 'C', tag: 'tag3', name: 'Site 3' };
-      const sorted = sortSites(sites, prioritySite);
-
-      expect(sorted[0]).toEqual(prioritySite);
-    });
-
     it('should handle sites without tags', () => {
       const sites = [
         { group: 'A', tag: null, name: 'Site 1' },
@@ -693,20 +680,6 @@ describe('Sorting Utilities', () => {
       const sites = [{ group: 'A', tag: 'tag1', name: 'Site 1' }];
       const sorted = sortSites(sites);
       expect(sorted).toEqual(sites);
-    });
-
-    it('should handle priority site that does not exist in array', () => {
-      const sites = [
-        { group: 'A', tag: 'tag1', name: 'Site 1' },
-        { group: 'B', tag: 'tag2', name: 'Site 2' },
-      ];
-
-      const prioritySite = { group: 'C', tag: 'tag3', name: 'Site 3' };
-      const sorted = sortSites(sites, prioritySite);
-
-      // Should just sort normally since priority site doesn't exist
-      expect(sorted[0].group).toBe('A');
-      expect(sorted[1].group).toBe('B');
     });
 
     it('should perform stable sort for identical items', () => {

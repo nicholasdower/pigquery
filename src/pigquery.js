@@ -5,7 +5,6 @@ import settingsIconSvg from './settings-icon.svg';
 import iconSvg from '../icons/icon.svg';
 import iconErrorSvg from '../icons/icon-badge-error.svg';
 import * as search from './search.js';
-import * as formatters from './formatters.js';
 import { compressAndEncode, decodeAndDecompress } from './compression.js';
 import logger from './logger.js';
 import Uninstaller from './uninstaller.js';
@@ -83,7 +82,7 @@ async function load() {
   const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(LOCALE), config.loadShortcuts()]);
   configuration = {
     snippets: sortSnippets(loaded.snippets),
-    sites: sortSites(loaded.sites, null),
+    sites: sortSites(loaded.sites),
     hasErrors: loaded.hasErrors,
   };
   snippets.update({ items: configuration.snippets, hasError: configuration.hasErrors });
@@ -826,14 +825,9 @@ function handleTableCellOpenPopup(cell) {
   listener();
   sites.addListener(listener);
   uninstaller.register(() => sites.removeListener(listener), 'popup-filtered-sites-change-handler', 'popup');
-  const contentInfo = formatters.detectContentType(content);
   openPopup(
     filteredSites,
     option => {
-      sites.update({
-        items: sortSites(sites.items, { group: option.group, name: option.name, tag: option.tag }),
-        hasError: sites.hasError,
-      });
       const url = option.url(content);
       if (url) {
         window.open(url, '_blank', 'noopener,noreferrer');

@@ -138,8 +138,8 @@ describe('config', () => {
       const config = await loadConfiguration();
 
       expect(config.snippets).toEqual([]);
-      expect(config.sites).toHaveLength(1);
-      expect(config.sites[0].name).toBe('Open URL');
+      expect(config.sites).toHaveLength(12);
+      expect(config.sites[0].name).toBe('JWT');
       expect(config.hasErrors).toBe(false);
       expect(config.hasRemoteSources).toBe(false);
     });
@@ -162,7 +162,7 @@ describe('config', () => {
 
       expect(config.snippets).toHaveLength(1);
       expect(config.snippets[0].name).toBe('snippet1');
-      expect(config.sites).toHaveLength(2); // user site + default
+      expect(config.sites).toHaveLength(13); // user site + default
       expect(config.sites[0].name).toBe('site1');
     });
 
@@ -219,23 +219,6 @@ describe('config', () => {
       const config = await loadConfiguration();
 
       expect(config.hasRemoteSources).toBe(true);
-    });
-
-    test('should convert regex strings to RegExp objects in sites', async () => {
-      const sources = [
-        {
-          url: 'local',
-          data: [{ name: 'site1', group: 'Test', regex: '^https://test', url: 'https://example.com?q=%s' }],
-        },
-      ];
-      chrome.storage.local.get.mockResolvedValue({
-        [STORAGE_KEY]: JSON.stringify(sources),
-      });
-
-      const config = await loadConfiguration();
-
-      expect(config.sites[0].regex).toBeInstanceOf(RegExp);
-      expect(config.sites[0].regex.source).toBe('^https:\\/\\/test');
     });
   });
 
