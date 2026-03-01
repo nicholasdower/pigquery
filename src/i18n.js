@@ -300,192 +300,192 @@ const TRANSLATIONS = {
     en: 'Site',
     de: 'Seite',
   },
-  // formatters.js: Type name for JSON
+  // json.js: Type name for JSON
   typeJson: {
     en: 'JSON',
     de: 'JSON',
   },
-  // formatters.js: Type name for JWT
+  // jwt.js: Type name for JWT
   typeJwt: {
     en: 'JWT',
     de: 'JWT',
   },
-  // formatters.js: Type name for UUID
+  // uuid.js: Type name for UUID
   typeUuid: {
     en: 'UUID',
     de: 'UUID',
   },
-  // formatters.js: Type name for Date
+  // date.js: Type name for Date
   typeDate: {
     en: 'Date',
     de: 'Datum',
   },
-  // formatters.js: Type name for Number
+  // number.js: Type name for Number
   typeNumber: {
     en: 'Number',
     de: 'Zahl',
   },
-  // formatters.js: Type name for Timestamp (Milliseconds)
+  // timestamp-milliseconds.js: Type name for Timestamp (Milliseconds)
   typeTimestampMilliseconds: {
     en: 'Timestamp (Milliseconds)',
     de: 'Zeitstempel (Millisekunden)',
   },
-  // formatters.js: Type name for Timestamp (Seconds)
+  // timestamp-seconds.js: Type name for Timestamp (Seconds)
   typeTimestampSeconds: {
     en: 'Timestamp (Seconds)',
     de: 'Zeitstempel (Sekunden)',
   },
-  // formatters.js: Type name for URL
+  // url.js: Type name for URL
   typeUrl: {
     en: 'URL',
     de: 'URL',
   },
-  // formatters.js: Type name for XML
+  // xml.js: Type name for XML
   typeXml: {
     en: 'XML',
     de: 'XML',
   },
-  // formatters.js: Type name for YAML
+  // yaml.js: Type name for YAML
   typeYaml: {
     en: 'YAML',
     de: 'YAML',
   },
-  // formatters.js: Type name for Base64
+  // base64.js: Type name for Base64
   typeBase64: {
     en: 'Base64',
     de: 'Base64',
   },
-  // formatters.js: Type name for Hex
+  // hex.js: Type name for Hex
   typeHex: {
     en: 'Hex',
     de: 'Hex',
   },
-  // formatters.js: Label for original content
+  // pigquery.js: Label for original content
   original: {
     en: 'Original',
     de: 'Original',
   },
-  // formatters.js: Label for formatted content
+  // json.js, number.js, xml.js, yaml.js: Label for formatted content
   formatted: {
     en: 'Formatted',
     de: 'Formatiert',
   },
-  // formatters.js: Label for decoded content
+  // base64.js, hex.js: Label for decoded content
   decoded: {
     en: 'Decoded',
     de: 'Dekodiert',
   },
-  // formatters.js: Label for date in ISO 8601 format
+  // date.js, timestamp-milliseconds.js, timestamp-seconds.js: Label for date in ISO 8601 format
   date: {
     en: 'ISO 8601',
     de: 'ISO 8601',
   },
-  // formatters.js: Label for localized date
+  // date.js, timestamp-milliseconds.js, timestamp-seconds.js: Label for localized date
   dateLocalized: {
     en: 'Localized',
     de: 'Lokalisiert',
   },
-  // formatters.js: Label for milliseconds
+  // date.js: Label for milliseconds
   milliseconds: {
     en: 'Milliseconds',
     de: 'Millisekunden',
   },
-  // formatters.js: Label for JWT signature
+  // jwt.js: Label for JWT signature
   signature: {
     en: 'Signature',
     de: 'Signatur',
   },
-  // formatters.js: Label for JWT issued time
+  // jwt.js: Label for JWT issued time
   issued: {
     en: 'Issued',
     de: 'Ausgestellt',
   },
-  // formatters.js: Label for JWT expiration time
+  // jwt.js: Label for JWT expiration time
   expires: {
     en: 'Expires',
     de: 'Läuft ab',
   },
-  // formatters.js: Label for JWT not before time
+  // jwt.js: Label for JWT not before time
   notBefore: {
     en: 'Not Before',
     de: 'Nicht vor',
   },
-  // formatters.js: Label for URL protocol
+  // url.js: Label for URL protocol
   protocol: {
     en: 'Protocol',
     de: 'Protokoll',
   },
-  // formatters.js: Label for URL path
+  // url.js: Label for URL path
   path: {
     en: 'Path',
     de: 'Pfad',
   },
-  // formatters.js: Label for JWT header
+  // jwt.js: Label for JWT header
   header: {
     en: 'Header',
     de: 'Header',
   },
-  // formatters.js: Label for JWT payload
+  // jwt.js: Label for JWT payload
   payload: {
     en: 'Payload',
     de: 'Payload',
   },
-  // formatters.js: Label for URL host
+  // url.js: Label for URL host
   host: {
     en: 'Host',
     de: 'Host',
   },
-  // formatters.js: Label for URL port
+  // url.js: Label for URL port
   port: {
     en: 'Port',
     de: 'Port',
   },
-  // formatters.js: Label for URL fragment
+  // url.js: Label for URL fragment
   fragment: {
     en: 'Fragment',
     de: 'Fragment',
   },
-  // formatters.js: Label for UUID version. $1 = version info
+  // uuid.js: Label for UUID version
   version: {
     en: 'Version',
     de: 'Version',
   },
-  // formatters.js: Label for URL parameter. $1 = parameter name
+  // url.js: Label for URL parameter. $1 = parameter name
   param: {
     en: 'Parameter: $1',
     de: 'Parameter: $1',
   },
-  // formatters.js: Label for hex dump
+  // hex.js: Label for hex dump
   hexDump: {
     en: 'Hex Dump',
     de: 'Hexdump',
   },
-  // formatters.js: Unknown value for UUID version
+  // uuid.js: Unknown value for UUID version
   unknown: {
     en: 'Unknown',
     de: 'Unbekannt',
   },
-  // formatters.js: UUID version 1 name
+  // uuid.js: UUID version 1 name
   uuidVersion1: {
     en: 'Time-based (MAC address)',
     de: 'Zeitbasiert (MAC-Adresse)',
   },
-  // formatters.js: UUID version 2 name
+  // uuid.js: UUID version 2 name
   uuidVersion2: {
     en: 'DCE Security',
     de: 'DCE-Sicherheit',
   },
-  // formatters.js: UUID version 3 name
+  // uuid.js: UUID version 3 name
   uuidVersion3: {
     en: 'Name-based (MD5)',
     de: 'Namensbasiert (MD5)',
   },
-  // formatters.js: UUID version 4 name
+  // uuid.js: UUID version 4 name
   uuidVersion4: {
     en: 'Random',
     de: 'Zufällig',
   },
-  // formatters.js: UUID version 5 name
+  // uuid.js: UUID version 5 name
   uuidVersion5: {
     en: 'Name-based (SHA-1)',
     de: 'Namensbasiert (SHA-1)',
