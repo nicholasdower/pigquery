@@ -698,12 +698,12 @@ uninstaller.addEventListener(
       }
       openPopup(
         snippets,
-        option => {
-          addRecentSnippetGroup(option.group);
+        snippet => {
+          addRecentSnippetGroup(snippet.group);
           snippets.update({ items: sortSnippets(snippets.items), hasError: snippets.hasError });
-          insertIntoEditor(editor, option.value);
+          insertIntoEditor(editor, snippet.value);
         },
-        item => [{ label: 'SQL', value: item.value, type: 'sql' }]
+        snippet => snippet.preview()
       );
       return;
     }
@@ -821,13 +821,13 @@ function handleTableCellOpenPopup(cell) {
   uninstaller.register(() => sites.removeListener(listener), 'popup-filtered-sites-change-handler', 'popup');
   openPopup(
     filteredSites,
-    option => {
-      const url = option.url(content);
+    site => {
+      const url = site.url(content);
       if (url) {
         window.open(url, '_blank', 'noopener,noreferrer');
       }
     },
-    option => option.preview(content)
+    site => site.preview(content)
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.

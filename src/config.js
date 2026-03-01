@@ -1,6 +1,7 @@
 import yaml from 'js-yaml';
-import { Site } from './sites/site.js';
+import { Site } from './site.js';
 import { Sites } from './sites/sites.js';
+import { Snippet } from './snippet.js';
 
 export const STORAGE_KEY = 'userPayload';
 export const BUSY_KEY = 'busy';
@@ -159,7 +160,7 @@ export async function loadConfiguration(locale) {
   const userSites = dedupe(allItems.filter(item => item.url)).map(item => new Site(item));
 
   return {
-    snippets: dedupe(allItems.filter(item => !item.url)),
+    snippets: dedupe(allItems.filter(item => !item.url)).map(item => new Snippet(item)),
     sites: [...userSites, ...defaultSites],
     hasErrors,
     hasRemoteSources,

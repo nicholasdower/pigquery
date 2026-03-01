@@ -4,6 +4,7 @@ export class Site {
   #url;
   #encode;
   #regex;
+  #tag;
 
   constructor({ name, group, url, encode, regex, tag }) {
     this.#name = name;
@@ -11,7 +12,7 @@ export class Site {
     this.#url = url;
     this.#encode = encode;
     this.#regex = regex instanceof RegExp ? regex : new RegExp(regex);
-    this.tag = tag;
+    this.#tag = tag;
   }
 
   get name() {
@@ -19,6 +20,9 @@ export class Site {
   }
   get group() {
     return this.#group;
+  }
+  get tag() {
+    return this.#tag;
   }
   isDefault() {
     return false;

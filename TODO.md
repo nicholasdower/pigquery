@@ -122,7 +122,6 @@ This document contains findings from a comprehensive code review of the PigQuery
 - [ ] Add country code formatter, show country name, time, currency, etc.
 - [ ] Allow sites and snippets to have a project filter. Maybe an array of regex.
 - [ ] Add Site previews that are fetched.
-- [ ] Create a Snippet class.
 - [ ] Rename Site/Sites, etc.
 
 ---
