@@ -764,15 +764,26 @@
         let i = 0;
         while (i < selectList.length) {
           const rest = selectList.slice(i);
+          // Skip whitespace and commas between values
+          const skip = rest.match(/^[\s,]+/);
+          if (skip) {
+            i += skip[0].length;
+            continue;
+          }
           const dq = rest.match(/^"([^"]*)"/);
           const sq = rest.match(/^'([^']*)'/);
+          const unquoted = rest.match(/^(-?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|true|false|null)\b/i);
           if (dq) {
             quoted.push(dq[1]);
             i += dq[0].length;
           } else if (sq) {
             quoted.push(sq[1]);
             i += sq[0].length;
+          } else if (unquoted) {
+            quoted.push(unquoted[1]);
+            i += unquoted[0].length;
           } else {
+            // Skip to next quoted value
             const next = rest.search(/["']/);
             if (next === -1) break;
             i += next;
@@ -1017,10 +1028,10 @@
         const currentTab = tabs.find(t => t.id === activeTabId);
 
         if (!sql) {
-          showResultsError('Bitte eine Abfrage eingeben (z.B. select "foo", "bar" union all select "moo", "bob").');
+          showResultsError('Bitte eine Abfrage eingeben (z.B. select "foo", "bar" union all select "moo", "bob" oder select 1, 2, 3).');
           if (currentTab) {
             currentTab.resultsHtml = '';
-            currentTab.resultsError = 'Bitte eine Abfrage eingeben (z.B. select "foo", "bar" union all select "moo", "bob").';
+            currentTab.resultsError = 'Bitte eine Abfrage eingeben (z.B. select "foo", "bar" union all select "moo", "bob" oder select 1, 2, 3).';
           }
           return;
         }
@@ -1034,10 +1045,10 @@
             currentTab.resultsError = null;
           }
         } else {
-          showResultsError('Nur select "...", ... [ union all select ... ] wird unterstützt (kein from).');
+          showResultsError('Nur select <Wert>, ... [ union all select ... ] wird unterstützt (kein from). Werte: Strings in Anführungszeichen oder Zahlen/true/false/null.');
           if (currentTab) {
             currentTab.resultsHtml = '';
-            currentTab.resultsError = 'Nur select "...", ... [ union all select ... ] wird unterstützt (kein from).';
+            currentTab.resultsError = 'Nur select <Wert>, ... [ union all select ... ] wird unterstützt (kein from). Werte: Strings in Anführungszeichen oder Zahlen/true/false/null.';
           }
         }
       }

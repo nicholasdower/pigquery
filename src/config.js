@@ -1,4 +1,5 @@
 import yaml from 'js-yaml';
+import { Site } from './site.js';
 
 export const STORAGE_KEY = 'userPayload';
 export const BUSY_KEY = 'busy';
@@ -149,9 +150,9 @@ export async function loadConfiguration() {
   const hasRemoteSources = getRemoteSources(sources).length > 0;
 
   // Default built-in sites
-  const defaultSites = [{ name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false }];
+  const defaultSites = [new Site({ name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false })];
 
-  const userSites = dedupe(allItems.filter(item => item.url)).map(item => ({ ...item, regex: new RegExp(item.regex) }));
+  const userSites = dedupe(allItems.filter(item => item.url)).map(item => new Site(item));
 
   return {
     snippets: dedupe(allItems.filter(item => !item.url)),

@@ -820,12 +820,7 @@ function handleTableCellOpenPopup(cell) {
 
   const filteredSites = new Updatable({ items: [], hasError: false });
   const listener = () => {
-    const filtered = sites.items
-      .filter(option => option.regex.test(content))
-      .map(option => ({
-        ...option,
-        url: option.url.replace('%s', option.encode === false ? content : encodeURIComponent(content)),
-      }));
+    const filtered = sites.items.filter(option => option.match(content));
     filteredSites.update({ items: filtered, hasError: sites.hasError });
   };
   listener();
@@ -839,9 +834,10 @@ function handleTableCellOpenPopup(cell) {
         items: sortSites(sites.items, { group: option.group, name: option.name, tag: option.tag }),
         hasError: sites.hasError,
       });
-      window.open(option.url, '_blank', 'noopener,noreferrer');
+      const url = option.url(content);
+      window.open(url, '_blank', 'noopener,noreferrer');
     },
-    () => contentInfo
+    (option) => option.preview(content)
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.
