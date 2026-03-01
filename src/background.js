@@ -85,7 +85,7 @@ async function injectContentScript(tab, force) {
 }
 
 async function updateErrorBadge() {
-  const { hasErrors } = await config.loadConfiguration();
+  const hasErrors = await config.hasConfigurationErrors();
 
   if (hasErrors) {
     chrome.action.setBadgeText({ text: '!' });

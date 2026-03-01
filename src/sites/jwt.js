@@ -9,6 +9,10 @@ function decodeBase64Url(str) {
 }
 
 export class Jwt {
+  #locale;
+
+  constructor(locale) { this.#locale = locale; }
+
   get name() { return 'JWT'; }
   get group() { return 'Formatters'; }
 
@@ -29,13 +33,14 @@ export class Jwt {
     return null;
   }
 
-  preview(content, locale) {
+  preview(content) {
     const parts = content.split('.');
 
     try {
       const header = decodeBase64Url(parts[0]);
       const payload = decodeBase64Url(parts[1]);
 
+      const locale = this.#locale;
       const typeName = i18n.getMessage('typeJwt', locale);
       const items = [
         {

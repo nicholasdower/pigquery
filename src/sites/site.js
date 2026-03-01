@@ -18,7 +18,7 @@ export class Site {
   get group() { return this.#group; }
   url(content) { return this.#url.replace('%s', this.#encode === false ? content : encodeURIComponent(content)); }
 
-  preview(content, locale) {
+  preview(content) {
     return [
       { label: 'Site', value: this.url(content), type: 'text' }
     ];

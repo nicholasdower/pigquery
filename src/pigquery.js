@@ -80,7 +80,7 @@ function addRecentSnippetGroup(group) {
 }
 
 async function load() {
-  const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(), config.loadShortcuts()]);
+  const [loaded, loadedShortcuts] = await Promise.all([config.loadConfiguration(LOCALE), config.loadShortcuts()]);
   configuration = {
     snippets: sortSnippets(loaded.snippets),
     sites: sortSites(loaded.sites, null),
@@ -839,7 +839,7 @@ function handleTableCellOpenPopup(cell) {
         window.open(url, '_blank', 'noopener,noreferrer');
       }
     },
-    (option) => option.preview(content, LOCALE)
+    (option) => option.preview(content)
   );
 
   // BigQuery steals focus asynchronously on the results table. Re-focus if this happens.

@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
-import { Site } from './site.js';
-import { Jwt } from './sites/jwt.js';
+import { Site } from './sites/site.js';
+import { Sites } from './sites/sites.js';
 
 export const STORAGE_KEY = 'userPayload';
 export const BUSY_KEY = 'busy';
@@ -125,13 +125,18 @@ export async function loadSources() {
   return data[STORAGE_KEY] ? JSON.parse(data[STORAGE_KEY]) : [];
 }
 
+export async function hasConfigurationErrors() {
+  const sources = await loadSources();
+  return sources.some(source => source.error != null);
+}
+
 /**
  * Loads and processes configuration from all sources.
  * Deduplicates by name+group+tag within snippets and sites separately,
  * preferring local over remote (last definition wins).
  * Returns { snippets: [...], sites: [...], hasErrors: boolean, hasRemoteSources: boolean }.
  */
-export async function loadConfiguration() {
+export async function loadConfiguration(locale) {
   const sources = await loadSources();
   // Order remote then local, so local definitions come last and win
   const allItems = [...sources.filter(s => s.url !== 'local'), ...sources.filter(s => s.url === 'local')].flatMap(
@@ -150,12 +155,7 @@ export async function loadConfiguration() {
   const hasErrors = sources.some(source => source.error != null);
   const hasRemoteSources = getRemoteSources(sources).length > 0;
 
-  // Default built-in sites
-  const defaultSites = [
-    new Site({ name: 'Open URL', group: 'Default', regex: /^https?:\/\//, url: '%s', encode: false }),
-    new Jwt()
-  ];
-
+  const defaultSites = Sites.default(locale);
   const userSites = dedupe(allItems.filter(item => item.url)).map(item => new Site(item));
 
   return {
