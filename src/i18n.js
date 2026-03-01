@@ -295,6 +295,11 @@ const TRANSLATIONS = {
     en: 'Bug',
     de: 'Fehler',
   },
+  // sites: Site label
+  site: {
+    en: 'Site',
+    de: 'Seite',
+  },
   // formatters.js: Type name for JSON
   typeJson: {
     en: 'JSON',
@@ -354,11 +359,6 @@ const TRANSLATIONS = {
   typeHex: {
     en: 'Hex',
     de: 'Hex',
-  },
-  // sites: Type name for Open URL
-  typeOpenUrl: {
-    en: 'Open URL',
-    de: 'URL öffnen',
   },
   // formatters.js: Label for original content
   original: {

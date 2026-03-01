@@ -3,12 +3,14 @@ export class Snippet {
   #group;
   #tag;
   #value;
+  #locale;
 
-  constructor({ name, group, tag, value }) {
+  constructor({ name, group, tag, value }, locale) {
     this.#name = name;
     this.#group = group;
     this.#tag = tag;
     this.#value = value;
+    this.#locale = locale;
   }
 
   get name() {

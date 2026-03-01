@@ -5,14 +5,16 @@ export class Site {
   #encode;
   #regex;
   #tag;
+  #locale;
 
-  constructor({ name, group, url, encode, regex, tag }) {
+  constructor({ name, group, url, encode, regex, tag }, locale) {
     this.#name = name;
     this.#group = group;
     this.#url = url;
     this.#encode = encode;
     this.#regex = regex instanceof RegExp ? regex : new RegExp(regex);
     this.#tag = tag;
+    this.#locale = locale;
   }
 
   get name() {
@@ -32,7 +34,7 @@ export class Site {
   }
 
   preview(content) {
-    return [{ label: 'Site', value: this.url(content), type: 'text' }];
+    return [{ label: i18n.getMessage('site', this.#locale), value: this.url(content), type: 'text' }];
   }
 
   match(value) {

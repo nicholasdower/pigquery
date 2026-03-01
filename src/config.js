@@ -157,10 +157,10 @@ export async function loadConfiguration(locale) {
   const hasRemoteSources = getRemoteSources(sources).length > 0;
 
   const defaultSites = Sites.default(locale);
-  const userSites = dedupe(allItems.filter(item => item.url)).map(item => new Site(item));
+  const userSites = dedupe(allItems.filter(item => item.url)).map(item => new Site(item, locale));
 
   return {
-    snippets: dedupe(allItems.filter(item => !item.url)).map(item => new Snippet(item)),
+    snippets: dedupe(allItems.filter(item => !item.url)).map(item => new Snippet(item, locale)),
     sites: [...userSites, ...defaultSites],
     hasErrors,
     hasRemoteSources,
