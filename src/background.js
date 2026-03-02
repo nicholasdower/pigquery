@@ -188,6 +188,19 @@ if (chrome?.runtime?.id) {
       });
       return true;
     }
+    if (message.action === 'fetchPreview') {
+      chrome.permissions
+        .request({ origins: [message.origin] })
+        .then(granted => {
+          if (!granted) return sendResponse({ ok: false, error: 'permission_denied' });
+          return fetch(message.url).then(response => {
+            if (!response.ok) return sendResponse({ ok: false, error: `HTTP ${response.status}` });
+            return response.text().then(text => sendResponse({ ok: true, text }));
+          });
+        })
+        .catch(e => sendResponse({ ok: false, error: e.message }));
+      return true;
+    }
     if (message.action === 'openOptionsPage') {
       const url = message.locale
         ? chrome.runtime.getURL(`dist/options.html?hl=${message.locale}`)

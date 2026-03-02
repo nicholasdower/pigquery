@@ -585,66 +585,74 @@ function openPopup(updatable, onOptionSelected, getContent) {
 
     const contentInfo = getContent(selectedItem);
 
-    contentInfo.forEach((item, index) => {
-      const itemEl = makeEl('div', { className: 'pig-format-item' });
+    const renderItems = items => {
+      items.forEach((item, index) => {
+        const itemEl = makeEl('div', { className: 'pig-format-item' });
 
-      const headerEl = makeEl('div', { className: 'pig-format-item-header' });
-      const labelEl = makeEl('div', { className: 'pig-format-item-label' });
-      labelEl.textContent = item.label;
-      headerEl.appendChild(labelEl);
+        const headerEl = makeEl('div', { className: 'pig-format-item-header' });
+        const labelEl = makeEl('div', { className: 'pig-format-item-label' });
+        labelEl.textContent = item.label;
+        headerEl.appendChild(labelEl);
 
-      const copyBtn = makeEl('button', { className: 'pig-format-item-copy' });
-      copyBtn.innerHTML =
-        '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
-      copyBtn.title = 'Copy';
-      copyBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        const currentValue = valueEl.textContent;
-        navigator.clipboard.writeText(currentValue);
-        showToast(i18n.getMessage('contentCopied', LOCALE));
-        inputEl.focus();
-      });
-      copyBtn.addEventListener('focus', () => {
-        // Only scroll on keyboard focus, not mouse click
-        if (!copyBtn.matches(':focus-visible')) return;
-        if (index === 0) {
-          contentPanel.scrollTop = 0;
+        const copyBtn = makeEl('button', { className: 'pig-format-item-copy' });
+        copyBtn.innerHTML =
+          '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M3 10.5V3.5a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
+        copyBtn.title = 'Copy';
+        copyBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const currentValue = valueEl.textContent;
+          navigator.clipboard.writeText(currentValue);
+          showToast(i18n.getMessage('contentCopied', LOCALE));
+          inputEl.focus();
+        });
+        copyBtn.addEventListener('focus', () => {
+          // Only scroll on keyboard focus, not mouse click
+          if (!copyBtn.matches(':focus-visible')) return;
+          if (index === 0) {
+            contentPanel.scrollTop = 0;
+          } else {
+            itemEl.scrollIntoView({ block: 'nearest' });
+          }
+        });
+        headerEl.appendChild(copyBtn);
+
+        itemEl.appendChild(headerEl);
+
+        const valueEl = makeEl('div', { className: 'pig-format-item-value' });
+
+        // Select text on right-click so browser shows "Copy" in context menu
+        valueEl.addEventListener('contextmenu', () => {
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(valueEl);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        });
+
+        itemEl.appendChild(valueEl);
+        contentPanel.appendChild(itemEl);
+
+        if (['json', 'xml', 'yaml', 'sql'].includes(item.type)) {
+          const highlighted = hljs.highlight(item.value, { language: item.type });
+          valueEl.innerHTML = highlighted.value;
+          if (!valueEl.classList.contains('hljs')) {
+            valueEl.classList.add('hljs');
+          }
         } else {
-          itemEl.scrollIntoView({ block: 'nearest' });
+          valueEl.textContent = item.value;
+          valueEl.classList.remove('hljs');
         }
       });
-      headerEl.appendChild(copyBtn);
 
-      itemEl.appendChild(headerEl);
+      contentPanel.style.display = '';
+      contentPanel.scrollTop = 0;
+    };
 
-      const valueEl = makeEl('div', { className: 'pig-format-item-value' });
-
-      // Select text on right-click so browser shows "Copy" in context menu
-      valueEl.addEventListener('contextmenu', () => {
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(valueEl);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      });
-
-      itemEl.appendChild(valueEl);
-      contentPanel.appendChild(itemEl);
-
-      if (['json', 'xml', 'yaml', 'sql'].includes(item.type)) {
-        const highlighted = hljs.highlight(item.value, { language: item.type });
-        valueEl.innerHTML = highlighted.value;
-        if (!valueEl.classList.contains('hljs')) {
-          valueEl.classList.add('hljs');
-        }
-      } else {
-        valueEl.textContent = item.value;
-        valueEl.classList.remove('hljs');
-      }
-    });
-
-    contentPanel.style.display = '';
-    contentPanel.scrollTop = 0;
+    if (contentInfo instanceof Promise) {
+      contentInfo.then(renderItems);
+    } else {
+      renderItems(contentInfo);
+    }
   }
 
   modalEl.appendChild(bodyEl);
